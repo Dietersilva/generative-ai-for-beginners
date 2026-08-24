@@ -107,6 +107,10 @@ After completing this course, check out our [Generative AI Learning collection](
 
 🔗 [OpenAI's CLIP paper](https://arxiv.org/pdf/2103.00020.pdf?WT.mc_id=academic-105485-koreyst)
 
+🔗 [Awesome-Video-Diffusion](https://github.com/showlab/Awesome-Video-Diffusion) - a curated list of diffusion models for video generation and editing
+
+🔗 [CogVideo](https://github.com/zai-org/CogVideo) - open-source text and image-to-video generation models (CogVideoX)
+
 ## Lesson 10 - Building Low Code AI Applications
 🔗 [Create bots with Microsoft Copilot Studio](https://learn.microsoft.com/training/paths/work-power-virtual-agents/?&WT.mc_id=academic-105485-koreyst)
 
