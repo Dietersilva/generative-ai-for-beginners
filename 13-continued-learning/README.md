@@ -93,6 +93,8 @@ After completing this course, check out our [Generative AI Learning collection](
 
 🔗 [Cosine Similarity](https://en.wikipedia.org/wiki/Cosine_similarity?wt.mc_id=github_S-1231_webpage_reactor)
 
+🔗 [Awesome-RAG](https://github.com/Danielskry/Awesome-RAG) - a curated list of Retrieval-Augmented Generation (RAG) applications in Generative AI
+
 ## Lesson 9 - Building Image Generation Applications
 
 🔗  [Generate Images with Azure OpenAI Service](https://learn.microsoft.com/training/modules/generate-images-azure-openai?WT.mc_id=academic-105485-koreyst)
