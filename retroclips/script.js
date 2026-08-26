@@ -61,7 +61,25 @@ function renderGrid(films) {
     video.addEventListener("click", toggleSound);
     soundBadge.addEventListener("click", toggleSound);
 
-    clipFrame.append(video, soundBadge);
+    // Decorative caption ticker, burned onto the clip so the commentary
+    // reads even muted/without looking away from the video. The real,
+    // screen-reader-visible text is the .commentary paragraph below --
+    // this is aria-hidden to avoid announcing the same text twice.
+    const caption = document.createElement("div");
+    caption.className = "clip-caption";
+    caption.setAttribute("aria-hidden", "true");
+    const captionTrack = document.createElement("div");
+    captionTrack.className = "clip-caption-track";
+    const secondsToRead = Math.min(28, Math.max(14, film.commentary.length * 0.09));
+    captionTrack.style.animationDuration = `${secondsToRead}s`;
+    const captionSpanA = document.createElement("span");
+    captionSpanA.textContent = film.commentary;
+    const captionSpanB = document.createElement("span");
+    captionSpanB.textContent = film.commentary;
+    captionTrack.append(captionSpanA, captionSpanB);
+    caption.append(captionTrack);
+
+    clipFrame.append(video, caption, soundBadge);
 
     const body = document.createElement("div");
     body.className = "card-body";

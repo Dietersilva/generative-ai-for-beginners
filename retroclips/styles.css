@@ -122,8 +122,9 @@ body {
 
 .sound-badge {
   position: absolute;
-  bottom: 0.6rem;
+  bottom: 0.3rem;
   right: 0.6rem;
+  z-index: 2;
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
@@ -140,6 +141,45 @@ body {
 
 .sound-badge:hover {
   border-color: var(--accent);
+}
+
+.clip-caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: rgba(5, 4, 3, 0.78);
+  border-top: 1px solid var(--accent-dim);
+  padding: 0.3rem 0;
+  pointer-events: none;
+}
+
+.clip-caption-track {
+  display: flex;
+  width: max-content;
+  white-space: nowrap;
+  animation: clip-caption-scroll linear infinite;
+}
+
+.clip-caption-track span {
+  padding-right: 4rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 0.78rem;
+  color: var(--ink);
+}
+
+@keyframes clip-caption-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .clip-caption-track {
+    animation: none;
+  }
 }
 
 .card-body {
