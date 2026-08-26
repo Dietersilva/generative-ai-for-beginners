@@ -20,7 +20,7 @@ function renderGrid(films) {
     video.muted = true;
     video.loop = true;
     video.playsInline = true;
-    video.setAttribute("aria-label", `${film.title} (${film.year}) placeholder clip`);
+    video.setAttribute("aria-label", `${film.title} (${film.year}) clip: ${film.scene_label}`);
     card.addEventListener("mouseenter", () => video.play().catch(() => {}));
     card.addEventListener("mouseleave", () => video.pause());
 
