@@ -1,0 +1,93 @@
+{
+  "site": {
+    "name": "RetroClips",
+    "tagline": "Six seconds of film history. Twenty seconds of why it matters.",
+    "generated_note": "Commentary below is written in the auto-generation pipeline's target style (see scripts/generate_commentary.py). It is example output for this prototype, not live model output."
+  },
+  "films": [
+    {
+      "id": "nosferatu-1922",
+      "title": "Nosferatu",
+      "year": 1922,
+      "director": "F.W. Murnau",
+      "country": "Germany",
+      "genre": "Horror",
+      "scene_label": "The shadow on the stairs",
+      "scene_description": "Count Orlok's elongated shadow climbs the staircase toward Ellen's bedroom door.",
+      "commentary": "Murnau never shows Orlok's hand touch the door — just his shadow, stretched impossibly long, climbing the staircase alone. It's one of horror's first lessons that suggestion terrifies more than any monster on screen. Every stalking-shadow shot since, Halloween included, is quoting this exact staircase.",
+      "pd_basis": "US copyright term fully expired (published 1922, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    },
+    {
+      "id": "caligari-1920",
+      "title": "The Cabinet of Dr. Caligari",
+      "year": 1920,
+      "director": "Robert Wiene",
+      "country": "Germany",
+      "genre": "Horror / Psychological",
+      "scene_label": "Cesare wakes",
+      "scene_description": "The somnambulist Cesare rises inside Caligari's tent amid the film's tilted, hand-painted sets.",
+      "commentary": "Nothing in this frame is real geometry — the walls lean, the shadows are painted on, the streets bend like they're melting. German Expressionism built its nightmares out of pure design, not special effects. Tim Burton, and half of horror's visual language, still borrows this warped dread a century later.",
+      "pd_basis": "US copyright term fully expired (published 1920, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    },
+    {
+      "id": "the-general-1926",
+      "title": "The General",
+      "year": 1926,
+      "director": "Buster Keaton",
+      "country": "USA",
+      "genre": "Action-Comedy / Silent",
+      "scene_label": "The bridge collapse",
+      "scene_description": "A full-size steam locomotive plunges through a burning bridge in a single unfaked take.",
+      "commentary": "That's not a miniature — Keaton actually dropped a full locomotive through a burning bridge, once, on camera, with no retakes possible. It was the single most expensive shot of the entire silent era. No stunt double, no trick photography, just a director who insisted the danger had to be real.",
+      "pd_basis": "US copyright term fully expired (published 1926, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    },
+    {
+      "id": "his-girl-friday-1940",
+      "title": "His Girl Friday",
+      "year": 1940,
+      "director": "Howard Hawks",
+      "country": "USA",
+      "genre": "Screwball Comedy",
+      "scene_label": "The newsroom opening",
+      "scene_description": "Hildy and Walter trade rapid, overlapping dialogue in the newspaper office.",
+      "commentary": "Hawks clocked this dialogue at nearly 240 words a minute, with actors deliberately talking over each other's lines. Most screenplays don't survive that; his did, because the overlaps were scripted, not improvised. It's still the reference point for fast-talking comedy, from Gilmore Girls to Aaron Sorkin's entire career.",
+      "pd_basis": "Entered the public domain when its US copyright registration was not renewed at the required 28-year mark.",
+      "pd_caveat": "Renewal-lapse titles like this one are well documented, but always confirm current status before commercial use — renewal research is more error-prone than a straightforward term-expiration case.",
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    },
+    {
+      "id": "night-of-the-living-dead-1968",
+      "title": "Night of the Living Dead",
+      "year": 1968,
+      "director": "George A. Romero",
+      "country": "USA",
+      "genre": "Horror",
+      "scene_label": "The cemetery attack",
+      "scene_description": "\"They're coming to get you, Barbara\" — the opening cemetery scene that starts the film.",
+      "commentary": "Romero shot this on a shoestring in rural Pennsylvania, and the grainy 16mm newsreel look wasn't a style choice — it's just what a $114,000 budget gets you. That accidental realism is what made it terrifying. It also invented the modern zombie outright; the word \"zombie\" never appears in the script.",
+      "pd_basis": "Entered the public domain immediately upon release because the distributor's title-card change dropped the copyright notice, which US law at the time required.",
+      "pd_caveat": null,
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    },
+    {
+      "id": "metropolis-1927",
+      "title": "Metropolis",
+      "year": 1927,
+      "director": "Fritz Lang",
+      "country": "Germany",
+      "genre": "Science Fiction",
+      "scene_label": "The Maschinenmensch transformation",
+      "scene_description": "The robot double of Maria is brought to life in rings of light.",
+      "commentary": "This transformation was built with practical light rings and in-camera exposure tricks decades before CGI existed — nobody has fully reverse-engineered Lang's exact method. The robot itself became the template for basically every sci-fi android after it, C-3PO included. A hundred years old and it still looks expensive.",
+      "pd_basis": "US copyright term fully expired for the original 1927 release (published well past the 95-year term).",
+      "pd_caveat": "Source from a print of the original public-domain release, not a modern restored transfer — restorations can carry their own new copyright on the restoration work itself.",
+      "clip": { "duration_sec": 6.5, "start_timestamp": null, "status": "placeholder" }
+    }
+  ]
+}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetroClips</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <span class="brand-mark">RC</span>
+    <h1>RetroClips</h1>
+  </div>
+  <p class="tagline" id="tagline">Six seconds of film history. Twenty seconds of why it matters.</p>
+  <p class="pd-note">Every clip on this site is sourced from a film whose US copyright has expired or lapsed &mdash; not a fair-use claim on a current release.</p>
+</header>
+
+<main id="grid" class="grid" aria-live="polite">
+  <!-- film cards injected by script.js -->
+</main>
+
+<footer class="site-footer">
+  <p>Prototype build. Clip playback is a placeholder &mdash; see <code>README.md</code> for why and how real clips get sourced.</p>
+</footer>
+
+<!-- Reaction cam: a small illustrated "person watching" overlay, not real footage -->
+<div class="reaction-cam" aria-hidden="true">
+  <div class="reaction-cam-frame">
+    <svg viewBox="0 0 100 100" class="reaction-figure">
+      <ellipse cx="50" cy="88" rx="34" ry="14" class="rc-shoulders"/>
+      <circle cx="50" cy="46" r="22" class="rc-head"/>
+      <circle cx="41" cy="44" r="3" class="rc-eye"/>
+      <circle cx="59" cy="44" r="3" class="rc-eye"/>
+      <path d="M 40 58 Q 50 64 60 58" class="rc-mouth"/>
+    </svg>
+    <div class="reaction-cam-scanline"></div>
+  </div>
+  <span class="reaction-cam-label">watching</span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
