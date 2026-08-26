@@ -66,6 +66,13 @@ body {
   max-width: 32rem;
 }
 
+.welcome {
+  margin: 1rem auto 0;
+  color: var(--ink);
+  max-width: 34rem;
+  font-size: 0.95rem;
+}
+
 .pd-note {
   margin: 0.6rem auto 0;
   max-width: 34rem;

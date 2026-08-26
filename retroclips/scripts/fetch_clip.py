@@ -44,6 +44,7 @@ Finding a timestamp:
 
 import argparse
 import json
+import os
 import pathlib
 import subprocess
 import sys
@@ -65,9 +66,34 @@ def load_film(film_id: str) -> dict:
     sys.exit(f"Unknown --film-id '{film_id}'. Known ids: {known}")
 
 
+def proxy_args() -> list[str]:
+    """
+    ffmpeg doesn't read the HTTPS_PROXY env var the way curl does, so on a
+    machine that sandboxes outbound traffic through an HTTP(S) proxy (like
+    the one this prototype was built in), ffmpeg needs to be told about it
+    explicitly or every fetch 403s. On a normal machine with no such proxy,
+    HTTPS_PROXY is unset and this is a no-op.
+    """
+    proxy = os.environ.get("HTTPS_PROXY") or os.environ.get("https_proxy")
+    if not proxy:
+        return []
+    args = ["-http_proxy", proxy]
+    for ca_path in (os.environ.get("SSL_CERT_FILE"), "/root/.ccr/ca-bundle.crt"):
+        if ca_path and pathlib.Path(ca_path).is_file():
+            args += ["-ca_file", ca_path]
+            break
+    return args
+
+
 def run_ffmpeg(args: list[str]) -> None:
-    print("+ ffmpeg", " ".join(args))
-    subprocess.run(["ffmpeg", "-nostdin", "-y", "-loglevel", "error", *args], check=True)
+    # ffmpeg rejects -http_proxy/-ca_file outright when the input isn't a
+    # network URL (e.g. the local-file poster-frame extraction below), so
+    # only attach them when an argument actually looks like one.
+    is_remote = any(a.startswith("http://") or a.startswith("https://") for a in args)
+    extra = proxy_args() if is_remote else []
+    full_args = ["ffmpeg", "-nostdin", "-y", "-loglevel", "error", *extra, *args]
+    print("+", " ".join(full_args))
+    subprocess.run(full_args, check=True)
 
 
 def main() -> None:

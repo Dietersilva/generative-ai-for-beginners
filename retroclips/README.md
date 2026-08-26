@@ -45,37 +45,65 @@ especially for anything commercial.
 - A CSS/SVG "reaction cam" in the bottom-right corner — an illustrated
   figure, not real video, so there's no likeness/rights question.
 
-### The clips are placeholders, not real footage
+### The clips are real footage, sourced from archive.org
 
-This prototype was built inside a sandboxed environment whose network
-policy blocks outbound access to archive.org and every general web
-host (only package registries and Anthropic's own API are reachable
-from here). That's a deliberate policy denial, not a bug, so this
-build didn't attempt to route around it.
+This prototype was originally built inside a sandboxed environment
+whose network policy blocked outbound access to archive.org and every
+general web host (only package registries and Anthropic's own API were
+reachable). That was a deliberate policy denial, not a bug, so the
+first pass didn't attempt to route around it — it shipped with
+synthetic placeholder clips instead, generated locally with
+`scripts/make_placeholder_clips.sh` (grain, vignette, title card,
+correct 6.5s length, honestly labeled as a placeholder on the frame).
 
-Instead, `scripts/make_placeholder_clips.sh` generates a synthetic
-6.5s clip per film locally with ffmpeg (grain, vignette, title card) —
-correct length, real `<video>` playback, honestly labeled as a
-placeholder on the frame itself. It's what's currently sitting in
-`assets/clips/`.
+The environment's network policy was then reconfigured to allow
+`archive.org` and its file-serving CDN subdomains (`*.us.archive.org`
+— archive.org serves actual video files from per-item hosts like
+`ia601606.us.archive.org`, so the wildcard is required, not just the
+apex domain). With that open, every clip in `assets/clips/` was
+re-sourced for real using `scripts/fetch_clip.py`:
 
-To swap in real footage:
+1. Search archive.org for a print of the film, and sanity-check it
+   (not `is_dark`, plausible runtime, actually black-and-white where
+   that matters — see the Metropolis note below).
+2. Scout for the right moment by pulling low-res contact-sheet frames
+   at coarse intervals across the likely part of the film, then
+   narrowing in — all via ranged HTTP requests against the remote
+   file, no full download needed.
+3. Run `fetch_clip.py` with the film id, the direct file URL, and the
+   in-point timestamp found by scouting. It seeks directly into the
+   remote file (`-ss` before `-i`) and re-encodes just that 6.5s
+   segment, so it never downloads the full film.
+4. Update `clip.start_timestamp`/`status`/`source_identifier`/
+   `source_url` in `data/films.json` (`fetch_clip.py` prints the line
+   to change), and correct `scene_label`/`scene_description`/
+   `commentary` if the actual footage doesn't match what was guessed
+   before sourcing — several did shift (e.g. Nosferatu's clip turned
+   out to be the claw-hand silhouette at the window, not a literal
+   staircase shot as first assumed; His Girl Friday's is the editor's
+   office scene, not the newsroom bullpen).
 
-1. Run `scripts/fetch_clip.py` **from a machine with normal internet
-   access** (not this sandbox) — it takes a film id, a direct
-   archive.org file URL, a start timestamp, and a duration, and uses
-   ffmpeg's remote seeking (`-ss` before `-i`) to pull and trim just
-   that segment without downloading the full film. See the script's
-   docstring for how to find a source URL and a timestamp.
-2. It overwrites `assets/clips/<film-id>.mp4` and regenerates the
-   poster jpg in the site's target format.
-3. Update that film's `clip.start_timestamp` and `clip.status` in
-   `data/films.json`.
+**ffmpeg needs to be told about the proxy explicitly** in an
+environment like this one — unlike `curl`, it doesn't read
+`HTTPS_PROXY` automatically, so `fetch_clip.py` detects the env var
+and passes `-http_proxy`/`-ca_file` to ffmpeg itself when set (see
+`proxy_args()` in the script). On a normal machine with no such proxy
+this is a no-op.
 
-Alternatively: if you'd rather this environment could reach
-archive.org directly, that's a setting on the environment itself
-(network policy is chosen when it's created) — worth revisiting if
-you want the whole pipeline runnable in one place.
+**Metropolis caveat**: the only readily-available prints on
+archive.org are the 2010 "complete" restoration (~150 min), which adds
+footage discovered after the film's original 1927 release. That
+newly-restored material has its own preservation-era copyright
+question. This clip is limited to the robot-transformation shot
+specifically, which was present in every prior public-domain cut of
+the film — a plain rescan of pre-existing PD frames is unlikely to
+carry its own copyright, but this is a narrower claim than the other
+five films' and is called out in that film's `pd_caveat`.
+
+Re-running `make_placeholder_clips.sh` would overwrite these with
+synthetic placeholders again — it's kept for adding new films quickly
+before their real clip is sourced, not for the six that already have
+one.
 
 ### Commentary generation
 
@@ -113,8 +141,6 @@ python3 -m http.server 8000
 
 - **Domain / hosting** — `retroclips.com` isn't registered and this
   isn't deployed anywhere; it's a local prototype.
-- **Real clips** — see above, blocked on network access from this
-  environment.
 - **Reaction cam** — currently a static illustrated loop. Options for
   a real version: a licensed stock reaction-footage loop, or an
   AI-generated avatar (avoids using any real person's likeness
