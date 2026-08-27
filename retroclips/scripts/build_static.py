@@ -402,7 +402,7 @@ def render_film_page(film: dict, version: str) -> str:
     <h1><a href="index.html" class="brand-link">RetroClips</a></h1>
   </div>
   <p class="tagline">{title} ({year})</p>
-  <p class="home-link"><a href="index.html">&larr; Home</a></p>
+  <p class="home-link"><a href="index.html" aria-label="Home">&larr; Retour</a></p>
 </header>
 
 <main class="film-page">
