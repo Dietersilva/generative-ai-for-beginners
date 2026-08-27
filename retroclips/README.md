@@ -124,15 +124,16 @@ There are two reserved ad slots — one under the header, one in-feed
 after the sixth film card (`.ad-slot`/`.ad-carousel` in `styles.css`,
 both generated into `index.html` by `build_static.py`). Neither loads
 a real ad yet; there's no ad network account to point them at. Rather
-than sit empty, each shows a slow, CSS-only crossfade of the site's
-own ten poster stills (a real collection, not a stock photo), dimmed
-and labeled "Advertisement" so it still reads as reserved space, not
-content. To activate one for real: sign up for a network (Google
-AdSense is the obvious first stop, though very low-traffic/prototype
-sites are frequently rejected until there's real traffic — worth
-revisiting once this has an audience), then swap the `.ad-carousel`
-markup inside the corresponding `.ad-slot` element for that network's
-script/tag.
+than sit empty, each shows a slow horizontally-scrolling filmstrip of
+the site's own ten poster stills (a real collection, not a stock
+photo) — each tile sized to the image's own 16:9 aspect ratio so the
+whole picture shows, not a stretched sliver of it, dimmed slightly so
+it doesn't compete with the real film grid. To activate one for real:
+sign up for a network (Google AdSense is the obvious first stop,
+though very low-traffic/prototype sites are frequently rejected until
+there's real traffic — worth revisiting once this has an audience),
+then swap the `.ad-carousel` markup inside the corresponding
+`.ad-slot` element for that network's script/tag.
 
 ### Monetization status
 

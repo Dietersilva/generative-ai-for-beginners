@@ -117,17 +117,21 @@ def render_card(film: dict) -> str:
 
 
 def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
-    # Reserved ad space, no network wired in yet -- filled with a CSS-only
-    # crossfade montage of the site's own poster stills (a real collection,
-    # not a stock photo) so it isn't a bare box. See .ad-carousel in
-    # styles.css for the animation.
-    imgs = "\n      ".join(
+    # Reserved ad space, no network wired in yet -- filled with a slow
+    # horizontally-scrolling filmstrip of the site's own poster stills (a
+    # real collection, not a stock photo) so it isn't a bare box. The
+    # sequence is duplicated back to back so the -50% translateX loop in
+    # .ad-carousel-track (styles.css) is seamless -- same trick as the
+    # caption ticker.
+    imgs = "\n          ".join(
         f'<img src="assets/clips/{film["id"]}.jpg" alt="">' for film in films
     )
     return f"""    <div class="ad-slot ad-slot--{variant}" data-ad-slot="{slot_id}" aria-hidden="true">
       <div class="ad-carousel">
-        {imgs}
-        <span class="ad-slot-label">Advertisement &mdash; reserved for an approved ad network</span>
+        <div class="ad-carousel-track">
+          {imgs}
+          {imgs}
+        </div>
       </div>
     </div>"""
 
