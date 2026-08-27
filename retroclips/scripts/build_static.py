@@ -119,16 +119,19 @@ def render_card(film: dict) -> str:
 def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
     # Reserved ad space, no network wired in yet -- filled with a slow
     # horizontally-scrolling filmstrip of the site's own poster stills (a
-    # real collection, not a stock photo) so it isn't a bare box. The
-    # sequence is duplicated back to back so the -50% translateX loop in
-    # .ad-carousel-track (styles.css) is seamless -- same trick as the
+    # real collection, not a stock photo) so it isn't a bare box. Named
+    # .poster-strip rather than .ad-slot/.ad-carousel on purpose: generic
+    # ad-blocker filter lists hide elements matching "ad-*" class/attribute
+    # patterns regardless of what's actually inside them. The sequence is
+    # duplicated back to back so the -50% translateX loop in
+    # .poster-strip-track (styles.css) is seamless -- same trick as the
     # caption ticker.
     imgs = "\n          ".join(
         f'<img src="assets/clips/{film["id"]}.jpg" alt="">' for film in films
     )
-    return f"""    <div class="ad-slot ad-slot--{variant}" data-ad-slot="{slot_id}" aria-hidden="true">
-      <div class="ad-carousel">
-        <div class="ad-carousel-track">
+    return f"""    <div class="poster-strip poster-strip--{variant}" data-poster-strip="{slot_id}" aria-hidden="true">
+      <div class="poster-strip-frame">
+        <div class="poster-strip-track">
           {imgs}
           {imgs}
         </div>
@@ -205,7 +208,7 @@ def csp_hash(script_body: str) -> str:
 def build_index(data: dict) -> None:
     text = INDEX_HTML.read_text()
 
-    ad_top = render_ad_slot(data["films"], "leaderboard", "top")
+    ad_top = render_ad_slot(data["films"], "top", "top")
     text = inject(text, "<!-- SEO:ADTOP_START -->", "<!-- SEO:ADTOP_END -->", ad_top)
 
     cards = render_cards(data["films"])

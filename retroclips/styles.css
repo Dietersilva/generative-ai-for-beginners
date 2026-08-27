@@ -388,44 +388,44 @@ body {
    box. Each tile is sized to the image's own aspect ratio (16:9, same as
    the film clips) rather than stretched to the slot's outer box, so the
    whole picture shows instead of a sliver of it. */
-.ad-slot {
+.poster-strip {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0.5rem 1.5rem;
 }
 
-.ad-slot--leaderboard {
+.poster-strip--top {
   margin-top: 1.5rem;
 }
 
-.ad-slot--infeed {
+.poster-strip--infeed {
   grid-column: 1 / -1;
   padding: 0;
 }
 
-.ad-carousel {
+.poster-strip-frame {
   overflow: hidden;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   background: var(--bg-card);
 }
 
-.ad-slot--leaderboard .ad-carousel {
+.poster-strip--top .poster-strip-frame {
   height: 100px;
 }
 
-.ad-slot--infeed .ad-carousel {
+.poster-strip--infeed .poster-strip-frame {
   height: 200px;
 }
 
-.ad-carousel-track {
+.poster-strip-track {
   display: flex;
   width: max-content;
   height: 100%;
-  animation: ad-carousel-scroll 50s linear infinite;
+  animation: poster-strip-scroll 50s linear infinite;
 }
 
-.ad-carousel-track img {
+.poster-strip-track img {
   flex: none;
   height: 100%;
   aspect-ratio: 16 / 9;
@@ -434,13 +434,13 @@ body {
   filter: grayscale(35%) sepia(10%) brightness(0.75);
 }
 
-@keyframes ad-carousel-scroll {
+@keyframes poster-strip-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ad-carousel-track {
+  .poster-strip-track {
     animation: none;
   }
 }
