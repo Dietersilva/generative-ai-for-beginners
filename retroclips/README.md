@@ -1,7 +1,7 @@
 # RetroClips
 
-A prototype for a site that pairs a 6-7 second clip from a famous *older*
-film with ~15-20 seconds of commentary underneath, plus a small
+A prototype for a site that pairs a ~10 second clip from a famous *older*
+film with ~20 seconds of commentary underneath, plus a small
 illustrated "reaction cam" watching along in the corner.
 
 **Live:** https://dietersilva.github.io/generative-ai-for-beginners/retroclips/
@@ -9,7 +9,7 @@ illustrated "reaction cam" watching along in the corner.
 
 ## Why public domain, not fair use
 
-The original pitch was "scrape clips from famous movies." Six-second
+The original pitch was "scrape clips from famous movies." Ten-second
 clips paired with commentary is roughly what a lot of YouTube reaction
 channels do, but that's not evidence the practice is legally safe to
 build a site on: there's no bright-line duration that makes a clip
@@ -255,13 +255,13 @@ five films' and is called out in that film's `pd_caveat`.
 
 Re-running `make_placeholder_clips.sh` would overwrite these with
 synthetic placeholders again — it's kept for adding new films quickly
-before their real clip is sourced, not for the ten that already have
-one.
+before their real clip is sourced, not for the thirteen that already
+have one.
 
 ### Commentary generation
 
 `data/films.json`'s commentary was hand-written in the style/length
-target (45-65 words, ~15-20 second read) that the real pipeline should
+target (45-65 words, ~20 second read) that the real pipeline should
 produce. `scripts/generate_commentary.py` is that real pipeline: given
 a film's metadata and scene description, it calls the Claude API for a
 commentary paragraph, and can write results back into `films.json`
