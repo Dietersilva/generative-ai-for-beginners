@@ -185,7 +185,8 @@ reachable). That was a deliberate policy denial, not a bug, so the
 first pass didn't attempt to route around it — it shipped with
 synthetic placeholder clips instead, generated locally with
 `scripts/make_placeholder_clips.sh` (grain, vignette, title card,
-correct 6.5s length, honestly labeled as a placeholder on the frame).
+correct length read from each film's `clip.duration_sec`, honestly
+labeled as a placeholder on the frame).
 
 The environment's network policy was then reconfigured to allow
 `archive.org` and its file-serving CDN subdomains (`*.us.archive.org`
@@ -203,8 +204,10 @@ re-sourced for real using `scripts/fetch_clip.py`:
    file, no full download needed.
 3. Run `fetch_clip.py` with the film id, the direct file URL, and the
    in-point timestamp found by scouting. It seeks directly into the
-   remote file (`-ss` before `-i`) and re-encodes just that 6.5s
-   segment, so it never downloads the full film.
+   remote file (`-ss` before `-i`) and re-encodes just that ~10s
+   segment, so it never downloads the full film (except when a
+   file's moov atom forces a full download anyway -- see the
+   Häxan/Reefer Madness note below).
 4. Update `clip.start_timestamp`/`status`/`source_identifier`/
    `source_url` in `data/films.json` (`fetch_clip.py` prints the line
    to change), and correct `scene_label`/`scene_description`/
@@ -220,6 +223,18 @@ environment like this one — unlike `curl`, it doesn't read
 and passes `-http_proxy`/`-ca_file` to ffmpeg itself when set (see
 `proxy_args()` in the script). On a normal machine with no such proxy
 this is a no-op.
+
+**Häxan/Reefer Madness caveat**: `fetch_clip.py`'s remote seek
+(`-ss` before `-i` on the archive.org URL) hung indefinitely against
+both of those files rather than erroring — their moov atom appears to
+sit late enough in the file that ffmpeg couldn't cheaply locate it
+through range requests over this proxy. Worked around it by
+downloading the full file directly with `curl` (fast and reliable —
+confirmed separately) and running the same scale/encode ffmpeg
+command against that local copy instead of the remote URL; output is
+byte-for-byte the same pipeline otherwise. If a new film's remote
+fetch hangs rather than failing outright, this is the first thing to
+suspect.
 
 **Metropolis caveat**: the only readily-available prints on
 archive.org are the 2010 "complete" restoration (~150 min), which adds

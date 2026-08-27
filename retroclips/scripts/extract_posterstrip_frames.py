@@ -27,7 +27,7 @@ FILMS_JSON = ROOT / "data" / "films.json"
 # Seconds into the clip to grab each frame -- spread across the 6.5s clip,
 # deliberately not 1.5s (that's the existing video-poster frame already in
 # assets/clips/<id>.jpg, no need to duplicate it here).
-FRAME_TIMES = [0.4, 3.2, 5.6]
+FRAME_TIMES = [0.5, 4.5, 8.5]
 
 
 def main() -> None:

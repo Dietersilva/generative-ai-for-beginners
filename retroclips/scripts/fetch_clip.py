@@ -13,7 +13,7 @@ Usage:
         --film-id nosferatu-1922 \
         --source-url "https://archive.org/download/<identifier>/<file>.mp4" \
         --start 00:14:32 \
-        --duration 6.5
+        --duration 10
 
 What it does:
     1. Seeks directly into the *remote* file with ffmpeg's -ss placed
@@ -39,7 +39,7 @@ Finding a timestamp:
     of the scene you want. A practical workflow: run this script once
     with a generous --duration (say 30s) around your rough guess,
     review the output, then narrow --start/--duration down to the
-    real 6-7s beat and re-run.
+    real 9-10s beat and re-run.
 """
 
 import argparse
@@ -101,11 +101,11 @@ def main() -> None:
     parser.add_argument("--film-id", required=True, help="id from data/films.json, e.g. nosferatu-1922")
     parser.add_argument("--source-url", required=True, help="direct URL to the source video file (not a player page)")
     parser.add_argument("--start", required=True, help="timestamp to start the clip, e.g. 00:14:32 or 872")
-    parser.add_argument("--duration", type=float, default=6.5, help="clip length in seconds (default 6.5, keep to 6-7)")
+    parser.add_argument("--duration", type=float, default=10.0, help="clip length in seconds (default 10, keep to 9-11)")
     args = parser.parse_args()
 
-    if not (6.0 <= args.duration <= 7.5):
-        print(f"warning: duration {args.duration}s is outside the site's 6-7s target range", file=sys.stderr)
+    if not (9.0 <= args.duration <= 11.0):
+        print(f"warning: duration {args.duration}s is outside the site's 9-11s target range", file=sys.stderr)
 
     film = load_film(args.film_id)
     CLIPS_DIR.mkdir(parents=True, exist_ok=True)
