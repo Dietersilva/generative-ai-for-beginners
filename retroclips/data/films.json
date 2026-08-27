@@ -246,6 +246,26 @@
         "source_identifier": "haxan-witchcraft-through-the-ages-1922",
         "source_url": "https://archive.org/details/haxan-witchcraft-through-the-ages-1922"
       }
+    },
+    {
+      "id": "reefer-madness-1936",
+      "title": "Reefer Madness",
+      "year": 1936,
+      "director": "Louis Gasnier",
+      "country": "USA",
+      "genre": "Drama / Propaganda",
+      "scene_label": "The piano frenzy",
+      "scene_description": "At a house party, a young man newly hooked on marijuana pounds out a wild, unhinged piece at the piano while a woman claws at him, the scene building toward the film's most infamous freak-out.",
+      "commentary": "Financed by a church group as a straight-faced morality tale, this scene is the reason the film survives at all: decades after its warnings stopped scaring anyone, midnight-movie and college audiences of the 1970s embraced it as unintentional comedy, and it's been in constant circulation ever since. The propaganda failed completely; the piano scene became immortal anyway.",
+      "pd_basis": "Copyright was never renewed, and multiple sources indicate the film may have entered the public domain even earlier due to a defective or missing original notice -- either way it's one of the most-cited public-domain films in the US.",
+      "pd_caveat": "Widely treated as public domain and freely redistributed for decades, but exact chain-of-title research varies by source -- confirm before commercial use.",
+      "clip": {
+        "duration_sec": 6.5,
+        "start_timestamp": "00:13:35",
+        "status": "sourced",
+        "source_identifier": "Popcornarchive-reeferMadness1936",
+        "source_url": "https://archive.org/details/Popcornarchive-reeferMadness1936"
+      }
     }
   ]
 }
