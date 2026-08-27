@@ -375,6 +375,7 @@ def render_film_page(film: dict, version: str) -> str:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
 <title>{page_title} | RetroClips</title>
 <meta name="description" content="{description}">
 <link rel="canonical" href="{page_url}">

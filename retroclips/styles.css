@@ -738,3 +738,13 @@ body {
 @media (max-width: 480px) {
   .reaction-cam { display: none; }
 }
+
+/* On-brand keyboard focus ring -- the browser default is a blue outline
+   that clashes with this palette. Every interactive element here is a
+   real <a>/<button>, so :focus-visible alone (no tabindex hacks) covers
+   full keyboard operability. */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
