@@ -681,6 +681,19 @@ body {
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
 }
 
+/* The bucket itself gets launched too, not just the kernels -- he's
+   so startled he throws the whole thing. This transform composes
+   with each kernel's own animation below, so the kernels scatter
+   away from a bucket that's also being tossed around. */
+[data-mood="scared"] .reaction-popcorn { animation: rc-bucket-toss 1.1s ease-out infinite; }
+@keyframes rc-bucket-toss {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(9px, -24px) rotate(-18deg); }
+  45% { transform: translate(15px, -12px) rotate(22deg); }
+  70% { transform: translate(11px, 3px) rotate(-10deg); }
+  88% { transform: translate(4px, -3px) rotate(5deg); }
+}
+
 .rc-popcorn-bucket { fill: #8a6d3c; }
 .rc-popcorn-bucket-rim { fill: #d1a35c; }
 .rc-popcorn-kernel {
@@ -737,30 +750,27 @@ body {
   76%, 91% { transform: translate(44px, -46px) scale(0.88) rotate(-110deg); }
 }
 
-.reaction-spit {
-  position: absolute;
-  top: 43px; /* aligned with mouth height on the face, not eye level */
-  right: -10px;
-  width: 34px;
-  height: 34px;
-  z-index: 3;
-  overflow: visible; /* same viewBox-clipping reason as .reaction-popcorn */
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
-}
+/* Unlike the popcorn bucket (a prop beside the frame), the spit-take
+   cup and spray live inside the same SVG coordinate space as the
+   mouth itself -- drawn directly at its edge -- so they're guaranteed
+   to read as connected instead of relying on two separately
+   positioned elements lining up by chance. */
+.rc-spit-take-props { display: none; }
+[data-mood="spit-take"] .rc-spit-take-props { display: block; }
 
 .rc-spit-cup { fill: #7a8a94; }
 .rc-spit-cup-rim { fill: #a9b8c1; }
 .rc-spit-droplet {
   fill: #bcd6e0;
   stroke: #3d5560;
-  stroke-width: 0.4;
+  stroke-width: 0.3;
   transform-box: fill-box;
   transform-origin: center;
 }
 
-/* Droplets burst outward from the cup and fade, rather than looping
-   back like the popcorn kernels do -- a spray that snapped back to
-   the cup would read as sucking the drink back in. */
+/* Droplets burst outward from the cup's rim and fade, rather than
+   looping back like the popcorn kernels do -- a spray that snapped
+   back to the cup would read as sucking the drink back in. */
 [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(1) { animation: rc-spit-1 0.5s ease-out infinite; }
 [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(2) { animation: rc-spit-2 0.55s ease-out infinite 0.05s; }
 [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(3) { animation: rc-spit-3 0.45s ease-out infinite 0.1s; }
@@ -768,23 +778,23 @@ body {
 
 @keyframes rc-spit-1 {
   0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(4px, -3px) scale(0.8); opacity: 1; }
-  100% { transform: translate(20px, -11px) scale(1.15); opacity: 0; }
+  20% { transform: translate(3px, -4px) scale(0.8); opacity: 1; }
+  100% { transform: translate(14px, -15px) scale(1.1); opacity: 0; }
 }
 @keyframes rc-spit-2 {
   0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(5px, 1px) scale(0.75); opacity: 1; }
-  100% { transform: translate(23px, 6px) scale(1.05); opacity: 0; }
+  20% { transform: translate(4px, 0px) scale(0.75); opacity: 1; }
+  100% { transform: translate(17px, 2px) scale(1.05); opacity: 0; }
 }
 @keyframes rc-spit-3 {
   0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(3px, -5px) scale(0.7); opacity: 1; }
-  100% { transform: translate(16px, -17px) scale(0.95); opacity: 0; }
+  20% { transform: translate(2px, -6px) scale(0.7); opacity: 1; }
+  100% { transform: translate(9px, -19px) scale(0.95); opacity: 0; }
 }
 @keyframes rc-spit-4 {
   0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(4px, 3px) scale(0.75); opacity: 1; }
-  100% { transform: translate(18px, 14px) scale(1); opacity: 0; }
+  20% { transform: translate(4px, 4px) scale(0.75); opacity: 1; }
+  100% { transform: translate(15px, 13px) scale(1); opacity: 0; }
 }
 
 @keyframes rc-spit-recoil {
