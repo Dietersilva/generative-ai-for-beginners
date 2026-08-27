@@ -140,6 +140,40 @@ body {
   color: var(--accent);
 }
 
+.filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.6rem;
+  max-width: 1200px;
+  margin: 1.75rem auto 0;
+  padding: 0 1.5rem;
+}
+
+.filter-btn {
+  border: 1px solid var(--accent-dim);
+  background: transparent;
+  color: var(--ink-dim);
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.filter-btn:hover {
+  border-color: var(--accent);
+  color: var(--ink);
+}
+
+.filter-btn.is-active {
+  background: var(--accent-dim);
+  border-color: var(--accent-dim);
+  color: var(--bg);
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -147,6 +181,10 @@ body {
   max-width: 1200px;
   margin: 2.5rem auto;
   padding: 0 1.5rem;
+}
+
+.card.is-filtered-out {
+  display: none;
 }
 
 .card {

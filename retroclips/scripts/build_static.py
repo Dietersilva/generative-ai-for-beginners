@@ -66,6 +66,27 @@ def caption_duration_class(commentary: str) -> str:
     return f"duration-{seconds}"
 
 
+CATEGORIES = ["horror", "comedy", "sci-fi", "drama"]
+CATEGORY_LABELS = {"horror": "Horror", "comedy": "Comedy", "sci-fi": "Sci-Fi", "drama": "Drama"}
+
+
+def category_for_genre(genre: str) -> str:
+    # Same bucketing script.js's moodForGenre uses for the reaction-cam,
+    # reused here as the genre-filter taxonomy so the two stay consistent
+    # -- filtering to "Horror" shows exactly the cards that make the
+    # reaction cam flinch. Individual genre strings are too varied/specific
+    # ("Action-Comedy / Silent", "Screwball Comedy", "Drama / Propaganda")
+    # to use directly as filter buttons.
+    g = genre.lower()
+    if "horror" in g or "psychological" in g:
+        return "horror"
+    if "comedy" in g:
+        return "comedy"
+    if "science" in g:
+        return "sci-fi"
+    return "drama"
+
+
 def render_card(film: dict) -> str:
     fid = film["id"]
     title = esc(film["title"])
@@ -73,6 +94,7 @@ def render_card(film: dict) -> str:
     director = esc(film["director"])
     country = esc(film["country"])
     genre = esc(film["genre"])
+    category = category_for_genre(film["genre"])
     scene_label = esc(film["scene_label"])
     commentary = esc(film["commentary"])
     duration_class = caption_duration_class(film["commentary"])
@@ -85,7 +107,7 @@ def render_card(film: dict) -> str:
             f'target="_blank" rel="noopener noreferrer">&#9654; Watch the full film</a>'
         )
 
-    return f"""    <article class="card" data-genre="{genre}">
+    return f"""    <article class="card" data-genre="{genre}" data-category="{category}">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/{fid}.mp4" poster="assets/clips/{fid}.jpg" preload="metadata" muted loop playsinline aria-label="{title} ({year}) clip: {scene_label}"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -169,6 +191,16 @@ def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
     </div>"""
 
 
+def render_filter_bar(films: list) -> str:
+    present = [c for c in CATEGORIES if any(category_for_genre(f["genre"]) == c for f in films)]
+    buttons = ['    <button type="button" class="filter-btn is-active" data-filter="all">All</button>']
+    for cat in present:
+        buttons.append(
+            f'    <button type="button" class="filter-btn" data-filter="{cat}">{CATEGORY_LABELS[cat]}</button>'
+        )
+    return '  <div class="filter-bar" role="group" aria-label="Filter by genre">\n' + "\n".join(buttons) + "\n  </div>"
+
+
 def render_cards(films: list) -> str:
     parts = []
     for i, film in enumerate(films):
@@ -237,6 +269,9 @@ def csp_hash(script_body: str) -> str:
 
 def build_index(data: dict) -> None:
     text = INDEX_HTML.read_text()
+
+    filter_bar = render_filter_bar(data["films"])
+    text = inject(text, "<!-- SEO:FILTERBAR_START -->", "<!-- SEO:FILTERBAR_END -->", filter_bar)
 
     ad_top = render_ad_slot(data["films"], "top", "top")
     text = inject(text, "<!-- SEO:ADTOP_START -->", "<!-- SEO:ADTOP_END -->", ad_top)

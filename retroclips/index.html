@@ -275,6 +275,16 @@
   <p class="welcome">Do you love classic movies? So do we &mdash; we built this hoping you'll fall for one you've never seen, one shot at a time. A lot of early film history is underseen, under-preserved, or just plain forgotten, and we don't think it should be &mdash; this is our small effort to help keep it in circulation.</p>
 </header>
 
+<!-- SEO:FILTERBAR_START -->
+  <div class="filter-bar" role="group" aria-label="Filter by genre">
+    <button type="button" class="filter-btn is-active" data-filter="all">All</button>
+    <button type="button" class="filter-btn" data-filter="horror">Horror</button>
+    <button type="button" class="filter-btn" data-filter="comedy">Comedy</button>
+    <button type="button" class="filter-btn" data-filter="sci-fi">Sci-Fi</button>
+    <button type="button" class="filter-btn" data-filter="drama">Drama</button>
+  </div>
+<!-- SEO:FILTERBAR_END -->
+
 <!-- SEO:ADTOP_START -->
     <div class="poster-strip poster-strip--top" data-poster-strip="top" aria-hidden="true">
       <div class="poster-strip-frame">
@@ -390,7 +400,7 @@
 
 <main id="grid" class="grid">
   <!-- SEO:CARDS_START -->
-    <article class="card" data-genre="Horror">
+    <article class="card" data-genre="Horror" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/nosferatu-1922.mp4" poster="assets/clips/nosferatu-1922.jpg" preload="metadata" muted loop playsinline aria-label="Nosferatu (1922) clip: The claw-hand silhouette"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -419,7 +429,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Horror / Psychological">
+    <article class="card" data-genre="Horror / Psychological" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/caligari-1920.mp4" poster="assets/clips/caligari-1920.jpg" preload="metadata" muted loop playsinline aria-label="The Cabinet of Dr. Caligari (1920) clip: Cesare wakes"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -448,7 +458,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Action-Comedy / Silent">
+    <article class="card" data-genre="Action-Comedy / Silent" data-category="comedy">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/the-general-1926.mp4" poster="assets/clips/the-general-1926.jpg" preload="metadata" muted loop playsinline aria-label="The General (1926) clip: The bridge collapse"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -477,7 +487,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Screwball Comedy">
+    <article class="card" data-genre="Screwball Comedy" data-category="comedy">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/his-girl-friday-1940.mp4" poster="assets/clips/his-girl-friday-1940.jpg" preload="metadata" muted loop playsinline aria-label="His Girl Friday (1940) clip: Walter and Hildy spar"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -506,7 +516,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Horror">
+    <article class="card" data-genre="Horror" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/night-of-the-living-dead-1968.mp4" poster="assets/clips/night-of-the-living-dead-1968.jpg" preload="metadata" muted loop playsinline aria-label="Night of the Living Dead (1968) clip: The graveside tease"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -535,7 +545,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Science Fiction">
+    <article class="card" data-genre="Science Fiction" data-category="sci-fi">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/metropolis-1927.mp4" poster="assets/clips/metropolis-1927.jpg" preload="metadata" muted loop playsinline aria-label="Metropolis (1927) clip: The Maschinenmensch transformation"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -674,7 +684,7 @@
         </div>
       </div>
     </div>
-    <article class="card" data-genre="Science Fantasy">
+    <article class="card" data-genre="Science Fantasy" data-category="sci-fi">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/trip-to-the-moon-1902.mp4" poster="assets/clips/trip-to-the-moon-1902.jpg" preload="metadata" muted loop playsinline aria-label="A Trip to the Moon (1902) clip: The moon in the eye"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -703,7 +713,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Action-Comedy / Silent">
+    <article class="card" data-genre="Action-Comedy / Silent" data-category="comedy">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/safety-last-1923.mp4" poster="assets/clips/safety-last-1923.jpg" preload="metadata" muted loop playsinline aria-label="Safety Last! (1923) clip: Hanging from the clock"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -732,7 +742,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Horror">
+    <article class="card" data-genre="Horror" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/phantom-of-the-opera-1925.mp4" poster="assets/clips/phantom-of-the-opera-1925.jpg" preload="metadata" muted loop playsinline aria-label="The Phantom of the Opera (1925) clip: The unmasking"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -761,7 +771,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Comedy-Drama / Silent">
+    <article class="card" data-genre="Comedy-Drama / Silent" data-category="comedy">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/the-kid-1921.mp4" poster="assets/clips/the-kid-1921.jpg" preload="metadata" muted loop playsinline aria-label="The Kid (1921) clip: The rooftop chase"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -790,7 +800,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Horror / Pre-Code">
+    <article class="card" data-genre="Horror / Pre-Code" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/white-zombie-1932.mp4" poster="assets/clips/white-zombie-1932.jpg" preload="metadata" muted loop playsinline aria-label="White Zombie (1932) clip: The eyes in the wine"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -819,7 +829,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Horror / Documentary-Fantasy">
+    <article class="card" data-genre="Horror / Documentary-Fantasy" data-category="horror">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/haxan-1922.mp4" poster="assets/clips/haxan-1922.jpg" preload="metadata" muted loop playsinline aria-label="Häxan (1922) clip: Flight to Brocken"></video>
         <div class="clip-caption" aria-hidden="true">
@@ -848,7 +858,7 @@
         </div>
       </div>
     </article>
-    <article class="card" data-genre="Drama / Propaganda">
+    <article class="card" data-genre="Drama / Propaganda" data-category="drama">
       <div class="clip-frame">
         <video class="clip-video" src="assets/clips/reefer-madness-1936.mp4" poster="assets/clips/reefer-madness-1936.jpg" preload="metadata" muted loop playsinline aria-label="Reefer Madness (1936) clip: The piano frenzy"></video>
         <div class="clip-caption" aria-hidden="true">

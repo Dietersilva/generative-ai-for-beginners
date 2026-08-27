@@ -123,4 +123,54 @@ function enhanceCard(card) {
   });
 }
 
+// Shuffle the film order on every visit so the page doesn't look
+// identical each time. Only the .card elements are reordered -- other
+// grid children (the in-feed poster-strip ad slot) stay in their
+// original slot rather than potentially landing first or last. This is
+// purely a display-order change made after the page has already loaded
+// with its real, static (and crawlable) order -- it doesn't affect what
+// non-JS clients or crawlers see.
+function shuffleGrid() {
+  const grid = document.getElementById("grid");
+  const children = Array.from(grid.children);
+  const cardSlots = [];
+  const cards = [];
+  children.forEach((el, i) => {
+    if (el.classList.contains("card")) {
+      cardSlots.push(i);
+      cards.push(el);
+    }
+  });
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  cardSlots.forEach((slot, i) => {
+    children[slot] = cards[i];
+  });
+  children.forEach((el) => grid.appendChild(el));
+}
+
+// Genre filter bar: buttons carry data-filter matching each card's
+// data-category (see category_for_genre in scripts/build_static.py).
+function enhanceFilterBar() {
+  const bar = document.querySelector(".filter-bar");
+  if (!bar) return;
+  const buttons = Array.from(bar.querySelectorAll(".filter-btn"));
+  const cards = Array.from(document.querySelectorAll(".card"));
+
+  bar.addEventListener("click", (event) => {
+    const btn = event.target.closest(".filter-btn");
+    if (!btn) return;
+    buttons.forEach((b) => b.classList.toggle("is-active", b === btn));
+    const filter = btn.dataset.filter;
+    cards.forEach((card) => {
+      const matches = filter === "all" || card.dataset.category === filter;
+      card.classList.toggle("is-filtered-out", !matches);
+    });
+  });
+}
+
+shuffleGrid();
 document.querySelectorAll(".card").forEach(enhanceCard);
+enhanceFilterBar();
