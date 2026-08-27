@@ -313,6 +313,14 @@ body {
   animation-play-state: running;
 }
 
+/* While narration is playing, script.js drives the caption's position
+   directly (via transform) to track actual playback progress, instead
+   of the free-running decorative scroll -- this beats the hover rule
+   above so a synced caption doesn't get fought over on a hovered card. */
+.clip-caption-track.is-narrating {
+  animation-play-state: paused !important;
+}
+
 .clip-caption-track span {
   padding-right: 4rem;
   font-family: var(--serif);

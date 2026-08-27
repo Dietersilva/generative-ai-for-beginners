@@ -49,6 +49,7 @@ function enhanceCard(card) {
   const narrateBtn = card.querySelector(".narrate-btn");
   const narrationAudio = card.querySelector(".narration-audio");
   const commentary = card.querySelector(".commentary");
+  const captionTrack = card.querySelector(".clip-caption-track");
   const mood = moodForGenre(card.dataset.genre || "");
 
   // Anywhere else on the card (not a link or button -- those already have
@@ -101,9 +102,25 @@ function enhanceCard(card) {
   // keeps its own behavior instead of navigating.
   soundBadge.addEventListener("click", toggleSound);
 
+  // While the real narration audio plays, the caption track's position
+  // is driven directly by playback progress instead of free-running --
+  // an approximation (there's no per-word timing data), but it means the
+  // caption is always showing roughly the line being read rather than
+  // scrolling at a fixed pace unrelated to where the narrator actually is.
+  const syncCaptionToNarration = () => {
+    if (!captionTrack || !narrationAudio.duration) return;
+    const progress = Math.min(1, narrationAudio.currentTime / narrationAudio.duration);
+    captionTrack.style.transform = `translateX(-${progress * 50}%)`;
+  };
+
   const stopThisNarration = () => {
     narrationAudio.pause();
     narrationAudio.currentTime = 0;
+    narrationAudio.removeEventListener("timeupdate", syncCaptionToNarration);
+    if (captionTrack) {
+      captionTrack.classList.remove("is-narrating");
+      captionTrack.style.transform = "";
+    }
     window.speechSynthesis.cancel();
     narrateBtn.classList.remove("narrating");
     narrateBtn.textContent = "🎧 Narration";
@@ -112,6 +129,14 @@ function enhanceCard(card) {
   };
 
   const speakFallback = () => {
+    // The real audio failed to load, so there's no playback progress to
+    // sync the caption to -- fall back to the plain decorative scroll
+    // (hover to run it) rather than leaving it frozen at 0%.
+    narrationAudio.removeEventListener("timeupdate", syncCaptionToNarration);
+    if (captionTrack) {
+      captionTrack.classList.remove("is-narrating");
+      captionTrack.style.transform = "";
+    }
     if (!speechSupported) {
       stopThisNarration();
       return;
@@ -141,6 +166,8 @@ function enhanceCard(card) {
     narrationAudio.currentTime = 0;
     narrationAudio.onended = stopThisNarration;
     narrationAudio.onerror = speakFallback;
+    if (captionTrack) captionTrack.classList.add("is-narrating");
+    narrationAudio.addEventListener("timeupdate", syncCaptionToNarration);
     narrationAudio.play().catch(speakFallback);
   });
 }
