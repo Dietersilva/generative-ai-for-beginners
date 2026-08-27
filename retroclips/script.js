@@ -27,7 +27,7 @@ function stopNarrationExcept(exceptBtn) {
   }
 }
 
-const CLIP_DUCK_VOLUME = 0.22;
+const CLIP_DUCK_VOLUME = 0.4;
 
 // The reaction-cam's expression follows whichever card you're hovering.
 function moodForGenre(genre) {
