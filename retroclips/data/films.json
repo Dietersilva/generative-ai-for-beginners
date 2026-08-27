@@ -566,6 +566,66 @@
         "start_timestamp": "00:51:21",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "doa-1950",
+      "title": "D.O.A.",
+      "year": 1950,
+      "director": "Rudolph Maté",
+      "country": "USA",
+      "genre": "Film Noir",
+      "scene_label": "I want to report a murder",
+      "scene_description": "Bigelow walks into the police homicide division, and when the detective asks who was murdered, delivers the line that gives the film its title -- a walking dead man narrating the case of his own poisoning.",
+      "commentary": "D.O.A. opens with its whole premise front-loaded: Frank Bigelow, poisoned with a slow-acting toxin he can't survive, spends the rest of the film investigating who killed him and why, racing a clock that's already run out. Edmond O'Brien plays the reveal completely straight, delivering \"I want to report a murder... mine\" without a wink, and the gambit worked well enough that the fatally-poisoned-man setup has been recycled by a stage musical, a 1969 West German remake, a 1988 Dennis Quaid version, and a 2022 reboot -- none of which needed permission, since the original fell into the public domain decades ago.",
+      "pd_basis": "Entered the public domain when its US copyright registration was not renewed at the required 28-year mark.",
+      "pd_caveat": "Renewal-lapse titles like this one are well documented, but always confirm current status before commercial use -- renewal research is more error-prone than a straightforward term-expiration case.",
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/doa-1950_202506",
+        "source_identifier": "doa-1950_202506",
+        "start_timestamp": "00:02:16",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "beat-the-devil-1953",
+      "title": "Beat the Devil",
+      "year": 1953,
+      "director": "John Huston",
+      "country": "USA",
+      "genre": "Comedy-Crime",
+      "scene_label": "The gang can't stop laughing at themselves",
+      "scene_description": "Peterson and his fellow schemers, holed up plotting their next move, dissolve into helpless laughter at their own scheme -- the loose, improvisational comic tone the whole film runs on.",
+      "commentary": "Beat the Devil was written day-by-day during shooting -- John Huston and a 29-year-old Truman Capote reworking pages each morning for that day's scenes, with Humphrey Bogart (who co-produced and financed it) reportedly baffled by what the finished film was even supposed to be. Contemporary audiences mostly agreed, and it flopped; decades later it's better understood as an early spoof of the prestige-thriller genre Bogart himself helped define, deadpan enough that people still argue about which lines are meant to be jokes.",
+      "pd_basis": "Entered the public domain when its US copyright registration was not renewed at the required 28-year mark.",
+      "pd_caveat": "Renewal-lapse titles like this one are well documented, but always confirm current status before commercial use -- renewal research is more error-prone than a straightforward term-expiration case.",
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/beat-the-devil-1953_202406",
+        "source_identifier": "beat-the-devil-1953_202406",
+        "start_timestamp": "00:10:32",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-little-shop-of-horrors-1960",
+      "title": "The Little Shop of Horrors",
+      "year": 1960,
+      "director": "Roger Corman",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "A trip to the dentist",
+      "scene_description": "Seymour, sent to pull a tooth so his carnivorous plant has something to eat, tries to bolt from the dentist's chair -- the two end up wrestling around the office instead.",
+      "commentary": "Roger Corman shot the entire film in two days and a night on sets left over from another production, mostly to test how fast a feature could be made on a bet. He never bothered securing the copyright, evidently not expecting it to have value beyond a quick theatrical run -- which is exactly why it's free to use today, while the 1986 musical remake it inspired stayed firmly copyrighted. This dental-office scene is also where a 23-year-old Jack Nicholson turns up in one of his first film roles, as the patient who shows up next and can't wait for his turn in the chair.",
+      "pd_basis": "Entered the public domain when its US copyright registration was not renewed at the required 28-year mark.",
+      "pd_caveat": "Some sources instead say the film was never formally copyrighted at all -- either way, it's one of the most widely cited and freely redistributed public-domain films in the US, but confirm current status before commercial use.",
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-little-shop-of-horrors-1960-by-roger-corman",
+        "source_identifier": "the-little-shop-of-horrors-1960-by-roger-corman",
+        "start_timestamp": "00:32:56",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
