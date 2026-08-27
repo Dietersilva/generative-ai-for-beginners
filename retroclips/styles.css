@@ -660,6 +660,7 @@ body {
   width: 34px;
   height: 34px;
   z-index: 3;
+  overflow: visible; /* kernels fly outside the 40x40 viewBox mid-animation -- an SVG clips to its own viewBox by default */
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
 }
 
