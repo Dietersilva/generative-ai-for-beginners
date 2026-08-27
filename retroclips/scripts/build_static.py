@@ -119,17 +119,17 @@ def render_card(film: dict) -> str:
         <button type="button" class="sound-badge" aria-label="Play clip with sound">&#128264;</button>
       </div>
       <div class="card-body">
+        <div class="listen-row">
+          <audio class="narration-audio" preload="none" src="assets/narration/{fid}.mp3"></audio>
+          <button type="button" class="narrate-btn" aria-label="Listen to the commentary for {title}, read over the clip">&#128264; Listen</button>
+        </div>
         <div class="card-title-row">
           <h2><a href="{fid}.html" class="card-title-link">{title}</a></h2>
           <span class="card-year">{year}</span>
         </div>
         <div class="card-meta">{director} &mdash; {country} &mdash; {genre}</div>
         <div class="scene-label">{scene_label}</div>
-        <div class="commentary-row">
-          <p class="commentary">{commentary}</p>
-          <audio class="narration-audio" preload="none" src="assets/narration/{fid}.mp3"></audio>
-          <button type="button" class="narrate-btn" aria-label="Listen to the commentary for {title}, read over the clip">&#128264; Listen</button>
-        </div>
+        <p class="commentary">{commentary}</p>
         <div class="card-footer-row">
           {watch_link}
           <a class="pd-badge" href="about.html#{fid}" title="{pd_title}">&copy; Public Domain</a>

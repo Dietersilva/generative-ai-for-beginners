@@ -399,11 +399,9 @@ body {
   color: var(--accent);
 }
 
-.commentary-row {
+.listen-row {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
+  justify-content: flex-end;
 }
 
 .commentary {
@@ -413,7 +411,6 @@ body {
 }
 
 .narrate-btn {
-  align-self: flex-end;
   border: 1px solid var(--accent-dim);
   background: transparent;
   color: var(--accent);
