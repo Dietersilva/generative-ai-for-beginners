@@ -125,13 +125,24 @@ def poster_strip_images(films: list) -> list:
     # extract_posterstrip_frames.py's extra frames per film, if they've
     # been generated -- falls back to just the one clip poster per film
     # otherwise, so this doesn't hard-require that script having been run.
-    paths = []
+    per_film = []
     for film in films:
         fid = film["id"]
-        paths.append(f"assets/clips/{fid}.jpg")
+        frames = [f"assets/clips/{fid}.jpg"]
         for n in range(1, POSTERSTRIP_FRAMES_PER_FILM + 1):
             if (POSTERSTRIP_DIR / f"{fid}-{n}.jpg").exists():
-                paths.append(f"assets/posterstrip/{fid}-{n}.jpg")
+                frames.append(f"assets/posterstrip/{fid}-{n}.jpg")
+        per_film.append(frames)
+
+    # Round-robin across films rather than grouping each film's frames
+    # together -- four consecutive tiles from the same 6.5s clip read as
+    # near-duplicates at a glance. Interleaving keeps every adjacent tile
+    # a different film while still cycling through all of them.
+    paths = []
+    for i in range(max(len(f) for f in per_film)):
+        for frames in per_film:
+            if i < len(frames):
+                paths.append(frames[i])
     return paths
 
 

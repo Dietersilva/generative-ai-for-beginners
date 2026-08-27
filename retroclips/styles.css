@@ -415,8 +415,7 @@ body {
 }
 
 .poster-strip--infeed .poster-strip-frame {
-  height: 200px;
-  max-height: 400px;
+  height: 100px;
 }
 
 .poster-strip-track {
