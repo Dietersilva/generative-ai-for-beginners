@@ -26,10 +26,13 @@ const CLIP_DUCK_VOLUME = 0.4;
 function moodForGenre(genre) {
   const g = genre.toLowerCase();
   if (g.includes("horror") || g.includes("psychological")) return "scared";
+  if (g.includes("screwball") || g.includes("romantic")) return "spit-take";
   if (g.includes("comedy")) return "laughing";
-  if (g.includes("science") || g.includes("surreal")) return "amazed";
+  if (g.includes("surreal")) return "dizzy";
+  if (g.includes("science")) return "amazed";
   if (g.includes("western") || g.includes("action")) return "thrilled";
-  if (g.includes("noir") || g.includes("crime") || g.includes("exploitation") || g.includes("propaganda") || g.includes("melodrama") || g.includes("drama")) return "tense";
+  if (g.includes("noir")) return "suspicious";
+  if (g.includes("crime") || g.includes("exploitation") || g.includes("propaganda") || g.includes("melodrama") || g.includes("drama")) return "tense";
   return "neutral";
 }
 

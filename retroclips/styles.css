@@ -644,7 +644,16 @@ body {
 [data-mood="tense"] .rc-mouth-tense,
 [data-mood="thrilled"] .rc-brows-thrilled,
 [data-mood="thrilled"] .rc-eyes-thrilled,
-[data-mood="thrilled"] .rc-mouth-thrilled {
+[data-mood="thrilled"] .rc-mouth-thrilled,
+[data-mood="spit-take"] .rc-brows-spit-take,
+[data-mood="spit-take"] .rc-eyes-spit-take,
+[data-mood="spit-take"] .rc-mouth-spit-take,
+[data-mood="dizzy"] .rc-brows-dizzy,
+[data-mood="dizzy"] .rc-eyes-dizzy,
+[data-mood="dizzy"] .rc-mouth-dizzy,
+[data-mood="suspicious"] .rc-brows-suspicious,
+[data-mood="suspicious"] .rc-eyes-suspicious,
+[data-mood="suspicious"] .rc-mouth-suspicious {
   display: block;
 }
 
@@ -652,6 +661,14 @@ body {
 [data-mood="laughing"] .reaction-figure { animation: rc-bounce 0.5s ease-in-out infinite; }
 [data-mood="tense"] .reaction-figure { animation: rc-tense-pulse 1.6s ease-in-out infinite; }
 [data-mood="thrilled"] .reaction-figure { animation: rc-thrilled-jiggle 0.45s ease-in-out infinite; }
+[data-mood="spit-take"] .reaction-figure { animation: rc-spit-recoil 0.5s ease-out infinite; }
+[data-mood="dizzy"] .reaction-figure { animation: rc-dizzy-wobble 2.2s ease-in-out infinite; }
+[data-mood="suspicious"] .reaction-figure { animation: rc-suspicious-tilt 3s ease-in-out infinite; }
+[data-mood="suspicious"] .rc-pupil-suspicious {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: rc-side-eye 2.4s ease-in-out infinite;
+}
 
 .reaction-popcorn {
   position: absolute;
@@ -715,6 +732,78 @@ body {
   80% { transform: translate(7px, -5px) scale(0.85) rotate(10deg); }
 }
 
+.reaction-spit {
+  position: absolute;
+  top: 30px;
+  right: -20px;
+  width: 34px;
+  height: 34px;
+  z-index: 3;
+  overflow: visible; /* same viewBox-clipping reason as .reaction-popcorn */
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
+}
+
+.rc-spit-cup { fill: #7a8a94; }
+.rc-spit-cup-rim { fill: #a9b8c1; }
+.rc-spit-droplet {
+  fill: #bcd6e0;
+  stroke: #3d5560;
+  stroke-width: 0.4;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+/* Droplets burst outward from the cup and fade, rather than looping
+   back like the popcorn kernels do -- a spray that snapped back to
+   the cup would read as sucking the drink back in. */
+[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(1) { animation: rc-spit-1 0.5s ease-out infinite; }
+[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(2) { animation: rc-spit-2 0.55s ease-out infinite 0.05s; }
+[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(3) { animation: rc-spit-3 0.45s ease-out infinite 0.1s; }
+[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(4) { animation: rc-spit-4 0.6s ease-out infinite 0.15s; }
+
+@keyframes rc-spit-1 {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(14px, -6px) scale(1.1); opacity: 0; }
+}
+@keyframes rc-spit-2 {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(16px, 3px) scale(1); opacity: 0; }
+}
+@keyframes rc-spit-3 {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(11px, -10px) scale(0.9); opacity: 0; }
+}
+@keyframes rc-spit-4 {
+  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translate(13px, 8px) scale(1); opacity: 0; }
+}
+
+@keyframes rc-spit-recoil {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(2px, -3px) rotate(4deg); }
+  40% { transform: translate(-1px, 0) rotate(-1deg); }
+}
+
+@keyframes rc-dizzy-wobble {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes rc-suspicious-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-2deg); }
+}
+
+@keyframes rc-side-eye {
+  0%, 20%, 100% { transform: translateX(0); }
+  40%, 60% { transform: translateX(2.5px); }
+}
+
 .reaction-cam-scanline {
   position: absolute;
   inset: 0;
@@ -775,11 +864,19 @@ body {
   [data-mood="laughing"] .reaction-figure,
   [data-mood="tense"] .reaction-figure,
   [data-mood="thrilled"] .reaction-figure,
+  [data-mood="spit-take"] .reaction-figure,
+  [data-mood="dizzy"] .reaction-figure,
+  [data-mood="suspicious"] .reaction-figure,
+  [data-mood="suspicious"] .rc-pupil-suspicious,
   [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(1),
   [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(2),
   [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(3),
   [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(4),
-  [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(5) {
+  [data-mood="scared"] .rc-popcorn-kernel:nth-of-type(5),
+  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(1),
+  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(2),
+  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(3),
+  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(4) {
     animation: none;
   }
 }
