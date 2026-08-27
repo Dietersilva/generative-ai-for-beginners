@@ -121,7 +121,7 @@ def render_card(film: dict) -> str:
       <div class="card-body">
         <div class="listen-row">
           <audio class="narration-audio" preload="none" src="assets/narration/{fid}.mp3"></audio>
-          <button type="button" class="narrate-btn" aria-label="Listen to the commentary for {title}, read over the clip">&#128264; Listen</button>
+          <button type="button" class="narrate-btn" aria-label="Listen to the commentary for {title}, read over the clip">&#127911; Narration</button>
         </div>
         <div class="card-title-row">
           <h2><a href="{fid}.html" class="card-title-link">{title}</a></h2>

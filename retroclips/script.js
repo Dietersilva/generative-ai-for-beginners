@@ -28,6 +28,8 @@ function moodForGenre(genre) {
   if (g.includes("horror") || g.includes("psychological")) return "scared";
   if (g.includes("comedy")) return "laughing";
   if (g.includes("science")) return "amazed";
+  if (g.includes("western") || g.includes("action")) return "thrilled";
+  if (g.includes("noir") || g.includes("crime") || g.includes("exploitation") || g.includes("propaganda") || g.includes("melodrama")) return "tense";
   return "neutral";
 }
 
@@ -101,7 +103,7 @@ function enhanceCard(card) {
     narrationAudio.currentTime = 0;
     window.speechSynthesis.cancel();
     narrateBtn.classList.remove("narrating");
-    narrateBtn.textContent = "🔊 Listen";
+    narrateBtn.textContent = "🎧 Narration";
     video.volume = 1;
     if (activeStopNarration === stopThisNarration) activeStopNarration = null;
   };
