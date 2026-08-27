@@ -125,6 +125,25 @@ commentary paragraph, and can write results back into `films.json`
 with `--write`. It needs `ANTHROPIC_API_KEY` set — get one at
 [console.anthropic.com](https://console.anthropic.com/).
 
+### Narration
+
+Each "Listen" button plays a pre-generated voice clip rather than
+calling any API live from the browser — a static site can't hide an
+API key from visitors, so narration has to be baked into a static
+asset the same way the film clips are. `scripts/generate_narration.py`
+calls ElevenLabs' TTS API once per film and writes
+`assets/narration/<film-id>.mp3`. It needs `ELEVENLABS_API_KEY` set
+and a `--voice-id`:
+
+```bash
+python3 scripts/generate_narration.py --voice-id <voice_id>
+```
+
+If a film's MP3 is missing (e.g. a new film added before running this
+script) or fails to load, `script.js` falls back to the browser's
+built-in speech synthesis automatically — same as before narration
+audio existed at all.
+
 ## Running it locally
 
 No build step needed:

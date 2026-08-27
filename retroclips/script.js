@@ -17,15 +17,10 @@ function muteOtherVideos(exceptVideo) {
   });
 }
 
-// Cancels whatever narration is running, unless it's exceptBtn's own.
-function stopNarrationExcept(exceptBtn) {
-  const activeBtn = document.querySelector(".narrate-btn.narrating");
-  if (activeBtn && activeBtn !== exceptBtn) {
-    window.speechSynthesis.cancel();
-    activeBtn.classList.remove("narrating");
-    activeBtn.textContent = "🔊 Listen";
-  }
-}
+// Only one narration plays at a time, whether it's a pre-generated voice
+// clip or the browser-TTS fallback. Whichever card started narrating last
+// registers its own stop function here; starting a new one calls it first.
+let activeStopNarration = null;
 
 const CLIP_DUCK_VOLUME = 0.4;
 
@@ -93,7 +88,7 @@ function renderGrid(films) {
       event.stopPropagation();
       if (video.muted) {
         const ownNarrationPlaying = narrateBtn && narrateBtn.classList.contains("narrating");
-        stopNarrationExcept(ownNarrationPlaying ? narrateBtn : null);
+        if (!ownNarrationPlaying && activeStopNarration) activeStopNarration();
         muteOtherVideos(video);
         video.muted = false;
         video.volume = ownNarrationPlaying ? CLIP_DUCK_VOLUME : 1;
@@ -148,39 +143,74 @@ function renderGrid(films) {
     commentary.textContent = film.commentary;
     commentaryRow.append(commentary);
 
-    if (speechSupported) {
-      narrateBtn = document.createElement("button");
-      narrateBtn.type = "button";
-      narrateBtn.className = "narrate-btn";
+    // Pre-generated ElevenLabs narration (scripts/generate_narration.py),
+    // one MP3 per film. Falls back to the browser's built-in TTS if that
+    // file is missing or fails to load -- e.g. a film added before its
+    // narration was generated, or a browser blocking the request.
+    const narrationAudio = document.createElement("audio");
+    narrationAudio.preload = "none";
+    narrationAudio.src = `assets/narration/${film.id}.mp3`;
+
+    const stopThisNarration = () => {
+      narrationAudio.pause();
+      narrationAudio.currentTime = 0;
+      window.speechSynthesis.cancel();
+      narrateBtn.classList.remove("narrating");
       narrateBtn.textContent = "🔊 Listen";
-      narrateBtn.setAttribute("aria-label", `Listen to the commentary for ${film.title}, read over the clip`);
-      narrateBtn.addEventListener("click", () => {
-        if (narrateBtn.classList.contains("narrating")) {
-          window.speechSynthesis.cancel();
-          narrateBtn.classList.remove("narrating");
-          narrateBtn.textContent = "🔊 Listen";
-          video.volume = 1;
-          return;
-        }
+      video.volume = 1;
+      if (activeStopNarration === stopThisNarration) activeStopNarration = null;
+    };
 
-        stopNarrationExcept(null); // only one narration plays at a time
-        muteOtherVideos(video); // ...and only one film's audio at a time
-        video.muted = false;
-        video.volume = CLIP_DUCK_VOLUME; // ducked so the narrator reads clearly over the score
-        video.play().catch(() => {});
+    const speakFallback = () => {
+      if (!speechSupported) {
+        stopThisNarration();
+        return;
+      }
+      const utterance = new SpeechSynthesisUtterance(film.commentary);
+      utterance.rate = 0.95;
+      utterance.onend = utterance.onerror = stopThisNarration;
+      window.speechSynthesis.speak(utterance);
+    };
 
-        const utterance = new SpeechSynthesisUtterance(film.commentary);
-        utterance.rate = 0.95;
-        narrateBtn.classList.add("narrating");
-        narrateBtn.textContent = "⏸ Reading…";
-        utterance.onend = utterance.onerror = () => {
-          narrateBtn.classList.remove("narrating");
-          narrateBtn.textContent = "🔊 Listen";
-          video.volume = 1;
-        };
-        window.speechSynthesis.speak(utterance);
-      });
-      commentaryRow.append(narrateBtn);
+    narrateBtn = document.createElement("button");
+    narrateBtn.type = "button";
+    narrateBtn.className = "narrate-btn";
+    narrateBtn.textContent = "🔊 Listen";
+    narrateBtn.setAttribute("aria-label", `Listen to the commentary for ${film.title}, read over the clip`);
+    narrateBtn.addEventListener("click", () => {
+      if (narrateBtn.classList.contains("narrating")) {
+        stopThisNarration();
+        return;
+      }
+
+      if (activeStopNarration) activeStopNarration(); // only one narration at a time
+      muteOtherVideos(video); // ...and only one film's audio at a time
+      video.muted = false;
+      video.volume = CLIP_DUCK_VOLUME; // ducked so the narrator reads clearly over the score
+      video.play().catch(() => {});
+
+      narrateBtn.classList.add("narrating");
+      narrateBtn.textContent = "⏸ Reading…";
+      activeStopNarration = stopThisNarration;
+
+      narrationAudio.currentTime = 0;
+      narrationAudio.onended = stopThisNarration;
+      narrationAudio.onerror = speakFallback;
+      narrationAudio.play().catch(speakFallback);
+    });
+    commentaryRow.append(narrateBtn);
+
+    const footerRow = document.createElement("div");
+    footerRow.className = "card-footer-row";
+
+    if (film.clip.source_url) {
+      const watchLink = document.createElement("a");
+      watchLink.className = "watch-link";
+      watchLink.href = film.clip.source_url;
+      watchLink.target = "_blank";
+      watchLink.rel = "noopener noreferrer";
+      watchLink.textContent = "▶ Watch the full film";
+      footerRow.append(watchLink);
     }
 
     const pdBadge = document.createElement("a");
@@ -188,8 +218,9 @@ function renderGrid(films) {
     pdBadge.href = `about.html#${film.id}`;
     pdBadge.textContent = "© Public Domain";
     pdBadge.title = film.pd_caveat ? `${film.pd_basis} ${film.pd_caveat}` : film.pd_basis;
+    footerRow.append(pdBadge);
 
-    body.append(titleRow, meta, sceneLabel, commentaryRow, pdBadge);
+    body.append(titleRow, meta, sceneLabel, commentaryRow, footerRow);
     card.append(clipFrame, body);
     grid.append(card);
   }

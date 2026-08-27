@@ -2,7 +2,9 @@
   "site": {
     "name": "RetroClips",
     "tagline": "Six seconds of film history. Twenty seconds of why it matters.",
-    "generated_note": "Commentary below is written in the auto-generation pipeline's target style (see scripts/generate_commentary.py). It is example output for this prototype, not live model output."
+    "generated_note": "Commentary below is written in the auto-generation pipeline's target style (see scripts/generate_commentary.py). It is example output for this prototype, not live model output.",
+    "narration_voice_id": "TABZn6CDfjMNGrsnGzzD",
+    "narration_voice_note": "ElevenLabs voice used by scripts/generate_narration.py. To switch narrators: change this ID, then re-run the script (no code edit needed)."
   },
   "films": [
     {
