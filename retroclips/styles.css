@@ -416,6 +416,7 @@ body {
 
 .poster-strip--infeed .poster-strip-frame {
   height: 200px;
+  max-height: 400px;
 }
 
 .poster-strip-track {
@@ -439,9 +440,28 @@ body {
   to { transform: translateX(-50%); }
 }
 
+/* Motion-safe fallback: a scrolling filmstrip with the animation switched
+   off would just freeze on its first couple of tiles forever, which reads
+   as broken ("why is it always the same two pictures?"), not as a
+   deliberate accessibility choice. Wrapping into a static mosaic instead
+   shows a full, varied grid with no motion at all. */
 @media (prefers-reduced-motion: reduce) {
   .poster-strip-track {
     animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+    height: auto;
+  }
+
+  .poster-strip--top .poster-strip-frame,
+  .poster-strip--infeed .poster-strip-frame {
+    height: auto;
+    max-height: 280px;
+    overflow: hidden;
+  }
+
+  .poster-strip-track img {
+    height: 90px;
   }
 }
 
