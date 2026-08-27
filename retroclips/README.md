@@ -148,15 +148,15 @@ anything containing "ad" because generic ad-blocker filter lists hide
 with the catalog rather than being hardcoded to "after card 6" forever
 — `render_cards()`'s `IN_FEED_AD_FIRST`/`IN_FEED_AD_REPEAT` constants
 insert one after the 6th card, then one every 8 cards after that (14,
-22, ...), so a future 30-film catalog gets three or four slots without
-anyone hand-placing them. One slot for 13 films is intentionally
-sparse; tighten `IN_FEED_AD_REPEAT` later if it ever feels too thin.
-Neither slot loads a real ad yet; there's no ad network account to
-point them at. Rather than sit empty, each shows a slow horizontally-
-scrolling filmstrip built from the site's own footage — each film's
-video poster plus three extra frames pulled from its clip by
-`scripts/extract_posterstrip_frames.py` (40 films' worth of stills as
-of this writing, not just 10), each tile sized to the image's own
+22, 30, ...), so a growing catalog gets more slots without anyone
+hand-placing them — three at the current 22-film size. Tighten
+`IN_FEED_AD_REPEAT` later if that ever feels too sparse. Neither slot
+loads a real ad yet; there's no ad network account to point them at.
+Rather than sit empty, each shows a slow horizontally-scrolling
+filmstrip built from the site's own footage — each film's video
+poster plus three extra frames pulled from its clip by
+`scripts/extract_posterstrip_frames.py` (well over 80 films' worth of
+stills as of this writing, not just 10), each tile sized to the image's own
 16:9 aspect ratio so the whole picture shows, not a stretched sliver
 of it, dimmed slightly so it doesn't compete with the real film grid.
 Each tile also links to that film's own page, so the slot doubles as

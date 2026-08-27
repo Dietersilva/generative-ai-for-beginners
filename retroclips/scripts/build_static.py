@@ -159,7 +159,7 @@ def poster_strip_images(films: list) -> list:
         per_film.append([(src, film) for src in frames])
 
     # Round-robin across films rather than grouping each film's frames
-    # together -- four consecutive tiles from the same 6.5s clip read as
+    # together -- four consecutive tiles from the same ~10s clip read as
     # near-duplicates at a glance. Interleaving keeps every adjacent tile
     # a different film while still cycling through all of them.
     entries = []

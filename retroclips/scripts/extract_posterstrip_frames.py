@@ -4,7 +4,7 @@ Extract extra still frames from each film's already-fetched clip, for the
 poster-strip montage in the reserved ad slots (see .poster-strip in
 styles.css). The video element still uses assets/clips/<film-id>.jpg (the
 1.5s frame fetch_clip.py grabs) as its poster -- these are additional
-frames, at different points in the same 6.5s clip, purely so the
+frames, at different points in the same ~10s clip, purely so the
 poster-strip has more than one image per film to cycle through.
 
 Run after any new film's clip is fetched:
@@ -24,7 +24,7 @@ CLIPS_DIR = ROOT / "assets" / "clips"
 OUT_DIR = ROOT / "assets" / "posterstrip"
 FILMS_JSON = ROOT / "data" / "films.json"
 
-# Seconds into the clip to grab each frame -- spread across the 6.5s clip,
+# Seconds into the clip to grab each frame -- spread across the ~10s clip,
 # deliberately not 1.5s (that's the existing video-poster frame already in
 # assets/clips/<id>.jpg, no need to duplicate it here).
 FRAME_TIMES = [0.5, 4.5, 8.5]
