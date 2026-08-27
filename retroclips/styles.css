@@ -655,11 +655,11 @@ body {
 
 .reaction-popcorn {
   position: absolute;
-  left: -8px;
-  bottom: 18px;
-  width: 28px;
-  height: 28px;
-  z-index: 2;
+  left: -22px;
+  bottom: 4px;
+  width: 34px;
+  height: 34px;
+  z-index: 3;
   filter: drop-shadow(0 2px 3px rgba(0,0,0,0.5));
 }
 
