@@ -120,7 +120,7 @@ def render_card(film: dict) -> str:
       </div>
       <div class="card-body">
         <div class="card-title-row">
-          <h2>{title}</h2>
+          <h2><a href="{fid}.html" class="card-title-link">{title}</a></h2>
           <span class="card-year">{year}</span>
         </div>
         <div class="card-meta">{director} &mdash; {country} &mdash; {genre}</div>
@@ -147,6 +147,8 @@ def poster_strip_images(films: list) -> list:
     # extract_posterstrip_frames.py's extra frames per film, if they've
     # been generated -- falls back to just the one clip poster per film
     # otherwise, so this doesn't hard-require that script having been run.
+    # Each entry carries the owning film too, since every tile now links
+    # to that film's own page.
     per_film = []
     for film in films:
         fid = film["id"]
@@ -154,34 +156,39 @@ def poster_strip_images(films: list) -> list:
         for n in range(1, POSTERSTRIP_FRAMES_PER_FILM + 1):
             if (POSTERSTRIP_DIR / f"{fid}-{n}.jpg").exists():
                 frames.append(f"assets/posterstrip/{fid}-{n}.jpg")
-        per_film.append(frames)
+        per_film.append([(src, film) for src in frames])
 
     # Round-robin across films rather than grouping each film's frames
     # together -- four consecutive tiles from the same 6.5s clip read as
     # near-duplicates at a glance. Interleaving keeps every adjacent tile
     # a different film while still cycling through all of them.
-    paths = []
+    entries = []
     for i in range(max(len(f) for f in per_film)):
         for frames in per_film:
             if i < len(frames):
-                paths.append(frames[i])
-    return paths
+                entries.append(frames[i])
+    return entries
 
 
 def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
     # Reserved ad space, no network wired in yet -- filled with a slow
     # horizontally-scrolling filmstrip of the site's own poster stills (a
-    # real collection, not a stock photo) so it isn't a bare box. Named
+    # real collection, not a stock photo) so it isn't a bare box, and each
+    # tile links to that film's own page -- real navigation, not just
+    # decoration, so the slot itself is no longer aria-hidden. Named
     # .poster-strip rather than .ad-slot/.ad-carousel on purpose: generic
     # ad-blocker filter lists hide elements matching "ad-*" class/attribute
     # patterns regardless of what's actually inside them. The sequence is
     # duplicated back to back so the -50% translateX loop in
     # .poster-strip-track (styles.css) is seamless -- same trick as the
     # caption ticker.
-    imgs = "\n          ".join(
-        f'<img src="{src}" alt="">' for src in poster_strip_images(films)
-    )
-    return f"""    <div class="poster-strip poster-strip--{variant}" data-poster-strip="{slot_id}" aria-hidden="true">
+    def tile(src: str, film: dict) -> str:
+        label = esc(f'{film["title"]} ({film["year"]})')
+        return f'<a href="{film["id"]}.html" aria-label="{label}"><img src="{src}" alt=""></a>'
+
+    entries = poster_strip_images(films)
+    imgs = "\n          ".join(tile(src, film) for src, film in entries)
+    return f"""    <div class="poster-strip poster-strip--{variant}" data-poster-strip="{slot_id}">
       <div class="poster-strip-frame">
         <div class="poster-strip-track">
           {imgs}
@@ -262,13 +269,51 @@ def render_json_ld(data: dict) -> str:
     return json.dumps(graph, indent=2, ensure_ascii=False)
 
 
+def asset_version() -> str:
+    # Cache-busting query param for styles.css/script.js. Without this, a
+    # deploy can leave a visitor's browser (or a CDN edge) serving last
+    # version's CSS/JS alongside this version's HTML -- which is exactly
+    # what happened a few times while iterating on the ad-slot styling
+    # ("it's still broken" after a fix that was, in fact, already live).
+    # Hashing the files themselves means the query string only changes
+    # when their content actually does.
+    h = hashlib.sha256()
+    for name in ("styles.css", "script.js"):
+        h.update((ROOT / name).read_bytes())
+    return h.hexdigest()[:10]
+
+
+def apply_asset_version(text: str, version: str) -> str:
+    # Regex (not a plain string replace) so this is idempotent -- safe to
+    # re-run against a file that already has a "?v=..." from a prior build.
+    text = re.sub(r'href="styles\.css(\?v=[a-f0-9]+)?"', f'href="styles.css?v={version}"', text)
+    text = re.sub(r'src="script\.js(\?v=[a-f0-9]+)?"', f'src="script.js?v={version}"', text)
+    return text
+
+
 def csp_hash(script_body: str) -> str:
     digest = hashlib.sha256(script_body.encode("utf-8")).digest()
     return "sha256-" + base64.b64encode(digest).decode("ascii")
 
 
-def build_index(data: dict) -> None:
+def csp_for_json_ld(json_ld_body: str) -> str:
+    script_hash = csp_hash(json_ld_body)
+    return (
+        "default-src 'self'; "
+        f"script-src 'self' '{script_hash}'; "
+        "style-src 'self'; "
+        "img-src 'self'; "
+        "media-src 'self'; "
+        "connect-src 'none'; "
+        "object-src 'none'; "
+        "base-uri 'none'; "
+        "form-action 'none';"
+    )
+
+
+def build_index(data: dict, version: str) -> None:
     text = INDEX_HTML.read_text()
+    text = apply_asset_version(text, version)
 
     filter_bar = render_filter_bar(data["films"])
     text = inject(text, "<!-- SEO:FILTERBAR_START -->", "<!-- SEO:FILTERBAR_END -->", filter_bar)
@@ -283,36 +328,115 @@ def build_index(data: dict) -> None:
     json_ld_script = f'<script type="application/ld+json">{json_ld_body}</script>'
     text = inject(text, "<!-- SEO:JSONLD_START -->", "<!-- SEO:JSONLD_END -->", json_ld_script)
 
-    script_hash = csp_hash(json_ld_body)
-    csp = (
-        "default-src 'self'; "
-        f"script-src 'self' '{script_hash}'; "
-        "style-src 'self'; "
-        "img-src 'self'; "
-        "media-src 'self'; "
-        "connect-src 'none'; "
-        "object-src 'none'; "
-        "base-uri 'none'; "
-        "form-action 'none';"
-    )
-    csp_tag = f'<meta http-equiv="Content-Security-Policy" content="{csp}">'
+    csp_tag = f'<meta http-equiv="Content-Security-Policy" content="{csp_for_json_ld(json_ld_body)}">'
     text = inject(text, "<!-- SEO:CSP_START -->", "<!-- SEO:CSP_END -->", csp_tag)
 
     INDEX_HTML.write_text(text)
 
 
-def build_about(data: dict) -> None:
+def render_film_json_ld(film: dict) -> str:
+    movie = {
+        "@context": "https://schema.org",
+        "@type": "Movie",
+        "name": film["title"],
+        "datePublished": str(film["year"]),
+        "director": {"@type": "Person", "name": film["director"]},
+        "countryOfOrigin": film["country"],
+        "genre": film["genre"],
+        "description": film["commentary"],
+        "image": f"{SITE_URL}assets/clips/{film['id']}.jpg",
+        "url": film["clip"].get("source_url") or SITE_URL,
+    }
+    return json.dumps(movie, indent=2, ensure_ascii=False)
+
+
+def render_film_page(film: dict, version: str) -> str:
+    fid = film["id"]
+    title = esc(film["title"])
+    year = film["year"]
+    scene_label = esc(film["scene_label"])
+    description = esc(film["commentary"])
+    page_title = f"{title} ({year}) &mdash; {scene_label}"
+    page_url = f"{SITE_URL}{fid}.html"
+    og_image = f"{SITE_URL}assets/clips/{fid}.jpg"
+
+    json_ld_body = render_film_json_ld(film)
+    json_ld_script = f'<script type="application/ld+json">{json_ld_body}</script>'
+    csp = csp_for_json_ld(json_ld_body)
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{page_title} | RetroClips</title>
+<meta name="description" content="{description}">
+<link rel="canonical" href="{page_url}">
+<meta property="og:type" content="video.other">
+<meta property="og:site_name" content="RetroClips">
+<meta property="og:title" content="{page_title}">
+<meta property="og:description" content="{description}">
+<meta property="og:url" content="{page_url}">
+<meta property="og:image" content="{og_image}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{page_title}">
+<meta name="twitter:description" content="{description}">
+<meta name="twitter:image" content="{og_image}">
+<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+<meta http-equiv="Content-Security-Policy" content="{csp}">
+<link rel="stylesheet" href="styles.css?v={version}">
+{json_ld_script}
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <a href="index.html" class="brand-link"><span class="brand-mark">RC</span></a>
+    <h1><a href="index.html" class="brand-link">RetroClips</a></h1>
+  </div>
+  <p class="tagline">{title} ({year})</p>
+</header>
+
+<main class="film-page">
+  <div class="grid grid--single">
+{render_card(film)}
+  </div>
+  <p class="film-page-back"><a href="index.html">&larr; Back to all clips</a></p>
+</main>
+
+<footer class="site-footer">
+  <p class="pd-note">Every clip on this site is public domain, not a fair-use claim &mdash; <a href="about.html">read why</a>.</p>
+</footer>
+
+<script src="script.js?v={version}"></script>
+</body>
+</html>
+"""
+
+
+def build_film_pages(data: dict, version: str) -> list:
+    ids = []
+    for film in data["films"]:
+        fid = film["id"]
+        out = ROOT / f"{fid}.html"
+        out.write_text(render_film_page(film, version))
+        ids.append(fid)
+    return ids
+
+
+def build_about(data: dict, version: str) -> None:
     text = ABOUT_HTML.read_text()
+    text = apply_asset_version(text, version)
     entries = "\n".join(render_about_entry(film) for film in data["films"])
     text = inject(text, "<!-- SEO:ENTRIES_START -->", "<!-- SEO:ENTRIES_END -->", entries)
     ABOUT_HTML.write_text(text)
 
 
-def build_sitemap() -> None:
+def build_sitemap(film_ids: list) -> None:
     from datetime import date
 
     today = date.today().isoformat()
-    urls = [SITE_URL, SITE_URL + "about.html"]
+    urls = [SITE_URL, SITE_URL + "about.html"] + [SITE_URL + f"{fid}.html" for fid in film_ids]
     entries = "\n".join(
         f"  <url>\n    <loc>{u}</loc>\n    <lastmod>{today}</lastmod>\n  </url>" for u in urls
     )
@@ -327,10 +451,12 @@ def build_sitemap() -> None:
 
 def main() -> None:
     data = json.loads(FILMS_JSON.read_text())
-    build_index(data)
-    build_about(data)
-    build_sitemap()
-    print(f"Wrote {INDEX_HTML}, {ABOUT_HTML}, {SITEMAP_XML}")
+    version = asset_version()
+    build_index(data, version)
+    build_about(data, version)
+    film_ids = build_film_pages(data, version)
+    build_sitemap(film_ids)
+    print(f"Wrote {INDEX_HTML}, {ABOUT_HTML}, {len(film_ids)} film pages, {SITEMAP_XML} (asset version {version})")
 
 
 if __name__ == "__main__":

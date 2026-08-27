@@ -46,6 +46,18 @@ function enhanceCard(card) {
   const commentary = card.querySelector(".commentary");
   const mood = moodForGenre(card.dataset.genre || "");
 
+  // Anywhere else on the card (not a link or button -- those already have
+  // their own destination: sound toggle, narration, the archive.org link,
+  // the PD badge, or the title, which already links here too) takes you
+  // to the film's own page, same as clicking the title.
+  const titleLink = card.querySelector(".card-title-link");
+  if (titleLink) {
+    card.addEventListener("click", (event) => {
+      if (event.target.closest("a, button")) return;
+      window.location.href = titleLink.getAttribute("href");
+    });
+  }
+
   card.addEventListener("mouseenter", () => {
     video.play().catch(() => {});
     setReactionMood(mood);
@@ -132,6 +144,7 @@ function enhanceCard(card) {
 // non-JS clients or crawlers see.
 function shuffleGrid() {
   const grid = document.getElementById("grid");
+  if (!grid) return; // a film's own page has one card and no #grid to shuffle
   const children = Array.from(grid.children);
   const cardSlots = [];
   const cards = [];
@@ -174,3 +187,14 @@ function enhanceFilterBar() {
 shuffleGrid();
 document.querySelectorAll(".card").forEach(enhanceCard);
 enhanceFilterBar();
+
+// A film's own page (films/<id>.html... actually <id>.html at the site
+// root) has exactly one card and nothing to hover away to, so play its
+// clip immediately instead of waiting for a mouseenter that will never
+// come.
+const soloCard = document.querySelector(".film-page .card");
+if (soloCard) {
+  const soloVideo = soloCard.querySelector(".clip-video");
+  soloVideo.play().catch(() => {});
+  setReactionMood(moodForGenre(soloCard.dataset.genre || ""));
+}
