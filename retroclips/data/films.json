@@ -226,6 +226,26 @@
         "source_identifier": "white-zombie-bluray-pnm",
         "source_url": "https://archive.org/details/white-zombie-bluray-pnm"
       }
+    },
+    {
+      "id": "haxan-1922",
+      "title": "Häxan",
+      "year": 1922,
+      "director": "Benjamin Christensen",
+      "country": "Sweden / Denmark",
+      "genre": "Horror / Documentary-Fantasy",
+      "scene_label": "Flight to Brocken",
+      "scene_description": "Dramatizing a confessed witch's testimony, silhouetted figures fly by broomstick through the night sky toward a towering, horned devil waiting on the mountain.",
+      "commentary": "Christensen shot this as a direct illustration of real interrogation transcripts -- the intertitle quotes an actual confession about flying to Blockula on a neighbor's broom. Equal parts silent horror film and lecture on medieval psychiatry, it was banned outright in the US for years and remains one of the most explicit silent films ever made about what accused witches were tortured into \"confessing.\"",
+      "pd_basis": "US copyright term fully expired (published 1922, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "duration_sec": 6.5,
+        "start_timestamp": "00:52:00",
+        "status": "sourced",
+        "source_identifier": "haxan-witchcraft-through-the-ages-1922",
+        "source_url": "https://archive.org/details/haxan-witchcraft-through-the-ages-1922"
+      }
     }
   ]
 }
