@@ -5,14 +5,29 @@ async function loadFilms() {
   renderGrid(data.films);
 }
 
-// Only one thing should be making sound at a time: unmuting a clip stops any
-// narration in progress, and narrating stops/mutes whichever clip is playing.
-function stopAllAudio(exceptVideo) {
-  window.speechSynthesis.cancel();
+// Only one film's audio plays at a time -- unmuting a clip mutes every
+// other clip. Narration is different: most of these are silent films with
+// just an orchestral score, so the narrator can read right over that score
+// like a documentary voiceover. Listen ducks its own card's clip to a low
+// volume instead of silencing it, and only cancels a narration running on
+// a *different* card (still only one voice at a time).
+function muteOtherVideos(exceptVideo) {
   document.querySelectorAll("video").forEach((v) => {
     if (v !== exceptVideo) v.muted = true;
   });
 }
+
+// Cancels whatever narration is running, unless it's exceptBtn's own.
+function stopNarrationExcept(exceptBtn) {
+  const activeBtn = document.querySelector(".narrate-btn.narrating");
+  if (activeBtn && activeBtn !== exceptBtn) {
+    window.speechSynthesis.cancel();
+    activeBtn.classList.remove("narrating");
+    activeBtn.textContent = "🔊 Listen";
+  }
+}
+
+const CLIP_DUCK_VOLUME = 0.22;
 
 // The reaction-cam's expression follows whichever card you're hovering.
 function moodForGenre(genre) {
@@ -55,9 +70,14 @@ function renderGrid(films) {
       setReactionMood(mood);
     });
     card.addEventListener("mouseleave", () => {
-      video.pause();
+      const ownNarrationPlaying = narrateBtn && narrateBtn.classList.contains("narrating");
+      if (!ownNarrationPlaying) video.pause();
       setReactionMood("neutral");
     });
+
+    // Declared now, assigned once the narrate button exists below --
+    // toggleSound needs to know if *this* card's own narration is playing.
+    let narrateBtn = null;
 
     const soundBadge = document.createElement("button");
     soundBadge.type = "button";
@@ -72,8 +92,11 @@ function renderGrid(films) {
     const toggleSound = (event) => {
       event.stopPropagation();
       if (video.muted) {
-        stopAllAudio(video);
+        const ownNarrationPlaying = narrateBtn && narrateBtn.classList.contains("narrating");
+        stopNarrationExcept(ownNarrationPlaying ? narrateBtn : null);
+        muteOtherVideos(video);
         video.muted = false;
+        video.volume = ownNarrationPlaying ? CLIP_DUCK_VOLUME : 1;
         video.play().catch(() => {});
       } else {
         video.muted = true;
@@ -126,16 +149,25 @@ function renderGrid(films) {
     commentaryRow.append(commentary);
 
     if (speechSupported) {
-      const narrateBtn = document.createElement("button");
+      narrateBtn = document.createElement("button");
       narrateBtn.type = "button";
       narrateBtn.className = "narrate-btn";
       narrateBtn.textContent = "🔊 Listen";
-      narrateBtn.setAttribute("aria-label", `Listen to the commentary for ${film.title}`);
+      narrateBtn.setAttribute("aria-label", `Listen to the commentary for ${film.title}, read over the clip`);
       narrateBtn.addEventListener("click", () => {
-        const isThisUtterance = narrateBtn.classList.contains("narrating");
-        stopAllAudio(null);
-        document.querySelectorAll(".narrate-btn.narrating").forEach((b) => b.classList.remove("narrating"));
-        if (isThisUtterance) return; // clicking again just stops it (stopAllAudio already cancelled)
+        if (narrateBtn.classList.contains("narrating")) {
+          window.speechSynthesis.cancel();
+          narrateBtn.classList.remove("narrating");
+          narrateBtn.textContent = "🔊 Listen";
+          video.volume = 1;
+          return;
+        }
+
+        stopNarrationExcept(null); // only one narration plays at a time
+        muteOtherVideos(video); // ...and only one film's audio at a time
+        video.muted = false;
+        video.volume = CLIP_DUCK_VOLUME; // ducked so the narrator reads clearly over the score
+        video.play().catch(() => {});
 
         const utterance = new SpeechSynthesisUtterance(film.commentary);
         utterance.rate = 0.95;
@@ -144,6 +176,7 @@ function renderGrid(films) {
         utterance.onend = utterance.onerror = () => {
           narrateBtn.classList.remove("narrating");
           narrateBtn.textContent = "🔊 Listen";
+          video.volume = 1;
         };
         window.speechSynthesis.speak(utterance);
       });
