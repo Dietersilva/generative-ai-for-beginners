@@ -239,6 +239,30 @@ body {
   }
 }
 
+/* One fixed class per whole-second duration (14-28s), computed at build
+   time by scripts/build_static.py. Avoids setting animation-duration via
+   an inline style attribute, which the CSP's style-src would otherwise
+   have to allow with 'unsafe-inline'. */
+.duration-14 { animation-duration: 14s; }
+.duration-15 { animation-duration: 15s; }
+.duration-16 { animation-duration: 16s; }
+.duration-17 { animation-duration: 17s; }
+.duration-18 { animation-duration: 18s; }
+.duration-19 { animation-duration: 19s; }
+.duration-20 { animation-duration: 20s; }
+.duration-21 { animation-duration: 21s; }
+.duration-22 { animation-duration: 22s; }
+.duration-23 { animation-duration: 23s; }
+.duration-24 { animation-duration: 24s; }
+.duration-25 { animation-duration: 25s; }
+.duration-26 { animation-duration: 26s; }
+.duration-27 { animation-duration: 27s; }
+.duration-28 { animation-duration: 28s; }
+
+.narration-audio {
+  display: none;
+}
+
 .card-body {
   padding: 1.1rem 1.25rem 1.4rem;
   display: flex;
@@ -355,6 +379,43 @@ body {
 .watch-link:hover {
   color: var(--ink);
   border-bottom-color: var(--ink);
+}
+
+/* Ad slots: clearly labeled, unstyled reserved space -- no ad network is
+   wired in yet (that requires an approved account; see README). Kept
+   visually distinct from the film cards so they're never mistaken for
+   content. */
+.ad-slot {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0.5rem 1.5rem;
+}
+
+.ad-slot-label {
+  display: block;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  padding: 1.4rem 1rem;
+  opacity: 0.7;
+}
+
+.ad-slot--leaderboard {
+  margin-top: 1.5rem;
+}
+
+.ad-slot--infeed {
+  grid-column: 1 / -1;
+  padding: 0;
+}
+
+.ad-slot--infeed .ad-slot-label {
+  padding: 2.4rem 1rem;
 }
 
 .site-footer {
