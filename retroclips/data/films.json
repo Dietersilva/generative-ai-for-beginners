@@ -386,6 +386,66 @@
         "start_timestamp": "00:40:25.5",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "my-man-godfrey-1936",
+      "title": "My Man Godfrey",
+      "year": 1936,
+      "director": "Gregory La Cava",
+      "country": "USA",
+      "genre": "Screwball Comedy",
+      "scene_label": "The scavenger hunt",
+      "scene_description": "At a Depression-era society scavenger hunt, a Park Avenue socialite in a sequined gown finds her prize item at the city dump: a 'forgotten man.'",
+      "commentary": "The joke -- rich people turning homeless men into a party game -- was sharp enough in 1936 that the film still reads as social commentary, not just farce, underneath the screwball banter. William Powell and Carole Lombard, married and divorced in real life by the time they made this together, have a chemistry the studio bet the whole picture on. It was nominated for six Oscars and lost every one, and is still one of the genre's high points.",
+      "pd_basis": "Entered the public domain when its US copyright registration was not renewed at the required 28-year mark.",
+      "pd_caveat": "Renewal-lapse titles like this one are well documented, but always confirm current status before commercial use -- renewal research is more error-prone than a straightforward term-expiration case.",
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/MyManGodfrey1936",
+        "source_identifier": "MyManGodfrey1936",
+        "start_timestamp": "00:02:52",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "pandoras-box-1929",
+      "title": "Pandora's Box",
+      "year": 1929,
+      "director": "G.W. Pabst",
+      "country": "Germany",
+      "genre": "Melodrama / Crime",
+      "scene_label": "The knife in the dark",
+      "scene_description": "In a bare London room on Christmas Eve, a stranger's hand closes around a knife on the table -- Lulu's final admirer isn't who he seems.",
+      "commentary": "Pabst cast an American unknown, Louise Brooks, over every established German star being considered, and her performance as Lulu -- pure appetite, no shame about it, destroyed by a world that punishes women for exactly that -- is still the reason the film is discussed today. This closing scene identifies her killer only by implication; German censors of the era wouldn't allow his name spoken outright, but everyone in 1929 knew exactly who was in the room with her.",
+      "pd_basis": "Never registered for US copyright and not renewed; entered the public domain in the US as an unregistered foreign work.",
+      "pd_caveat": "Foreign-film PD status under the US's URAA rules turns on registration and renewal history that can be genuinely hard to verify -- confirm independently before commercial use.",
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/pandoras-box-1929-by-georg-wilhelm-pabst",
+        "source_identifier": "pandoras-box-1929-by-georg-wilhelm-pabst",
+        "start_timestamp": "02:08:40.5",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-phantom-carriage-1921",
+      "title": "The Phantom Carriage",
+      "year": 1921,
+      "director": "Victor Sjöström",
+      "country": "Sweden",
+      "genre": "Fantasy / Horror",
+      "scene_label": "Death's coachman",
+      "scene_description": "A hooded figure kneels by a skeletal horse and cart at the edge of a cemetery, both rendered as ghostly double exposures -- whoever dies last each year must drive Death's carriage for the next.",
+      "commentary": "Sjöström shot the same footage twice and combined it in-camera to get this translucent, layered ghost effect -- no opticals, no lab tricks available yet in 1921, just precise double exposure. Ingmar Bergman called it one of the films that made him want to make films at all, and screened it every year on his birthday for most of his life; the hooded Death figure here is a direct ancestor of Bergman's own in The Seventh Seal.",
+      "pd_basis": "US copyright term fully expired (published 1921, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-phantom-carriage-1921-by-victor-sjostrom",
+        "source_identifier": "the-phantom-carriage-1921-by-victor-sjostrom",
+        "start_timestamp": "01:02:14",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
