@@ -139,13 +139,20 @@ Along with that:
 
 ### Ad slots
 
-There are two reserved ad slots — one under the header, one in-feed
-after the sixth film card (`.poster-strip`/`.poster-strip-frame` in
-`styles.css`, both generated into `index.html` by `build_static.py`;
-named that instead of anything containing "ad" because generic
-ad-blocker filter lists hide `.ad-*`/`data-ad-*` elements outright).
-Neither loads a real ad yet; there's no ad network account to point
-them at. Rather than sit empty, each shows a slow horizontally-
+There are two reserved ad slots at the current catalog size — one
+under the header, one in-feed after the sixth film card
+(`.poster-strip`/`.poster-strip-frame` in `styles.css`, both generated
+into `index.html` by `build_static.py`; named that instead of
+anything containing "ad" because generic ad-blocker filter lists hide
+`.ad-*`/`data-ad-*` elements outright). The in-feed placement scales
+with the catalog rather than being hardcoded to "after card 6" forever
+— `render_cards()`'s `IN_FEED_AD_FIRST`/`IN_FEED_AD_REPEAT` constants
+insert one after the 6th card, then one every 8 cards after that (14,
+22, ...), so a future 30-film catalog gets three or four slots without
+anyone hand-placing them. One slot for 13 films is intentionally
+sparse; tighten `IN_FEED_AD_REPEAT` later if it ever feels too thin.
+Neither slot loads a real ad yet; there's no ad network account to
+point them at. Rather than sit empty, each shows a slow horizontally-
 scrolling filmstrip built from the site's own footage — each film's
 video poster plus three extra frames pulled from its clip by
 `scripts/extract_posterstrip_frames.py` (40 films' worth of stills as

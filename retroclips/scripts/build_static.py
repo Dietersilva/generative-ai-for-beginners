@@ -208,12 +208,18 @@ def render_filter_bar(films: list) -> str:
     return '  <div class="filter-bar" role="group" aria-label="Filter by genre">\n' + "\n".join(buttons) + "\n  </div>"
 
 
+IN_FEED_AD_FIRST = 5  # 0-indexed: insert after the 6th card
+IN_FEED_AD_REPEAT = 8  # ...then every 8 cards after that
+
+
 def render_cards(films: list) -> str:
     parts = []
+    slot_n = 0
     for i, film in enumerate(films):
         parts.append(render_card(film))
-        if i == 5:  # after the 6th card
-            parts.append(render_ad_slot(films, "infeed", "in-feed"))
+        if i >= IN_FEED_AD_FIRST and (i - IN_FEED_AD_FIRST) % IN_FEED_AD_REPEAT == 0:
+            slot_n += 1
+            parts.append(render_ad_slot(films, "infeed", f"in-feed-{slot_n}"))
     return "\n".join(parts)
 
 
