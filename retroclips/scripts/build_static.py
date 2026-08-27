@@ -302,7 +302,7 @@ def csp_for_json_ld(json_ld_body: str) -> str:
         "default-src 'self'; "
         f"script-src 'self' '{script_hash}'; "
         "style-src 'self'; "
-        "img-src 'self'; "
+        "img-src 'self' data:; "
         "media-src 'self'; "
         "connect-src 'none'; "
         "object-src 'none'; "
@@ -395,6 +395,7 @@ def render_film_page(film: dict, version: str) -> str:
     <h1><a href="index.html" class="brand-link">RetroClips</a></h1>
   </div>
   <p class="tagline">{title} ({year})</p>
+  <p class="home-link"><a href="index.html">&larr; Home</a></p>
 </header>
 
 <main class="film-page">

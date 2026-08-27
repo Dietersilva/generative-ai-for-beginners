@@ -88,7 +88,12 @@ function enhanceCard(card) {
       video.muted = true;
     }
   };
-  video.addEventListener("click", toggleSound);
+  // The video itself no longer toggles sound on click -- clicking it (like
+  // clicking anywhere else non-interactive on the card) now goes to the
+  // film's own page instead, where the sound/narration controls live.
+  // The small sound-badge overlay is the exception, same as the narrate
+  // button, watch link, and PD badge: it's a deliberate control, so it
+  // keeps its own behavior instead of navigating.
   soundBadge.addEventListener("click", toggleSound);
 
   const stopThisNarration = () => {
@@ -187,14 +192,3 @@ function enhanceFilterBar() {
 shuffleGrid();
 document.querySelectorAll(".card").forEach(enhanceCard);
 enhanceFilterBar();
-
-// A film's own page (films/<id>.html... actually <id>.html at the site
-// root) has exactly one card and nothing to hover away to, so play its
-// clip immediately instead of waiting for a mouseenter that will never
-// come.
-const soloCard = document.querySelector(".film-page .card");
-if (soloCard) {
-  const soloVideo = soloCard.querySelector(".clip-video");
-  soloVideo.play().catch(() => {});
-  setReactionMood(moodForGenre(soloCard.dataset.genre || ""));
-}
