@@ -422,7 +422,7 @@ body {
   display: flex;
   width: max-content;
   height: 100%;
-  animation: poster-strip-scroll 50s linear infinite;
+  animation: poster-strip-scroll 180s linear infinite;
 }
 
 .poster-strip-track img {

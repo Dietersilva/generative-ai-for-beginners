@@ -121,14 +121,20 @@ Along with that:
 ### Ad slots
 
 There are two reserved ad slots — one under the header, one in-feed
-after the sixth film card (`.ad-slot`/`.ad-carousel` in `styles.css`,
-both generated into `index.html` by `build_static.py`). Neither loads
-a real ad yet; there's no ad network account to point them at. Rather
-than sit empty, each shows a slow horizontally-scrolling filmstrip of
-the site's own ten poster stills (a real collection, not a stock
-photo) — each tile sized to the image's own 16:9 aspect ratio so the
-whole picture shows, not a stretched sliver of it, dimmed slightly so
-it doesn't compete with the real film grid. To activate one for real:
+after the sixth film card (`.poster-strip`/`.poster-strip-frame` in
+`styles.css`, both generated into `index.html` by `build_static.py`;
+named that instead of anything containing "ad" because generic
+ad-blocker filter lists hide `.ad-*`/`data-ad-*` elements outright).
+Neither loads a real ad yet; there's no ad network account to point
+them at. Rather than sit empty, each shows a slow horizontally-
+scrolling filmstrip built from the site's own footage — each film's
+video poster plus three extra frames pulled from its clip by
+`scripts/extract_posterstrip_frames.py` (40 films' worth of stills as
+of this writing, not just 10), each tile sized to the image's own
+16:9 aspect ratio so the whole picture shows, not a stretched sliver
+of it, dimmed slightly so it doesn't compete with the real film grid.
+Run that script after fetching any new film's clip to add its frames
+to the rotation. To activate a slot for real:
 sign up for a network (Google AdSense is the obvious first stop,
 though very low-traffic/prototype sites are frequently rejected until
 there's real traffic — worth revisiting once this has an audience),
@@ -263,7 +269,10 @@ python3 -m http.server 8000
    --write` instead of writing the commentary by hand.
 5. Run `scripts/generate_narration.py --film-id <id>` to generate its
    narration audio.
-6. Run `scripts/build_static.py` to regenerate the static HTML card
+6. Run `scripts/extract_posterstrip_frames.py` to pull its frames
+   into the ad-slot poster-strip rotation (optional but cheap — local
+   only, no network).
+7. Run `scripts/build_static.py` to regenerate the static HTML card
    in `index.html`, its entry in `about.html`, and `sitemap.xml` —
    without this step the new film won't actually appear on the site.
 

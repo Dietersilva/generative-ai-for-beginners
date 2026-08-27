@@ -116,6 +116,25 @@ def render_card(film: dict) -> str:
     </article>"""
 
 
+POSTERSTRIP_DIR = ROOT / "assets" / "posterstrip"
+POSTERSTRIP_FRAMES_PER_FILM = 3  # matches FRAME_TIMES in extract_posterstrip_frames.py
+
+
+def poster_strip_images(films: list) -> list:
+    # One frame from assets/clips/<id>.jpg (the video's own poster) plus
+    # extract_posterstrip_frames.py's extra frames per film, if they've
+    # been generated -- falls back to just the one clip poster per film
+    # otherwise, so this doesn't hard-require that script having been run.
+    paths = []
+    for film in films:
+        fid = film["id"]
+        paths.append(f"assets/clips/{fid}.jpg")
+        for n in range(1, POSTERSTRIP_FRAMES_PER_FILM + 1):
+            if (POSTERSTRIP_DIR / f"{fid}-{n}.jpg").exists():
+                paths.append(f"assets/posterstrip/{fid}-{n}.jpg")
+    return paths
+
+
 def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
     # Reserved ad space, no network wired in yet -- filled with a slow
     # horizontally-scrolling filmstrip of the site's own poster stills (a
@@ -127,7 +146,7 @@ def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
     # .poster-strip-track (styles.css) is seamless -- same trick as the
     # caption ticker.
     imgs = "\n          ".join(
-        f'<img src="assets/clips/{film["id"]}.jpg" alt="">' for film in films
+        f'<img src="{src}" alt="">' for src in poster_strip_images(films)
     )
     return f"""    <div class="poster-strip poster-strip--{variant}" data-poster-strip="{slot_id}" aria-hidden="true">
       <div class="poster-strip-frame">
