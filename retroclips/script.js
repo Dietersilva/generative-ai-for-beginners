@@ -14,6 +14,20 @@ function stopAllAudio(exceptVideo) {
   });
 }
 
+// The reaction-cam's expression follows whichever card you're hovering.
+function moodForGenre(genre) {
+  const g = genre.toLowerCase();
+  if (g.includes("horror") || g.includes("psychological")) return "scared";
+  if (g.includes("comedy")) return "laughing";
+  if (g.includes("science")) return "amazed";
+  return "neutral";
+}
+
+function setReactionMood(mood) {
+  const cam = document.querySelector(".reaction-cam");
+  if (cam) cam.dataset.mood = mood;
+}
+
 function renderGrid(films) {
   const grid = document.getElementById("grid");
   grid.innerHTML = "";
@@ -35,8 +49,15 @@ function renderGrid(films) {
     video.loop = true;
     video.playsInline = true;
     video.setAttribute("aria-label", `${film.title} (${film.year}) clip: ${film.scene_label}`);
-    card.addEventListener("mouseenter", () => video.play().catch(() => {}));
-    card.addEventListener("mouseleave", () => video.pause());
+    const mood = moodForGenre(film.genre);
+    card.addEventListener("mouseenter", () => {
+      video.play().catch(() => {});
+      setReactionMood(mood);
+    });
+    card.addEventListener("mouseleave", () => {
+      video.pause();
+      setReactionMood("neutral");
+    });
 
     const soundBadge = document.createElement("button");
     soundBadge.type = "button";
@@ -129,15 +150,13 @@ function renderGrid(films) {
       commentaryRow.append(narrateBtn);
     }
 
-    const pdBasis = document.createElement("div");
-    pdBasis.className = "pd-basis";
-    let pdHTML = `<strong>Public domain:</strong> ${film.pd_basis}`;
-    if (film.pd_caveat) {
-      pdHTML += `<br>${film.pd_caveat}`;
-    }
-    pdBasis.innerHTML = pdHTML;
+    const pdBadge = document.createElement("a");
+    pdBadge.className = "pd-badge";
+    pdBadge.href = `about.html#${film.id}`;
+    pdBadge.textContent = "© Public Domain";
+    pdBadge.title = film.pd_caveat ? `${film.pd_basis} ${film.pd_caveat}` : film.pd_basis;
 
-    body.append(titleRow, meta, sceneLabel, commentaryRow, pdBasis);
+    body.append(titleRow, meta, sceneLabel, commentaryRow, pdBadge);
     card.append(clipFrame, body);
     grid.append(card);
   }

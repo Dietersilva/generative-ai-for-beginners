@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About &mdash; RetroClips</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="brand">
+    <a href="index.html" class="brand-link"><span class="brand-mark">RC</span></a>
+    <h1><a href="index.html" class="brand-link">RetroClips</a></h1>
+  </div>
+  <p class="tagline">Why every clip here is public domain, not a fair-use bet</p>
+</header>
+
+<main class="about-body">
+  <p>Six-second clips paired with commentary is roughly what a lot of YouTube
+  reaction channels do, but that's not evidence the practice is legally safe
+  to build a standalone site on. There's no bright-line duration that makes
+  a clip "fair use" &mdash; it's a case-by-case four-factor test &mdash; and what
+  actually protects most of those YouTube channels is platform-specific
+  (YouTube's Content ID lets a studio monetize instead of suing, and YouTube
+  absorbs the takedown process). A standalone site has neither cushion.</p>
+
+  <p>So this site only uses films whose US copyright has <strong>expired or
+  lapsed</strong>, meaning the film itself can legally be hosted outright, no
+  fair-use argument required. Two ways a film ends up here: <strong>term
+  expiration</strong> (anything published before 1930 is now out of
+  copyright in the US regardless of anything else), or a <strong>notice or
+  renewal lapse</strong> &mdash; some later films fell into the public domain
+  because of a technicality under the copyright law in effect when they were
+  made, like a missing copyright notice or an unrenewed registration.</p>
+
+  <p><strong>This is not legal advice.</strong> Verify a film's status
+  yourself before relying on it, especially for anything commercial &mdash;
+  renewal-lapse cases in particular are more error-prone to confirm than a
+  straightforward "published before 1930."</p>
+
+  <h2>Basis for each film</h2>
+  <div id="film-list">Loading…</div>
+
+  <p class="about-back"><a href="index.html">&larr; Back to the clips</a></p>
+</main>
+
+<script>
+  fetch("data/films.json")
+    .then((res) => res.json())
+    .then((data) => {
+      const list = document.getElementById("film-list");
+      list.innerHTML = "";
+      for (const film of data.films) {
+        const entry = document.createElement("div");
+        entry.className = "about-entry";
+        entry.id = film.id;
+        entry.innerHTML = `
+          <h3>${film.title} <span class="card-year">${film.year}</span></h3>
+          <p>${film.pd_basis}</p>
+          ${film.pd_caveat ? `<p class="about-caveat">${film.pd_caveat}</p>` : ""}
+        `;
+        list.append(entry);
+      }
+    });
+</script>
+</body>
+</html>

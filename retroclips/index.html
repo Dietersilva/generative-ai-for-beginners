@@ -15,7 +15,7 @@
   </div>
   <p class="tagline" id="tagline">Six seconds of film history. Twenty seconds of why it matters.</p>
   <p class="welcome">Do you love classic movies? So do we &mdash; we built this hoping you'll fall for one you've never seen, one shot at a time.</p>
-  <p class="pd-note">Every clip on this site is sourced from a film whose US copyright has expired or lapsed &mdash; not a fair-use claim on a current release.</p>
+  <p class="pd-note">Every clip on this site is public domain, not a fair-use claim &mdash; <a href="about.html">read why</a>.</p>
 </header>
 
 <main id="grid" class="grid" aria-live="polite">
@@ -23,21 +23,72 @@
 </main>
 
 <footer class="site-footer">
-  <p>Prototype build. All six clips are real footage sourced from archive.org &mdash; see <code>README.md</code> for sourcing details and how to add more.</p>
+  <p>Prototype build. Every clip is real footage sourced from archive.org &mdash; see <code>README.md</code> for sourcing details and how to add more.</p>
 </footer>
 
-<!-- Reaction cam: a small illustrated "person watching" overlay, not real footage -->
-<div class="reaction-cam" aria-hidden="true">
+<!-- Reaction cam: a small illustrated "person watching" overlay, not real
+     footage. Its expression reacts to the genre of whichever card you're
+     hovering (see script.js) -- purely decorative, aria-hidden. -->
+<div class="reaction-cam" aria-hidden="true" data-mood="neutral">
   <div class="reaction-cam-frame">
     <svg viewBox="0 0 100 100" class="reaction-figure">
-      <ellipse cx="50" cy="88" rx="34" ry="14" class="rc-shoulders"/>
+      <ellipse cx="50" cy="90" rx="36" ry="16" class="rc-shoulders"/>
       <circle cx="50" cy="46" r="22" class="rc-head"/>
-      <circle cx="41" cy="44" r="3" class="rc-eye"/>
-      <circle cx="59" cy="44" r="3" class="rc-eye"/>
-      <path d="M 40 58 Q 50 64 60 58" class="rc-mouth"/>
+
+      <g class="rc-brows rc-brows-neutral">
+        <path d="M 36 37 L 44 37"/>
+        <path d="M 56 37 L 64 37"/>
+      </g>
+      <g class="rc-brows rc-brows-scared">
+        <path d="M 35 35 Q 40 30 47 35"/>
+        <path d="M 53 35 Q 60 30 65 35"/>
+      </g>
+      <g class="rc-brows rc-brows-laughing">
+        <path d="M 36 36 Q 40 33 45 36"/>
+        <path d="M 55 36 Q 60 33 64 36"/>
+      </g>
+      <g class="rc-brows rc-brows-amazed">
+        <path d="M 35 31 L 46 33"/>
+        <path d="M 54 33 L 65 31"/>
+      </g>
+
+      <g class="rc-eyes rc-eyes-neutral">
+        <circle cx="41" cy="44" r="3"/>
+        <circle cx="59" cy="44" r="3"/>
+      </g>
+      <g class="rc-eyes rc-eyes-scared">
+        <circle cx="41" cy="45" r="5.5"/>
+        <circle cx="59" cy="45" r="5.5"/>
+        <circle cx="41" cy="45" r="1.6" class="rc-pupil"/>
+        <circle cx="59" cy="45" r="1.6" class="rc-pupil"/>
+      </g>
+      <g class="rc-eyes rc-eyes-laughing">
+        <path d="M 37 45 Q 41 40 45 45"/>
+        <path d="M 55 45 Q 59 40 63 45"/>
+      </g>
+      <g class="rc-eyes rc-eyes-amazed">
+        <circle cx="41" cy="44" r="5"/>
+        <circle cx="59" cy="44" r="5"/>
+        <circle cx="41" cy="44" r="1.4" class="rc-pupil"/>
+        <circle cx="59" cy="44" r="1.4" class="rc-pupil"/>
+      </g>
+
+      <path d="M 40 58 Q 50 64 60 58" class="rc-mouth rc-mouth-neutral"/>
+      <ellipse cx="50" cy="61" rx="6" ry="9" class="rc-mouth rc-mouth-scared"/>
+      <path d="M 35 55 Q 50 76 65 55 Q 50 65 35 55 Z" class="rc-mouth rc-mouth-laughing"/>
+      <circle cx="50" cy="61" r="4.5" class="rc-mouth rc-mouth-amazed"/>
     </svg>
     <div class="reaction-cam-scanline"></div>
   </div>
+  <svg class="reaction-popcorn" viewBox="0 0 40 40" aria-hidden="true">
+    <path d="M 10 16 L 30 16 L 26 38 L 14 38 Z" class="rc-popcorn-bucket"/>
+    <path d="M 10 16 L 30 16 L 29 20 L 11 20 Z" class="rc-popcorn-bucket-rim"/>
+    <circle cx="15" cy="13" r="4" class="rc-popcorn-kernel"/>
+    <circle cx="21" cy="10" r="4.5" class="rc-popcorn-kernel"/>
+    <circle cx="27" cy="13" r="4" class="rc-popcorn-kernel"/>
+    <circle cx="18" cy="15" r="3.5" class="rc-popcorn-kernel"/>
+    <circle cx="24" cy="16" r="3.5" class="rc-popcorn-kernel"/>
+  </svg>
   <span class="reaction-cam-label">watching</span>
 </div>
 

@@ -4,6 +4,9 @@ A prototype for a site that pairs a 6-7 second clip from a famous *older*
 film with ~15-20 seconds of commentary underneath, plus a small
 illustrated "reaction cam" watching along in the corner.
 
+**Live:** https://dietersilva.github.io/generative-ai-for-beginners/retroclips/
+(served via GitHub Pages from this branch — see "Not done yet" below).
+
 ## Why public domain, not fair use
 
 The original pitch was "scrape clips from famous movies." Six-second
@@ -27,10 +30,12 @@ fair-use argument required. Two ways a film ends up here:
   when they were made: a missing copyright notice (*Night of the Living
   Dead*) or an unrenewed registration (*His Girl Friday*).
 
-Each film card on the site shows its specific basis in a `Public
-domain:` line, plus a caveat where the reasoning is more fact-dependent
-(renewal-lapse cases in particular are more error-prone to verify than
-a straightforward "published before 1930"). **This is not legal
+Each film card shows a small `© Public Domain` badge; the specific
+basis per film (plus a caveat where the reasoning is more
+fact-dependent — renewal-lapse cases in particular are more
+error-prone to verify than a straightforward "published before 1930")
+lives on `about.html`, generated live from `data/films.json` so it
+can't drift out of sync with the actual data. **This is not legal
 advice** — verify a film's status yourself before relying on it,
 especially for anything commercial.
 
@@ -38,12 +43,17 @@ especially for anything commercial.
 
 - `index.html`, `styles.css`, `script.js` — a static site, no build
   step. Renders a card per film from `data/films.json`: clip, title,
-  director/year/genre, the scene shown, commentary, and the PD basis.
-- `data/films.json` — six films with real metadata and hand-written
+  director/year/genre, the scene shown, commentary, and a PD badge.
+- `about.html` — the full "why public domain" rationale plus a
+  per-film basis list, rendered from `data/films.json` at load time.
+- `data/films.json` — ten films with real metadata and hand-written
   commentary (in the target style/length for the auto-generation
   pipeline below).
 - A CSS/SVG "reaction cam" in the bottom-right corner — an illustrated
-  figure, not real video, so there's no likeness/rights question.
+  figure, not real video, so there's no likeness/rights question. Its
+  expression reacts to whichever card's genre you're hovering (scared
+  for horror, laughing for comedy, amazed for sci-fi) via a
+  `data-mood` attribute swapped in `script.js`.
 
 ### The clips are real footage, sourced from archive.org
 
@@ -102,7 +112,7 @@ five films' and is called out in that film's `pd_caveat`.
 
 Re-running `make_placeholder_clips.sh` would overwrite these with
 synthetic placeholders again — it's kept for adding new films quickly
-before their real clip is sourced, not for the six that already have
+before their real clip is sourced, not for the ten that already have
 one.
 
 ### Commentary generation
@@ -139,15 +149,19 @@ python3 -m http.server 8000
 
 ## Not done yet / open questions
 
-- **Domain / hosting** — `retroclips.com` isn't registered and this
-  isn't deployed anywhere; it's a local prototype.
-- **Reaction cam** — currently a static illustrated loop. Options for
-  a real version: a licensed stock reaction-footage loop, or an
-  AI-generated avatar (avoids using any real person's likeness
-  without consent) — either is a separate follow-up, not attempted
-  here.
-- **Scale** — six films is a proof of concept, not a catalog. The
-  public-domain feature-film pool is large (archive.org alone lists
-  hundreds), but each one still needs its PD status individually
+- **Domain** — `retroclips.com` itself isn't registered. The site is
+  live on GitHub Pages (see link at the top) instead, serving straight
+  off this branch — worth moving to a real domain if this goes past
+  prototype, and worth flipping the Pages source over to `main` once
+  this branch's PR is merged (Pages settings on GitHub, not something
+  set in this repo's files).
+- **Reaction cam** — still an illustrated SVG, not real video, so
+  there's no likeness/rights question, but its four expressions
+  (neutral/scared/laughing/amazed) are simple shape swaps. A real
+  video version would need either licensed stock reaction footage or
+  an AI-generated avatar — not attempted here.
+- **Scale** — ten films is still a proof of concept, not a catalog.
+  The public-domain feature-film pool is large (archive.org alone
+  lists hundreds), but each one still needs its PD status individually
   confirmed and a real in-point timestamped by hand — there's no
   shortcut for either step.
