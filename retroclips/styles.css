@@ -381,28 +381,16 @@ body {
   border-bottom-color: var(--ink);
 }
 
-/* Ad slots: clearly labeled, unstyled reserved space -- no ad network is
-   wired in yet (that requires an approved account; see README). Kept
-   visually distinct from the film cards so they're never mistaken for
-   content. */
+/* Ad slots: reserved space with no ad network wired in yet (that needs an
+   approved account; see README). Filled for now with a slow, CSS-only
+   crossfade montage built from the site's own poster stills -- an actual
+   "collection," not a stock photo -- so it's never a bare, broken-looking
+   box, but still clearly marked and visually distinct from the film grid
+   so it's never mistaken for a real card. */
 .ad-slot {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0.5rem 1.5rem;
-}
-
-.ad-slot-label {
-  display: block;
-  text-align: center;
-  font-family: var(--mono);
-  font-size: 0.62rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ink-dim);
-  border: 1px dashed var(--border);
-  border-radius: var(--radius);
-  padding: 1.4rem 1rem;
-  opacity: 0.7;
 }
 
 .ad-slot--leaderboard {
@@ -414,8 +402,78 @@ body {
   padding: 0;
 }
 
-.ad-slot--infeed .ad-slot-label {
-  padding: 2.4rem 1rem;
+.ad-carousel {
+  position: relative;
+  overflow: hidden;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+}
+
+.ad-slot--leaderboard .ad-carousel {
+  height: 110px;
+}
+
+.ad-slot--infeed .ad-carousel {
+  height: 220px;
+}
+
+.ad-carousel img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 20%;
+  opacity: 0;
+  filter: grayscale(45%) sepia(15%) brightness(0.55);
+  animation: ad-carousel-cycle 40s infinite;
+}
+
+.ad-carousel img:nth-of-type(1)  { animation-delay: 0s; }
+.ad-carousel img:nth-of-type(2)  { animation-delay: 4s; }
+.ad-carousel img:nth-of-type(3)  { animation-delay: 8s; }
+.ad-carousel img:nth-of-type(4)  { animation-delay: 12s; }
+.ad-carousel img:nth-of-type(5)  { animation-delay: 16s; }
+.ad-carousel img:nth-of-type(6)  { animation-delay: 20s; }
+.ad-carousel img:nth-of-type(7)  { animation-delay: 24s; }
+.ad-carousel img:nth-of-type(8)  { animation-delay: 28s; }
+.ad-carousel img:nth-of-type(9)  { animation-delay: 32s; }
+.ad-carousel img:nth-of-type(10) { animation-delay: 36s; }
+
+@keyframes ad-carousel-cycle {
+  0%, 100% { opacity: 0; }
+  2% { opacity: 1; }
+  8% { opacity: 1; }
+  10% { opacity: 0; }
+}
+
+.ad-slot-label {
+  position: absolute;
+  left: 50%;
+  bottom: 0.5rem;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink);
+  background: rgba(5, 4, 3, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-carousel img {
+    animation: none;
+    opacity: 0;
+  }
+  .ad-carousel img:nth-of-type(1) {
+    opacity: 1;
+  }
 }
 
 .site-footer {

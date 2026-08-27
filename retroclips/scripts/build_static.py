@@ -116,8 +116,19 @@ def render_card(film: dict) -> str:
     </article>"""
 
 
-AD_SLOT_INFEED = """    <div class="ad-slot ad-slot--infeed" data-ad-slot="in-feed" aria-hidden="true">
-      <span class="ad-slot-label">Advertisement &mdash; reserved for an approved ad network</span>
+def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
+    # Reserved ad space, no network wired in yet -- filled with a CSS-only
+    # crossfade montage of the site's own poster stills (a real collection,
+    # not a stock photo) so it isn't a bare box. See .ad-carousel in
+    # styles.css for the animation.
+    imgs = "\n      ".join(
+        f'<img src="assets/clips/{film["id"]}.jpg" alt="">' for film in films
+    )
+    return f"""    <div class="ad-slot ad-slot--{variant}" data-ad-slot="{slot_id}" aria-hidden="true">
+      <div class="ad-carousel">
+        {imgs}
+        <span class="ad-slot-label">Advertisement &mdash; reserved for an approved ad network</span>
+      </div>
     </div>"""
 
 
@@ -126,7 +137,7 @@ def render_cards(films: list) -> str:
     for i, film in enumerate(films):
         parts.append(render_card(film))
         if i == 5:  # after the 6th card
-            parts.append(AD_SLOT_INFEED)
+            parts.append(render_ad_slot(films, "infeed", "in-feed"))
     return "\n".join(parts)
 
 
@@ -189,6 +200,9 @@ def csp_hash(script_body: str) -> str:
 
 def build_index(data: dict) -> None:
     text = INDEX_HTML.read_text()
+
+    ad_top = render_ad_slot(data["films"], "leaderboard", "top")
+    text = inject(text, "<!-- SEO:ADTOP_START -->", "<!-- SEO:ADTOP_END -->", ad_top)
 
     cards = render_cards(data["films"])
     text = inject(text, "<!-- SEO:CARDS_START -->", "<!-- SEO:CARDS_END -->", cards)

@@ -95,7 +95,7 @@ function enhanceCard(card) {
       return;
     }
     const utterance = new SpeechSynthesisUtterance(commentary.textContent);
-    utterance.rate = 0.95;
+    utterance.rate = 0.85;
     utterance.onend = utterance.onerror = stopThisNarration;
     window.speechSynthesis.speak(utterance);
   };

@@ -50,6 +50,7 @@ def generate_one(film: dict, voice_id: str, api_key: str) -> pathlib.Path:
             "similarity_boost": 0.75,
             "style": 0.35,
             "use_speaker_boost": True,
+            "speed": 0.85,
         },
     }).encode("utf-8")
 

@@ -120,15 +120,19 @@ Along with that:
 
 ### Ad slots
 
-There are two reserved, clearly-labeled ad slots — one under the
-header, one in-feed after the sixth film card (`.ad-slot` in
-`styles.css`, generated into `index.html` by `build_static.py` for
-the in-feed one). Neither loads anything right now; there's no ad
-network account to point them at yet. To activate one: sign up for a
-network (Google AdSense is the obvious first stop, though very
-low-traffic/prototype sites are frequently rejected until there's
-real traffic — worth revisiting once this has an audience), then drop
-that network's script/tag inside the corresponding `.ad-slot` element.
+There are two reserved ad slots — one under the header, one in-feed
+after the sixth film card (`.ad-slot`/`.ad-carousel` in `styles.css`,
+both generated into `index.html` by `build_static.py`). Neither loads
+a real ad yet; there's no ad network account to point them at. Rather
+than sit empty, each shows a slow, CSS-only crossfade of the site's
+own ten poster stills (a real collection, not a stock photo), dimmed
+and labeled "Advertisement" so it still reads as reserved space, not
+content. To activate one for real: sign up for a network (Google
+AdSense is the obvious first stop, though very low-traffic/prototype
+sites are frequently rejected until there's real traffic — worth
+revisiting once this has an audience), then swap the `.ad-carousel`
+markup inside the corresponding `.ad-slot` element for that network's
+script/tag.
 
 ### Monetization status
 
@@ -230,7 +234,10 @@ python3 scripts/generate_narration.py --voice-id <voice_id>
 If a film's MP3 is missing (e.g. a new film added before running this
 script) or fails to load, `script.js` falls back to the browser's
 built-in speech synthesis automatically — same as before narration
-audio existed at all.
+audio existed at all. Both paths are deliberately paced a little
+slower than each API's default (ElevenLabs' `voice_settings.speed:
+0.85`; the browser fallback's `utterance.rate = 0.85`) after early
+feedback that the default pace read too fast.
 
 ## Running it locally
 
