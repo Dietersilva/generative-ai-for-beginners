@@ -626,6 +626,66 @@
         "start_timestamp": "00:32:56",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "steamboat-bill-jr-1928",
+      "title": "Steamboat Bill, Jr.",
+      "year": 1928,
+      "director": "Charles Reisner",
+      "country": "USA",
+      "genre": "Action-Comedy / Silent",
+      "scene_label": "The house front falls",
+      "scene_description": "As a cyclone tears through town, Buster stands motionless in the exact spot where a collapsing house's attic window will pass clean over him -- the whole two-story facade crashes down around him, missing him by inches on every side.",
+      "commentary": "The falling building front weighed about two tons, and the attic window was sized to clear Keaton's body by only a few inches on either side -- the crew reportedly couldn't bear to watch, and Keaton insisted on doing the stunt himself, marking his exact spot on the ground beforehand. There was no trick photography: one camera, one take, and a genuinely lethal margin for error if the wind had pushed the facade even slightly off its rig. It's routinely cited as the single most dangerous shot of the silent era, and stunt coordinators still study it today.",
+      "pd_basis": "US copyright term fully expired (published 1928, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/steamboat-bill-jr.-1928-by-buster-keaton",
+        "source_identifier": "steamboat-bill-jr.-1928-by-buster-keaton",
+        "start_timestamp": "00:59:49",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "sherlock-jr-1924",
+      "title": "Sherlock Jr.",
+      "year": 1924,
+      "director": "Buster Keaton",
+      "country": "USA",
+      "genre": "Comedy / Silent",
+      "scene_label": "Walking into the movie",
+      "scene_description": "Having fallen asleep as the theater's projectionist, Buster's dream-self wanders down the aisle and into the screen, and the backdrop keeps cutting out from under him -- a desert one moment, a rock in the middle of the ocean the next.",
+      "commentary": "Getting Keaton to appear seamlessly inside a rapid series of environments -- a desert, a busy street, a mountain ledge, the open ocean -- required none of the compositing tools that would later make this kind of effect routine; in 1924 it meant surveying each location in advance, chalking Keaton's exact mark, and matching the camera's height, distance, and lens precisely between setups so the cut from one world to the next would land as a jolt instead of an obvious scene change. It's still cited as one of the most technically demanding effects sequences of the silent era, achieved with nothing but a tape measure and exact repetition.",
+      "pd_basis": "US copyright term fully expired (published 1924, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/sherlockjr1924_201909",
+        "source_identifier": "sherlockjr1924_201909",
+        "start_timestamp": "00:21:03",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-hunchback-of-notre-dame-1923",
+      "title": "The Hunchback of Notre Dame",
+      "year": 1923,
+      "director": "Wallace Worsley",
+      "country": "USA",
+      "genre": "Drama / Historical",
+      "scene_label": "The swing to sanctuary",
+      "scene_description": "Quasimodo scales down the cathedral's ornate facade to snatch Esmeralda from the gallows below, then carries her inside Notre Dame -- under medieval law, once she's within its walls, the church itself becomes her only protection from execution.",
+      "commentary": "Universal built a full-scale reproduction of the Notre Dame plaza on its studio lot -- reportedly the most expensive set built in Hollywood up to that point -- and populated it with thousands of extras for the film's climactic siege. Lon Chaney designed and built his own Quasimodo makeup and body rig, including a twenty-to-thirty-pound rubber hump and harness he wore through the entire shoot in the California sun. The \"sanctuary\" the film's plot hinges on was real medieval law: a church genuinely could shelter a fugitive from secular arrest, at least temporarily, and that specific legal technicality is what the climax turns on.",
+      "pd_basis": "US copyright term fully expired (published 1923, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/TheHunchbackOfNotreDame1923_201312",
+        "source_identifier": "TheHunchbackOfNotreDame1923_201312",
+        "start_timestamp": "01:28:17",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
