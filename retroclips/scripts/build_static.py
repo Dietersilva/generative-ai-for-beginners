@@ -297,6 +297,36 @@ def apply_asset_version(text: str, version: str) -> str:
     return text
 
 
+def apply_site_url(text: str) -> str:
+    # Idempotent: rewrites the domain+path prefix in canonical/og:url/og:image/
+    # twitter:image to the current SITE_URL, regardless of what was previously
+    # baked in (including a github.io subpath), so index.html and about.html
+    # (patched in place, not regenerated from scratch) can't silently drift to
+    # a stale domain/path on a future rebuild. Matched by known trailing
+    # suffix rather than by prefix, since SITE_URL itself can contain slashes
+    # (a github.io subpath), which a prefix-based replace would double up.
+    def replace_url(match: "re.Match") -> str:
+        attr, old_url = match.group(1), match.group(2)
+        if old_url.endswith("about.html"):
+            return f'{attr}{SITE_URL}about.html"'
+        if "assets/clips/" in old_url:
+            filename = old_url.split("assets/clips/")[-1]
+            return f'{attr}{SITE_URL}assets/clips/{filename}"'
+        return f'{attr}{SITE_URL}"'
+
+    text = re.sub(
+        r'(<link rel="canonical" href="|<meta property="og:url" content=")(https?://[^"]+)"',
+        replace_url,
+        text,
+    )
+    text = re.sub(
+        r'(<meta property="og:image" content="|<meta name="twitter:image" content=")(https?://[^"]+)"',
+        replace_url,
+        text,
+    )
+    return text
+
+
 def csp_hash(script_body: str) -> str:
     digest = hashlib.sha256(script_body.encode("utf-8")).digest()
     return "sha256-" + base64.b64encode(digest).decode("ascii")
@@ -320,6 +350,7 @@ def csp_for_json_ld(json_ld_body: str) -> str:
 def build_index(data: dict, version: str) -> None:
     text = INDEX_HTML.read_text()
     text = apply_asset_version(text, version)
+    text = apply_site_url(text)
 
     filter_bar = render_filter_bar(data["films"])
     text = inject(text, "<!-- SEO:FILTERBAR_START -->", "<!-- SEO:FILTERBAR_END -->", filter_bar)
@@ -435,6 +466,7 @@ def build_film_pages(data: dict, version: str) -> list:
 def build_about(data: dict, version: str) -> None:
     text = ABOUT_HTML.read_text()
     text = apply_asset_version(text, version)
+    text = apply_site_url(text)
     entries = "\n".join(render_about_entry(film) for film in data["films"])
     text = inject(text, "<!-- SEO:ENTRIES_START -->", "<!-- SEO:ENTRIES_END -->", entries)
     ABOUT_HTML.write_text(text)

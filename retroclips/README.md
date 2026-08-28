@@ -49,7 +49,7 @@ especially for anything commercial.
   DOM from scratch.
 - `about.html` — the full "why public domain" rationale plus a
   per-film basis list, statically generated from `data/films.json`.
-- `data/films.json` — ten films with real metadata and hand-written
+- `data/films.json` — 52 films with real metadata and hand-written
   commentary (in the target style/length for the auto-generation
   pipeline below). This is the single source of truth; both HTML
   pages are generated from it (see below), so they can't drift out of
@@ -155,8 +155,8 @@ loads a real ad yet; there's no ad network account to point them at.
 Rather than sit empty, each shows a slow horizontally-scrolling
 filmstrip built from the site's own footage — each film's video
 poster plus three extra frames pulled from its clip by
-`scripts/extract_posterstrip_frames.py` (well over 80 films' worth of
-stills as of this writing, not just 10), each tile sized to the image's own
+`scripts/extract_posterstrip_frames.py` (52 films' worth of stills as
+of this writing — over 200 tiles total), each tile sized to the image's own
 16:9 aspect ratio so the whole picture shows, not a stretched sliver
 of it, dimmed slightly so it doesn't compete with the real film grid.
 Each tile also links to that film's own page, so the slot doubles as
@@ -329,12 +329,20 @@ python3 -m http.server 8000
   this branch's PR is merged (Pages settings on GitHub, not something
   set in this repo's files).
 - **Reaction cam** — still an illustrated SVG, not real video, so
-  there's no likeness/rights question, but its four expressions
-  (neutral/scared/laughing/amazed) are simple shape swaps. A real
-  video version would need either licensed stock reaction footage or
-  an AI-generated avatar — not attempted here.
-- **Scale** — ten films is still a proof of concept, not a catalog.
-  The public-domain feature-film pool is large (archive.org alone
-  lists hundreds), but each one still needs its PD status individually
-  confirmed and a real in-point timestamped by hand — there's no
-  shortcut for either step.
+  there's no likeness/rights question. It now has eleven mood
+  variants (neutral, scared, laughing, amazed, tense, thrilled,
+  swoon, sleepy, wink, dizzy, suspicious), each a shape/prop swap on
+  the same base figure. A real video version would need either
+  licensed stock reaction footage or an AI-generated avatar — not
+  attempted here.
+- **Scale** — 52 films and growing, sourced in small batches with each
+  film's PD status individually confirmed and its clip in-point
+  timestamped by hand — there's no shortcut for either step. The
+  public-domain feature-film pool is still much larger (archive.org
+  alone lists hundreds), so this keeps expanding over time.
+- **Narration gaps** — the ElevenLabs narration quota is finite; a
+  handful of the most recently added films can temporarily ship
+  without a generated `assets/narration/*.mp3` file. The site falls
+  back to the browser's built-in speech synthesis in that case, so
+  narration still works, just not in the custom voice. Backfilling
+  the missing mp3s once quota resets is a standing follow-up.

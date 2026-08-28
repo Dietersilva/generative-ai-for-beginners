@@ -13,6 +13,6 @@
 
 ## Notes
 
-- 22 films as of 2026-08, still growing.
+- 52 films as of 2026-08, still growing.
 - All clips and narration audio are static assets, generated once by the scripts in /scripts and committed to the repo -- nothing on this site is fetched live from a third-party API at request time.
 - Source and full sourcing methodology: https://github.com/dietersilva/generative-ai-for-beginners/tree/main/retroclips
