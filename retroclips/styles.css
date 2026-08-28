@@ -987,8 +987,17 @@ body {
   }
 }
 
+/* Shrink rather than hide on narrow screens -- this is the one place
+   most phone visitors will ever see the mascot react, especially now
+   that touch has its own first-tap preview (see script.js). Scaling
+   the whole fixed-position group keeps every child's hand-tuned
+   pixel offset (popcorn bucket, drink cup, label) proportional
+   without having to recompute each one per breakpoint. */
 @media (max-width: 480px) {
-  .reaction-cam { display: none; }
+  .reaction-cam {
+    transform: translateX(-50%) scale(0.72);
+    transform-origin: bottom center;
+  }
 }
 
 /* On-brand keyboard focus ring -- the browser default is a blue outline
