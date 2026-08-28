@@ -746,6 +746,66 @@
         "start_timestamp": "00:06:20",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-thief-of-bagdad-1924",
+      "title": "The Thief of Bagdad",
+      "year": 1924,
+      "director": "Raoul Walsh",
+      "country": "USA",
+      "genre": "Fantasy / Action",
+      "scene_label": "The flying carpet, and the Princess",
+      "scene_description": "Ahmed reunites with the Princess on the magic carpet as it carries them to safety over a Bagdad seized by the Mongol army.",
+      "commentary": "The bazaar set alone covered more than two acres on a concrete floor that had to be re-enameled several times a week, part of a production budget over $1.1 million -- an enormous sum for 1924 -- under design chief William Cameron Menzies, whose soaring, geometric sets here launched his career and helped invent what the industry would later call production design. Filming ran more than 28 weeks. Douglas Fairbanks, who produced and starred, did his own stunts and insisted on practical in-camera effects for the flying carpet and the rest of the film's magic rather than the optical trickery available at the time.",
+      "pd_basis": "US copyright term fully expired (published 1924, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-thief-of-bagdad-1924",
+        "source_identifier": "the-thief-of-bagdad-1924",
+        "start_timestamp": "02:24:48",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-mark-of-zorro-1920",
+      "title": "The Mark of Zorro",
+      "year": 1920,
+      "director": "Fred Niblo",
+      "country": "USA",
+      "genre": "Swashbuckler / Action",
+      "scene_label": "Zorro crosses blades at last",
+      "scene_description": "Recognizing Zorro's swordplay from an earlier duel, the villain finally faces the masked avenger blade to blade.",
+      "commentary": "Adapted from Johnston McCulley's pulp serial \"The Curse of Capistrano,\" this was Fairbanks's first costume swashbuckler after a decade of contemporary comedies, and its success reoriented the rest of his career toward the swordfights and derring-do he's remembered for. Fairbanks did the bulk of his own stunt work and fencing here, athletic enough that decades later Bob Kane cited this exact film -- the mask, the cape, the double identity of a foppish nobleman hiding a masked vigilante -- as a direct model for Batman.",
+      "pd_basis": "US copyright term fully expired (published 1920, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-mark-of-zorro-1920_202310",
+        "source_identifier": "the-mark-of-zorro-1920_202310",
+        "start_timestamp": "01:43:06",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "body-and-soul-1925",
+      "title": "Body and Soul",
+      "year": 1925,
+      "director": "Oscar Micheaux",
+      "country": "USA",
+      "genre": "Drama",
+      "scene_label": "The Reverend takes the pulpit",
+      "scene_description": "In his screen debut, Paul Robeson plays a false preacher working his congregation, opening a sermon before a room that doesn't yet see through him.",
+      "commentary": "This was Paul Robeson's first film role, and he plays two parts -- the corrupt \"Reverend\" seen here, and that man's honest twin brother -- a dual performance Micheaux built the entire film around. Micheaux wrote, directed, produced, and distributed the picture independently outside the studio system, one of the so-called \"race films\" made explicitly for Black audiences at a time when most American theaters were segregated. New York's censors found its portrait of a fraudulent preacher offensive enough that they forced Micheaux to cut the original nine-reel version down to five before it could screen at all; that shortened cut is the only version known to survive.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/body-and-soul-1925-by-oscar-micheaux",
+        "source_identifier": "body-and-soul-1925-by-oscar-micheaux",
+        "start_timestamp": "00:07:56",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
