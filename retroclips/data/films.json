@@ -926,6 +926,66 @@
         "start_timestamp": "00:19:52",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-golem-1920",
+      "title": "The Golem: How He Came into the World",
+      "year": 1920,
+      "director": "Paul Wegener, Carl Boese",
+      "country": "Germany",
+      "genre": "Horror / Fantasy",
+      "scene_label": "\"Aemaet\" -- the Golem opens its eyes",
+      "scene_description": "Rabbi Loew slides the star-shaped amulet, engraved with the magic word AEMAET, into the clay figure's chest. A beat of stillness, then an extreme close-up: the Golem's stone eyes snap open.",
+      "commentary": "Paul Wegener not only co-directed but plays the Golem himself, under makeup and a heavy clay-textured suit designed by Expressionist architect Hans Poelzig. The film is a prequel to two earlier Golem films Wegener had already made and lost, and it's the one that survives complete. Its blocky, jagged medieval-ghetto sets and the Golem's own lumbering, silent menace fed directly into Hollywood horror a decade later -- Boris Karloff's Frankenstein's Monster owes a visible debt to Wegener's performance and silhouette.",
+      "pd_basis": "US copyright term fully expired (published 1920, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-golem-how-he-came-into-the-world-1920-by-paul-wegener",
+        "source_identifier": "the-golem-how-he-came-into-the-world-1920-by-paul-wegener",
+        "start_timestamp": "00:32:22",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "grass-1925",
+      "title": "Grass: A Nation's Battle for Life",
+      "year": 1925,
+      "director": "Merian C. Cooper, Ernest B. Schoedsack",
+      "country": "USA",
+      "genre": "Documentary",
+      "scene_label": "\"Zardeh Kuh is conquered!\"",
+      "scene_description": "A single-file line of pack animals and tribespeople, silhouetted against jagged peaks, claws its way up a steep, snow-choked mountainside during the Bakhtiari's twice-yearly migration.",
+      "commentary": "Cooper and Schoedsack shot this with no actors, no script, and barely any budget, following the Bakhtiari people of Persia on their real, brutal migration over the Zagros Mountains in search of grazing land -- fording an icy river and then climbing an near-vertical, snowbound pass, on foot, with their herds. The two filmmakers were so taken with adventure filmmaking after this that they went on to make King Kong together eight years later. Grass is now preserved in the National Film Registry as one of the earliest feature-length documentaries.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/1925-grass-a-nations-battle-for-life",
+        "source_identifier": "1925-grass-a-nations-battle-for-life",
+        "start_timestamp": "01:04:16",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-lodger-1927",
+      "title": "The Lodger: A Story of the London Fog",
+      "year": 1927,
+      "director": "Alfred Hitchcock",
+      "country": "UK",
+      "genre": "Crime / Thriller",
+      "scene_label": "A stranger comes to stay",
+      "scene_description": "A fog-wreathed figure appears at the boarding-house door asking for a room, his face wrapped in a scarf to the eyes. The landlady looks up at him, framed from below on the staircase, unsure what she's just let in.",
+      "commentary": "Hitchcock always called this his first true film -- the first to show \"the Hitchcock touch.\" He was 27, working from a novel loosely inspired by Jack the Ripper, and already reaching for the visual tricks that would define his career: a glass floor built into the set so the camera could look straight up through the ceiling at the lodger's pacing feet, and a wrongly-suspected man at the center of the plot, a theme Hitchcock would return to again and again over the next five decades. Star Ivor Novello was already a matinee idol, which forced the studio to soften the ending so its heartthrob couldn't turn out to be the killer.",
+      "pd_basis": "US copyright term fully expired (published 1927, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-lodger-a-story-of-the-london-fog-1927-bd-mkv",
+        "source_identifier": "the-lodger-a-story-of-the-london-fog-1927-bd-mkv",
+        "start_timestamp": "00:14:16",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
