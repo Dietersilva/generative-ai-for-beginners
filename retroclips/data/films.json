@@ -866,6 +866,66 @@
         "start_timestamp": "01:20:40",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "intolerance-1916",
+      "title": "Intolerance",
+      "year": 1916,
+      "director": "D.W. Griffith",
+      "country": "USA",
+      "genre": "Drama / Historical",
+      "scene_label": "The fall of Babylon",
+      "scene_description": "In the film's ancient-Babylon strand, worshippers crowd the base of the city's colossal winged-bull gods -- one of four separate historical eras Griffith crosscuts between across the film's three-hour runtime.",
+      "commentary": "Griffith built this Babylon set to a scale nothing in film had attempted before -- walls and towering statuary reportedly visible for miles across Hollywood, populated with some 3,000 extras for its crowd scenes, standing for years afterward as a local landmark before it was finally torn down. He made the film partly as his answer to the firestorm of criticism over his previous picture, The Birth of a Nation: an epic about the destructive cost of intolerance across four different eras of history, crosscut together in a way virtually no one had tried at feature length before. It was a costly commercial failure on release and contributed to Griffith's later financial troubles, but its editing techniques went on to influence nearly every filmmaker who saw it.",
+      "pd_basis": "US copyright term fully expired (published 1916, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/intolerance-loves-struggle-throughout-the-ages-1916-by-david-w.-griffith",
+        "source_identifier": "intolerance-loves-struggle-throughout-the-ages-1916-by-david-w.-griffith",
+        "start_timestamp": "01:52:06",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "way-down-east-1920",
+      "title": "Way Down East",
+      "year": 1920,
+      "director": "D.W. Griffith",
+      "country": "USA",
+      "genre": "Drama",
+      "scene_label": "The ice-floe rescue",
+      "scene_description": "Stranded unconscious on a breaking ice floe drifting toward a waterfall, Anna is reached just in time by the man who loves her, leaping floe to floe to carry her to shore.",
+      "commentary": "Lillian Gish did her own stunts here, no double, on real breaking ice during a New England blizzard in temperatures below zero -- about twenty takes a day for three weeks left her with frostbitten fingers and nerve damage in the hand she trailed in the freezing water, feeling she said she never fully got back. Griffith himself was frostbitten on one side of his face directing the scene. Gish had spent the weeks beforehand taking daily ice baths and walking the streets coatless to prepare her body for the cold. None of it was faked: the ice really was breaking apart under them as the cameras rolled.",
+      "pd_basis": "US copyright term fully expired (published 1920, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/way-down-east-1920-by-d.-w.-griffith",
+        "source_identifier": "way-down-east-1920-by-d.-w.-griffith",
+        "start_timestamp": "02:22:28",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "a-fool-there-was-1915",
+      "title": "A Fool There Was",
+      "year": 1915,
+      "director": "Frank Powell",
+      "country": "USA",
+      "genre": "Drama",
+      "scene_label": "\"Kiss me, my fool!\"",
+      "scene_description": "The Vampire closes in on the married diplomat she's chosen to destroy, delivering the line that would become the film's most quoted, and most imitated, moment.",
+      "commentary": "Theda Bara plays \"The Vampire\" -- never given an actual name -- and the film made her one of the first manufactured movie stars, complete with a fabricated backstory claiming she was born in the shadow of the Sphinx to a French artist and an Arabian princess (she was actually from Cincinnati). Its intertitle \"Kiss me, my fool!\" became one of the most quoted lines of the silent era, endlessly repeated and misquoted as \"kiss me, you fool\" for decades after. The film adapts a 1909 Broadway play, itself inspired by Rudyard Kipling's poem \"The Vampire,\" and it's largely responsible for popularizing the word \"vamp\" as shorthand for a seductive femme fatale.",
+      "pd_basis": "US copyright term fully expired (published 1915, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/a-fool-there-was-1915_202507",
+        "source_identifier": "a-fool-there-was-1915_202507",
+        "start_timestamp": "00:19:52",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
