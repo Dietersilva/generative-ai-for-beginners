@@ -21,7 +21,7 @@
 <!-- SEO:CSP_START -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-oBO0UDYQLhVZmFcHqm0Uu5kxwomebLJgJUwrtaKjAog='; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <!-- SEO:CSP_END -->
-<link rel="stylesheet" href="styles.css?v=e91e446cba">
+<link rel="stylesheet" href="styles.css?v=fc7900ed25">
 <!-- SEO:JSONLD_START -->
 <script type="application/ld+json">{
   "@context": "https://schema.org",
@@ -3054,7 +3054,10 @@
       <ellipse cx="71" cy="48" rx="4" ry="7" class="rc-ear"/>
       <ellipse cx="50" cy="46" rx="21" ry="23" class="rc-head"/>
       <path d="M 28 38 Q 26 18 50 17 Q 74 18 72 38 Q 72 24 50 24 Q 28 24 28 38 Z" class="rc-hair"/>
+      <path d="M 31 27 Q 28 8 50 7 Q 72 8 69 27 Z" class="rc-hat-crown"/>
+      <ellipse cx="50" cy="25" rx="25" ry="4" class="rc-hat-brim"/>
       <path d="M 49 47 Q 47 51 48 53 Q 49 54 51 53" class="rc-nose"/>
+      <path d="M 30 48 Q 28 62 38 70 Q 44 74 50 74 Q 56 74 62 70 Q 72 62 70 48 Q 60 54 50 54 Q 40 54 30 48 Z" class="rc-beard"/>
 
       <g class="rc-brows rc-brows-neutral">
         <path d="M 36 37 L 44 37"/>
@@ -3142,6 +3145,14 @@
         <circle cx="57" cy="44" r="1.3" class="rc-pupil rc-pupil-suspicious"/>
       </g>
 
+      <g class="rc-glasses">
+        <rect x="33" y="36" width="16" height="16" rx="4" class="rc-glasses-frame"/>
+        <rect x="51" y="36" width="16" height="16" rx="4" class="rc-glasses-frame"/>
+        <line x1="49" y1="44" x2="51" y2="44" class="rc-glasses-frame"/>
+        <line x1="33" y1="41" x2="26" y2="44" class="rc-glasses-frame"/>
+        <line x1="67" y1="41" x2="74" y2="44" class="rc-glasses-frame"/>
+      </g>
+
       <path d="M 40 58 Q 50 64 60 58" class="rc-mouth rc-mouth-neutral"/>
       <ellipse cx="50" cy="61" rx="6" ry="9" class="rc-mouth rc-mouth-scared"/>
       <path d="M 35 55 Q 50 76 65 55 Q 50 65 35 55 Z" class="rc-mouth rc-mouth-laughing"/>
@@ -3151,6 +3162,7 @@
       <ellipse cx="50" cy="60" rx="7" ry="6" class="rc-mouth rc-mouth-spit-take"/>
       <path d="M 40 58 Q 44 55 48 58 Q 52 61 56 58 Q 60 55 61 57" class="rc-mouth rc-mouth-dizzy"/>
       <path d="M 40 59 Q 48 61 52 58 Q 56 56 60 57" class="rc-mouth rc-mouth-suspicious"/>
+      <path d="M 43 52 Q 46.5 50 50 52 Q 53.5 50 57 52 Q 53.5 54.5 50 53 Q 46.5 54.5 43 52 Z" class="rc-mustache"/>
 
       <g class="rc-spit-take-props">
         <path d="M 57 53 L 66 55 L 62 68 L 54 65 Z" class="rc-spit-cup"/>
@@ -3172,9 +3184,17 @@
     <circle cx="18" cy="15" r="3.5" class="rc-popcorn-kernel"/>
     <circle cx="24" cy="16" r="3.5" class="rc-popcorn-kernel"/>
   </svg>
+  <svg class="reaction-drink" viewBox="0 0 40 40" aria-hidden="true">
+    <path d="M 12 16 L 28 16 L 25 36 L 15 36 Z" class="rc-drink-cup"/>
+    <path d="M 12 16 L 28 16 L 27 20 L 13 20 Z" class="rc-drink-cup-rim"/>
+    <circle cx="20" cy="12" r="2.4" class="rc-drink-droplet"/>
+    <circle cx="14" cy="10" r="2" class="rc-drink-droplet"/>
+    <circle cx="26" cy="9" r="2" class="rc-drink-droplet"/>
+    <circle cx="20" cy="6" r="1.7" class="rc-drink-droplet"/>
+  </svg>
   <span class="reaction-cam-label">watching</span>
 </div>
 
-<script src="script.js?v=e91e446cba"></script>
+<script src="script.js?v=fc7900ed25"></script>
 </body>
 </html>

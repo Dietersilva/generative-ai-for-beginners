@@ -56,10 +56,24 @@ function enhanceCard(card) {
   // their own destination: sound toggle, narration, the archive.org link,
   // the PD badge, or the title, which already links here too) takes you
   // to the film's own page, same as clicking the title.
+  //
+  // Touch devices have no hover, so the reaction-cam mood (and its
+  // popcorn/spit-take payoff) would otherwise never be seen -- a tap
+  // there goes straight to a click with no preview in between. On a
+  // no-hover device the first tap on the card body previews (mood +
+  // clip) instead of navigating; a second tap, or tapping the title
+  // link itself, follows through.
+  const noHover = window.matchMedia("(hover: none)").matches;
+  let touchPreviewed = !noHover;
   const titleLink = card.querySelector(".card-title-link");
   if (titleLink) {
     card.addEventListener("click", (event) => {
       if (event.target.closest("a, button")) return;
+      if (!touchPreviewed) {
+        touchPreviewed = true;
+        event.preventDefault();
+        return;
+      }
       window.location.href = titleLink.getAttribute("href");
     });
   }
@@ -68,6 +82,12 @@ function enhanceCard(card) {
     video.play().catch(() => {});
     setReactionMood(mood);
   });
+  if (noHover) {
+    card.addEventListener("touchstart", () => {
+      video.play().catch(() => {});
+      setReactionMood(mood);
+    }, { passive: true });
+  }
   card.addEventListener("mouseleave", () => {
     const ownNarrationPlaying = narrateBtn.classList.contains("narrating");
     if (!ownNarrationPlaying) video.pause();
