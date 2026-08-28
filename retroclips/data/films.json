@@ -686,6 +686,66 @@
         "start_timestamp": "01:28:17",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-lost-world-1925",
+      "title": "The Lost World",
+      "year": 1925,
+      "director": "Harry O. Hoyt",
+      "country": "USA",
+      "genre": "Science Fantasy",
+      "scene_label": "The brontosaurus rampages through London",
+      "scene_description": "The expedition's captured brontosaurus breaks loose from its crane cage on the London docks and stampedes through the city, flattening buildings before vanishing into the Thames.",
+      "commentary": "Willis O'Brien's stop-motion effects here were the first time mass audiences had seen dinosaurs move and interact with a live-action world at this scale, and the techniques he refined -- posable armature models, incremental frame-by-frame animation, miniatures matted into real footage -- became the direct blueprint for his own King Kong eight years later. Three years before the film even opened, Arthur Conan Doyle previewed O'Brien's test reel -- a Triceratops family, an Allosaurus attack, a Stegosaurus -- for a room of magicians that included Harry Houdini, coyly calling the creatures \"psychic\" and letting the room debate whether they'd just watched something real. In 1998 the Library of Congress added the finished film to the National Film Registry.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/TheLostWorld1925",
+        "source_identifier": "TheLostWorld1925",
+        "start_timestamp": "01:27:22",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-adventures-of-prince-achmed-1926",
+      "title": "The Adventures of Prince Achmed",
+      "year": 1926,
+      "director": "Lotte Reiniger",
+      "country": "Germany",
+      "genre": "Fantasy / Action",
+      "scene_label": "The stolen flying horse takes off",
+      "scene_description": "Prince Achmed steals a sorcerer's magic mechanical horse and, working out its controls mid-flight, sends it rearing up over the palace and out across the rooftops.",
+      "commentary": "Every figure on screen is a hand-cut, hinged cardboard-and-lead-foil silhouette, animated a fraction of a millimeter at a time and shot frame by frame in a friend's garage by a crew of five. To fake real depth, Reiniger stacked her silhouettes across horizontal panes of glass at different distances from the camera and moved them independently -- a multiplane setup she worked out roughly a decade before Walt Disney's studio patented and popularized its own version. The film took about five years to complete. Because the two earlier animated features by Quirino Cristiani in Argentina no longer survive, Prince Achmed stands as the oldest surviving animated feature film.",
+      "pd_basis": "US copyright term fully expired (published 1926, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the.-adventures.-of.-prince.-achmed.-1926.720p.-blu-ray.x-264-public-hd",
+        "source_identifier": "the.-adventures.-of.-prince.-achmed.-1926.720p.-blu-ray.x-264-public-hd",
+        "start_timestamp": "00:07:10",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "faust-1926",
+      "title": "Faust",
+      "year": 1926,
+      "director": "F. W. Murnau",
+      "country": "Germany",
+      "genre": "Horror / Fantasy",
+      "scene_label": "Mephisto's wings blot out the sky",
+      "scene_description": "Answering Satan's wager that he can corrupt one righteous soul, Mephisto spreads his wings over Faust's home town, and plague spreads wherever their shadow falls.",
+      "commentary": "The village beneath Mephisto's wings is a miniature model, not a full-size set -- art director Robert Herlth's team built it from reeds and rushes standing in for pine trees, glass wool for clouds, and real turf glued onto plaster, with the buildings' proportions deliberately warped to read as vast, crooked distance under the demon's shadow. Emil Jannings plays Mephisto here, a few years before he'd move to Hollywood and become the first person to win the Academy Award for Best Actor, for two other films. Murnau himself considered the picture troubled -- he reshot the ending after a poor test screening -- but this looming apparition over the model village became one of the most reproduced single images of the silent era.",
+      "pd_basis": "US copyright term fully expired (published 1926, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/FaustF.W.MurnauSilentFilm",
+        "source_identifier": "FaustF.W.MurnauSilentFilm",
+        "start_timestamp": "00:06:20",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
