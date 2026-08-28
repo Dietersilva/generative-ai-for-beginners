@@ -25,13 +25,15 @@ const CLIP_DUCK_VOLUME = 0.4;
 // The reaction-cam's expression follows whichever card you're hovering.
 function moodForGenre(genre) {
   const g = genre.toLowerCase();
+  if (g.includes("pre-code")) return "wink";
   if (g.includes("horror") || g.includes("psychological")) return "scared";
-  if (g.includes("screwball") || g.includes("romantic")) return "spit-take";
+  if (g.includes("screwball") || g.includes("romantic")) return "swoon";
   if (g.includes("comedy")) return "laughing";
   if (g.includes("surreal")) return "dizzy";
   if (g.includes("science")) return "amazed";
   if (g.includes("western") || g.includes("action")) return "thrilled";
   if (g.includes("noir")) return "suspicious";
+  if (g.includes("documentary")) return "sleepy";
   if (g.includes("crime") || g.includes("exploitation") || g.includes("propaganda") || g.includes("melodrama") || g.includes("drama")) return "tense";
   return "neutral";
 }
@@ -186,7 +188,10 @@ function enhanceCard(card) {
     narrationAudio.currentTime = 0;
     narrationAudio.onended = stopThisNarration;
     narrationAudio.onerror = speakFallback;
-    if (captionTrack) captionTrack.classList.add("is-narrating");
+    if (captionTrack) {
+      captionTrack.classList.add("is-narrating");
+      captionTrack.style.transform = "translateX(0%)"; // snap back to the start now, don't wait for the first timeupdate tick
+    }
     narrationAudio.addEventListener("timeupdate", syncCaptionToNarration);
     narrationAudio.play().catch(speakFallback);
   });

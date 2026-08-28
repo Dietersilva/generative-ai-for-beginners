@@ -316,9 +316,13 @@ body {
 /* While narration is playing, script.js drives the caption's position
    directly (via transform) to track actual playback progress, instead
    of the free-running decorative scroll -- this beats the hover rule
-   above so a synced caption doesn't get fought over on a hovered card. */
+   above so a synced caption doesn't get fought over on a hovered card.
+   Fully removing the animation (not just pausing it) matters here: a
+   paused CSS animation still holds its last frozen transform value,
+   which outranks a plain inline style in the cascade and would
+   silently block the JS-driven transform from ever showing. */
 .clip-caption-track.is-narrating {
-  animation-play-state: paused !important;
+  animation: none !important;
 }
 
 .clip-caption-track span {
@@ -647,6 +651,9 @@ body {
 
 .rc-mouth { fill: none; stroke: #6b5a44; stroke-width: 2; stroke-linecap: round; display: none; }
 .rc-mouth-laughing, .rc-mouth-thrilled { fill: #4a3c2c; stroke: #4a3c2c; }
+.rc-mouth-sleepy { fill: #4a3c2c; stroke: #4a3c2c; }
+
+.rc-heart { fill: #c9505f; }
 
 [data-mood="neutral"] .rc-brows-neutral,
 [data-mood="neutral"] .rc-eyes-neutral,
@@ -666,9 +673,15 @@ body {
 [data-mood="thrilled"] .rc-brows-thrilled,
 [data-mood="thrilled"] .rc-eyes-thrilled,
 [data-mood="thrilled"] .rc-mouth-thrilled,
-[data-mood="spit-take"] .rc-brows-spit-take,
-[data-mood="spit-take"] .rc-eyes-spit-take,
-[data-mood="spit-take"] .rc-mouth-spit-take,
+[data-mood="swoon"] .rc-brows-swoon,
+[data-mood="swoon"] .rc-eyes-swoon,
+[data-mood="swoon"] .rc-mouth-swoon,
+[data-mood="sleepy"] .rc-brows-sleepy,
+[data-mood="sleepy"] .rc-eyes-sleepy,
+[data-mood="sleepy"] .rc-mouth-sleepy,
+[data-mood="wink"] .rc-brows-wink,
+[data-mood="wink"] .rc-eyes-wink,
+[data-mood="wink"] .rc-mouth-wink,
 [data-mood="dizzy"] .rc-brows-dizzy,
 [data-mood="dizzy"] .rc-eyes-dizzy,
 [data-mood="dizzy"] .rc-mouth-dizzy,
@@ -682,7 +695,9 @@ body {
 [data-mood="laughing"] .reaction-figure { animation: rc-bounce 0.5s ease-in-out infinite; }
 [data-mood="tense"] .reaction-figure { animation: rc-tense-pulse 1.6s ease-in-out infinite; }
 [data-mood="thrilled"] .reaction-figure { animation: rc-thrilled-jiggle 0.45s ease-in-out infinite; }
-[data-mood="spit-take"] .reaction-figure { animation: rc-spit-recoil 0.5s ease-out infinite; }
+[data-mood="swoon"] .reaction-figure { animation: rc-swoon-sway 2.4s ease-in-out infinite; }
+[data-mood="sleepy"] .reaction-figure { animation: rc-sleepy-nod 3.6s ease-in-out infinite; }
+[data-mood="wink"] .reaction-figure { animation: rc-wink-tilt 2s ease-in-out infinite; }
 [data-mood="dizzy"] .reaction-figure { animation: rc-dizzy-wobble 2.2s ease-in-out infinite; }
 [data-mood="suspicious"] .reaction-figure { animation: rc-suspicious-tilt 3s ease-in-out infinite; }
 [data-mood="suspicious"] .rc-pupil-suspicious {
@@ -835,57 +850,68 @@ body {
   80%, 95% { transform: translate(-64px, -10px) scale(0.85); opacity: 0.9; }
 }
 
-/* Unlike the popcorn bucket (a prop beside the frame), the spit-take
-   cup and spray live inside the same SVG coordinate space as the
-   mouth itself -- drawn directly at its edge -- so they're guaranteed
-   to read as connected instead of relying on two separately
-   positioned elements lining up by chance. */
-.rc-spit-take-props { display: none; }
-[data-mood="spit-take"] .rc-spit-take-props { display: block; }
+/* Every prop below lives inside the same SVG coordinate space as the
+   face itself (not a separately positioned sibling element like the
+   popcorn bucket), so there's no cross-element alignment to get
+   wrong -- the lesson from the spit-take prop this replaced, which
+   depended on a separate cup graphic lining up with the mouth. */
+.rc-swoon-hearts, .rc-sleepy-zzz { display: none; }
+[data-mood="swoon"] .rc-swoon-hearts { display: block; }
+[data-mood="sleepy"] .rc-sleepy-zzz { display: block; }
 
-.rc-spit-cup { fill: #7a8a94; }
-.rc-spit-cup-rim { fill: #a9b8c1; }
-.rc-spit-droplet {
-  fill: #bcd6e0;
-  stroke: #3d5560;
-  stroke-width: 0.3;
+.rc-float-heart {
+  fill: #c9505f;
   transform-box: fill-box;
   transform-origin: center;
+  opacity: 0;
+}
+[data-mood="swoon"] .rc-float-heart-1 { animation: rc-heart-float 2.2s ease-out infinite; }
+[data-mood="swoon"] .rc-float-heart-2 { animation: rc-heart-float 2.2s ease-out infinite 0.5s; }
+[data-mood="swoon"] .rc-float-heart-3 { animation: rc-heart-float 2.2s ease-out infinite 1s; }
+
+@keyframes rc-heart-float {
+  0% { transform: translateY(0) scale(0.6); opacity: 0; }
+  20% { transform: translateY(-3px) scale(1); opacity: 1; }
+  100% { transform: translateY(-16px) scale(0.85); opacity: 0; }
 }
 
-/* Droplets burst outward from the cup's rim and fade, rather than
-   looping back like the popcorn kernels do -- a spray that snapped
-   back to the cup would read as sucking the drink back in. */
-[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(1) { animation: rc-spit-1 0.5s ease-out infinite; }
-[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(2) { animation: rc-spit-2 0.55s ease-out infinite 0.05s; }
-[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(3) { animation: rc-spit-3 0.45s ease-out infinite 0.1s; }
-[data-mood="spit-take"] .rc-spit-droplet:nth-of-type(4) { animation: rc-spit-4 0.6s ease-out infinite 0.15s; }
-
-@keyframes rc-spit-1 {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(3px, -4px) scale(0.8); opacity: 1; }
-  100% { transform: translate(14px, -15px) scale(1.1); opacity: 0; }
-}
-@keyframes rc-spit-2 {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(4px, 0px) scale(0.75); opacity: 1; }
-  100% { transform: translate(17px, 2px) scale(1.05); opacity: 0; }
-}
-@keyframes rc-spit-3 {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(2px, -6px) scale(0.7); opacity: 1; }
-  100% { transform: translate(9px, -19px) scale(0.95); opacity: 0; }
-}
-@keyframes rc-spit-4 {
-  0% { transform: translate(0, 0) scale(0.3); opacity: 0; }
-  20% { transform: translate(4px, 4px) scale(0.75); opacity: 1; }
-  100% { transform: translate(15px, 13px) scale(1); opacity: 0; }
+@keyframes rc-swoon-sway {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-3deg) translateY(-1px); }
+  50% { transform: rotate(0deg) translateY(-2px); }
+  75% { transform: rotate(3deg) translateY(-1px); }
 }
 
-@keyframes rc-spit-recoil {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20% { transform: translate(2px, -3px) rotate(4deg); }
-  40% { transform: translate(-1px, 0) rotate(-1deg); }
+.rc-z {
+  font-family: var(--serif);
+  font-weight: bold;
+  fill: #cbb89a;
+  opacity: 0;
+}
+.rc-z-1 { font-size: 8px; }
+.rc-z-2 { font-size: 6px; }
+.rc-z-3 { font-size: 5px; }
+[data-mood="sleepy"] .rc-z-1 { animation: rc-zzz-float 3s ease-in-out infinite; }
+[data-mood="sleepy"] .rc-z-2 { animation: rc-zzz-float 3s ease-in-out infinite 1s; }
+[data-mood="sleepy"] .rc-z-3 { animation: rc-zzz-float 3s ease-in-out infinite 2s; }
+
+@keyframes rc-zzz-float {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 0.7; }
+  100% { transform: translate(6px, -10px); opacity: 0; }
+}
+
+@keyframes rc-sleepy-nod {
+  0%, 15% { transform: rotate(0deg) translateY(0); }
+  45%, 55% { transform: rotate(4deg) translateY(3px); }
+  75%, 100% { transform: rotate(0deg) translateY(0); }
+}
+
+@keyframes rc-wink-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30%, 50% { transform: rotate(-6deg); }
+  70% { transform: rotate(0deg); }
 }
 
 @keyframes rc-dizzy-wobble {
@@ -964,7 +990,9 @@ body {
   [data-mood="laughing"] .reaction-figure,
   [data-mood="tense"] .reaction-figure,
   [data-mood="thrilled"] .reaction-figure,
-  [data-mood="spit-take"] .reaction-figure,
+  [data-mood="swoon"] .reaction-figure,
+  [data-mood="sleepy"] .reaction-figure,
+  [data-mood="wink"] .reaction-figure,
   [data-mood="dizzy"] .reaction-figure,
   [data-mood="suspicious"] .reaction-figure,
   [data-mood="suspicious"] .rc-pupil-suspicious,
@@ -979,10 +1007,12 @@ body {
   [data-mood="scared"] .rc-drink-droplet:nth-of-type(2),
   [data-mood="scared"] .rc-drink-droplet:nth-of-type(3),
   [data-mood="scared"] .rc-drink-droplet:nth-of-type(4),
-  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(1),
-  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(2),
-  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(3),
-  [data-mood="spit-take"] .rc-spit-droplet:nth-of-type(4) {
+  [data-mood="swoon"] .rc-float-heart-1,
+  [data-mood="swoon"] .rc-float-heart-2,
+  [data-mood="swoon"] .rc-float-heart-3,
+  [data-mood="sleepy"] .rc-z-1,
+  [data-mood="sleepy"] .rc-z-2,
+  [data-mood="sleepy"] .rc-z-3 {
     animation: none;
   }
 }
