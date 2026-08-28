@@ -21,7 +21,7 @@
 <!-- SEO:CSP_START -->
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-oBO0UDYQLhVZmFcHqm0Uu5kxwomebLJgJUwrtaKjAog='; style-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none';">
 <!-- SEO:CSP_END -->
-<link rel="stylesheet" href="styles.css?v=c8d1c68f8d">
+<link rel="stylesheet" href="styles.css?v=e91e446cba">
 <!-- SEO:JSONLD_START -->
 <script type="application/ld+json">{
   "@context": "https://schema.org",
@@ -3038,8 +3038,23 @@
 <div class="reaction-cam" aria-hidden="true" data-mood="neutral">
   <div class="reaction-cam-frame">
     <svg viewBox="0 0 100 100" class="reaction-figure">
+      <defs>
+        <radialGradient id="rc-head-grad" cx="38%" cy="30%" r="75%">
+          <stop offset="0%" stop-color="#e6d6b8"/>
+          <stop offset="55%" stop-color="#cbb89a"/>
+          <stop offset="100%" stop-color="#a88f68"/>
+        </radialGradient>
+        <linearGradient id="rc-shoulders-grad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#4a4136"/>
+          <stop offset="100%" stop-color="#2a251e"/>
+        </linearGradient>
+      </defs>
       <ellipse cx="50" cy="90" rx="36" ry="16" class="rc-shoulders"/>
-      <circle cx="50" cy="46" r="22" class="rc-head"/>
+      <ellipse cx="29" cy="48" rx="4" ry="7" class="rc-ear"/>
+      <ellipse cx="71" cy="48" rx="4" ry="7" class="rc-ear"/>
+      <ellipse cx="50" cy="46" rx="21" ry="23" class="rc-head"/>
+      <path d="M 28 38 Q 26 18 50 17 Q 74 18 72 38 Q 72 24 50 24 Q 28 24 28 38 Z" class="rc-hair"/>
+      <path d="M 49 47 Q 47 51 48 53 Q 49 54 51 53" class="rc-nose"/>
 
       <g class="rc-brows rc-brows-neutral">
         <path d="M 36 37 L 44 37"/>
@@ -3160,6 +3175,6 @@
   <span class="reaction-cam-label">watching</span>
 </div>
 
-<script src="script.js?v=c8d1c68f8d"></script>
+<script src="script.js?v=e91e446cba"></script>
 </body>
 </html>
