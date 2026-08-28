@@ -806,6 +806,66 @@
         "start_timestamp": "00:07:56",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-black-pirate-1926",
+      "title": "The Black Pirate",
+      "year": 1926,
+      "director": "Albert Parker",
+      "country": "USA",
+      "genre": "Swashbuckler / Action",
+      "scene_label": "The knife-slide down the sail",
+      "scene_description": "The pirate captain plunges his knife into the topsail and rides it down to the deck, tearing the canvas in half as he falls.",
+      "commentary": "The stunt was faked, brilliantly: the sail was pre-slit, Fairbanks gripped a fixed blade rigged to a hidden pulley-and-counterbalance system his own brother Robert engineered, and his weight on the rig lowered him smoothly to the deck while the canvas tore open around him -- airplane propellers off camera billowed the sails for effect. It's also one of the very first color feature films: shot entirely in an early two-strip Technicolor process, only the third feature ever to use it, requiring two strips of film fused back-to-back, so thick and heat-sensitive the picture would warp out of focus during projection. Fairbanks, in his forties by then, still did the stunt work himself, taping his arms and legs to avoid rope burns.",
+      "pd_basis": "US copyright term fully expired (published 1926, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-black-pirate-1926-by-albert-parker",
+        "source_identifier": "the-black-pirate-1926-by-albert-parker",
+        "start_timestamp": "00:30:09",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "salome-1923",
+      "title": "Salomé",
+      "year": 1923,
+      "director": "Charles Bryant",
+      "country": "USA",
+      "genre": "Drama",
+      "scene_label": "The Dance of the Seven Veils",
+      "scene_description": "Salomé dances for her stepfather Herod, the price of the dance being anything she desires -- including, she has already decided, the head of the prophet who spurned her.",
+      "commentary": "Alla Nazimova produced this herself and, though her husband Charles Bryant received the director's credit, most who worked on it -- and most historians since -- consider Nazimova its real director. A persistent rumor holds she cast the entire production with gay and bisexual performers as a tribute to Oscar Wilde; one extra later said gay cast members were indeed present, just not an unusual number of them, let alone all. Costume and set designer Natacha Rambova built every frame directly from Aubrey Beardsley's scandalous 1890s illustrations for Wilde's play -- the film's own opening credits bill her work as \"after Aubrey Beardsley.\" It flopped on release and effectively ended Nazimova's career as a major studio star; it's since been reclaimed as a cult classic.",
+      "pd_basis": "US copyright term fully expired (published 1923, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/salome-1923_202507",
+        "source_identifier": "salome-1923_202507",
+        "start_timestamp": "00:48:15",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "traffic-in-souls-1913",
+      "title": "Traffic in Souls",
+      "year": 1913,
+      "director": "George Loane Tucker",
+      "country": "USA",
+      "genre": "Crime / Drama",
+      "scene_label": "The arrest, mid-celebration",
+      "scene_description": "Police interrupt a formal engagement party to arrest the ring's respectable-seeming financier, armed with recordings his own target's father secretly made of his voice.",
+      "commentary": "Made for about $5,700 and grossing roughly $450,000, this was the film that established Universal as a major studio. Its plot turns on an early piece of surveillance fiction: the missing girl's father, a deaf inventor, has built a phonographic recording device, and his daughter uses it to secretly capture the trafficking ring's own voices as evidence against them. Marketed as an exposé of the real \"white slavery\" panic gripping American cities at the time, it was a sensation on release, drawing both audiences and moral reformers -- one of the earliest American feature films built explicitly as a message picture. The Library of Congress added it to the National Film Registry in 2006.",
+      "pd_basis": "US copyright term fully expired (published 1913, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/traffic_in_souls",
+        "source_identifier": "traffic_in_souls",
+        "start_timestamp": "01:20:40",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
