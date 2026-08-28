@@ -986,6 +986,66 @@
         "start_timestamp": "00:14:16",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "gertie-the-dinosaur-1914",
+      "title": "Gertie the Dinosaur",
+      "year": 1914,
+      "director": "Winsor McCay",
+      "country": "USA",
+      "genre": "Animated Short / Comedy",
+      "scene_label": "\"Be a good girl and bow to the audience.\"",
+      "scene_description": "Gertie the Brontosaurus, coaxed by her off-screen animator, dips her long neck all the way to the ground in a big, showy bow for the crowd.",
+      "commentary": "McCay, already famous for the comic strip Little Nemo, hand-drew every one of Gertie's roughly 10,000 frames himself and originally performed the film live on vaudeville stages, standing beside the screen with a whip, \"commanding\" Gertie to bow, dance, and cry on cue as if she were really responding to him. She was the first animated character ever given a distinct, appealing personality rather than just a gag-delivery device, which makes Gertie the direct ancestor of every cartoon character with a face audiences actually cared about, from Mickey Mouse onward.",
+      "pd_basis": "US copyright term fully expired (published 1914, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/gertiethe-dinosaur-512kb",
+        "source_identifier": "gertiethe-dinosaur-512kb",
+        "start_timestamp": "00:07:09",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-iron-horse-1924",
+      "title": "The Iron Horse",
+      "year": 1924,
+      "director": "John Ford",
+      "country": "USA",
+      "genre": "Western / Action",
+      "scene_label": "The Golden Spike at Promontory Point",
+      "scene_description": "The Union Pacific and Central Pacific locomotives roll nose to nose as a huge crowd packs the gap between them -- a careful recreation of the famous 1869 photograph marking the completion of America's first transcontinental railroad.",
+      "commentary": "This was John Ford's first big-budget epic, made when he was still in his twenties, and Fox threw real resources at it: thousands of extras, cavalry, Chinese and Irish laborers, herds of buffalo, and two replica locomotives built to match the original Jupiter and No. 119 engines down to the rivets. Ford shot much of it on location in the Nevada desert in brutal winter conditions, and the finished film helped define the Western epic as a genre a full generation before Ford's own Stagecoach.",
+      "pd_basis": "US copyright term fully expired (published 1924, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-iron-horse-1924-by-john-ford",
+        "source_identifier": "the-iron-horse-1924-by-john-ford",
+        "start_timestamp": "02:25:03",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "wings-1927",
+      "title": "Wings",
+      "year": 1927,
+      "director": "William A. Wellman",
+      "country": "USA",
+      "genre": "War / Action",
+      "scene_label": "David's first dogfight",
+      "scene_description": "A German patrol dives out of the clouds, wingtips crossing just past the camera, as the pilot's-eye view puts the audience right in the cockpit for the attack.",
+      "commentary": "Wings won the first-ever Academy Award for Best Picture and remains the only fully silent film to do so. Director William Wellman, a World War I combat pilot himself, insisted on shooting real aerial combat with cameras mounted directly on the planes rather than using models, which meant training his stars, including Clara Bow and a young, then-unknown Gary Cooper in a small early role, to fly. The production borrowed actual Army Air Corps pilots and aircraft, and several stunt fliers were injured during filming chasing shots no one had attempted before.",
+      "pd_basis": "US copyright term fully expired (published 1927, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/wings_1927",
+        "source_identifier": "wings_1927",
+        "start_timestamp": "01:36:58",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
