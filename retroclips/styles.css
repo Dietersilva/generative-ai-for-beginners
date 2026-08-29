@@ -165,6 +165,17 @@ body {
   color: var(--accent);
 }
 
+.site-family {
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  color: var(--ink-dim);
+}
+
+.site-family a {
+  color: var(--ink-dim);
+  text-decoration: underline;
+}
+
 .filter-bar {
   display: flex;
   flex-wrap: wrap;

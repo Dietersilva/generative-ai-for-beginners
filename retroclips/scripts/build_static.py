@@ -39,6 +39,7 @@ FILMS_JSON = ROOT / "data" / "films.json"
 INDEX_HTML = ROOT / "index.html"
 ABOUT_HTML = ROOT / "about.html"
 SITEMAP_XML = ROOT / "sitemap.xml"
+RSS_XML = ROOT / "feed.xml"
 
 SITE_URL = "https://dietersilva.github.io/generative-ai-for-beginners/retroclips/"
 
@@ -410,6 +411,7 @@ def render_film_page(film: dict, version: str) -> str:
 <title>{page_title} | RetroClips</title>
 <meta name="description" content="{description}">
 <link rel="canonical" href="{page_url}">
+<link rel="alternate" type="application/rss+xml" title="RetroClips — New Films" href="feed.xml">
 <meta property="og:type" content="video.other">
 <meta property="og:site_name" content="RetroClips">
 <meta property="og:title" content="{page_title}">
@@ -489,6 +491,52 @@ def build_sitemap(film_ids: list) -> None:
     SITEMAP_XML.write_text(sitemap)
 
 
+def build_rss(data: dict) -> None:
+    from datetime import datetime, timezone
+    from email.utils import format_datetime
+
+    films = sorted(
+        data["films"],
+        key=lambda f: (f.get("date_added", "1970-01-01"), f["id"]),
+        reverse=True,
+    )[:30]
+
+    def rfc822(date_str: str) -> str:
+        dt = datetime.fromisoformat(date_str).replace(tzinfo=timezone.utc)
+        return format_datetime(dt)
+
+    items = []
+    for film in films:
+        fid = film["id"]
+        page_url = f"{SITE_URL}{fid}.html"
+        pub_date = rfc822(film.get("date_added", "1970-01-01"))
+        description = f"{film['scene_label']} — {film['commentary']}"
+        items.append(
+            "  <item>\n"
+            f"    <title>{esc(film['title'])} ({film['year']})</title>\n"
+            f"    <link>{page_url}</link>\n"
+            f"    <guid isPermaLink=\"true\">{page_url}</guid>\n"
+            f"    <pubDate>{pub_date}</pubDate>\n"
+            f"    <description>{esc(description)}</description>\n"
+            "  </item>"
+        )
+
+    build_date = format_datetime(datetime.now(timezone.utc))
+    rss = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0">\n'
+        "<channel>\n"
+        "  <title>RetroClips — New Films</title>\n"
+        f"  <link>{SITE_URL}</link>\n"
+        "  <description>New public-domain film clips added to RetroClips.</description>\n"
+        "  <language>en-us</language>\n"
+        f"  <lastBuildDate>{build_date}</lastBuildDate>\n"
+        + "\n".join(items)
+        + "\n</channel>\n</rss>\n"
+    )
+    RSS_XML.write_text(rss)
+
+
 def main() -> None:
     data = json.loads(FILMS_JSON.read_text())
     version = asset_version()
@@ -496,7 +544,8 @@ def main() -> None:
     build_about(data, version)
     film_ids = build_film_pages(data, version)
     build_sitemap(film_ids)
-    print(f"Wrote {INDEX_HTML}, {ABOUT_HTML}, {len(film_ids)} film pages, {SITEMAP_XML} (asset version {version})")
+    build_rss(data)
+    print(f"Wrote {INDEX_HTML}, {ABOUT_HTML}, {len(film_ids)} film pages, {SITEMAP_XML}, {RSS_XML} (asset version {version})")
 
 
 if __name__ == "__main__":

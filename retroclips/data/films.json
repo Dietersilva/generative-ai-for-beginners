@@ -9,6 +9,7 @@
   "films": [
     {
       "id": "nosferatu-1922",
+      "date_added": "2026-08-27",
       "title": "Nosferatu",
       "year": 1922,
       "director": "F.W. Murnau",
@@ -29,6 +30,7 @@
     },
     {
       "id": "caligari-1920",
+      "date_added": "2026-08-27",
       "title": "The Cabinet of Dr. Caligari",
       "year": 1920,
       "director": "Robert Wiene",
@@ -49,6 +51,7 @@
     },
     {
       "id": "the-general-1926",
+      "date_added": "2026-08-27",
       "title": "The General",
       "year": 1926,
       "director": "Buster Keaton",
@@ -69,6 +72,7 @@
     },
     {
       "id": "his-girl-friday-1940",
+      "date_added": "2026-08-27",
       "title": "His Girl Friday",
       "year": 1940,
       "director": "Howard Hawks",
@@ -89,6 +93,7 @@
     },
     {
       "id": "night-of-the-living-dead-1968",
+      "date_added": "2026-08-27",
       "title": "Night of the Living Dead",
       "year": 1968,
       "director": "George A. Romero",
@@ -109,6 +114,7 @@
     },
     {
       "id": "metropolis-1927",
+      "date_added": "2026-08-27",
       "title": "Metropolis",
       "year": 1927,
       "director": "Fritz Lang",
@@ -129,6 +135,7 @@
     },
     {
       "id": "trip-to-the-moon-1902",
+      "date_added": "2026-08-27",
       "title": "A Trip to the Moon",
       "year": 1902,
       "director": "Georges Méliès",
@@ -149,6 +156,7 @@
     },
     {
       "id": "safety-last-1923",
+      "date_added": "2026-08-27",
       "title": "Safety Last!",
       "year": 1923,
       "director": "Fred C. Newmeyer, Sam Taylor",
@@ -169,6 +177,7 @@
     },
     {
       "id": "phantom-of-the-opera-1925",
+      "date_added": "2026-08-27",
       "title": "The Phantom of the Opera",
       "year": 1925,
       "director": "Rupert Julian",
@@ -189,6 +198,7 @@
     },
     {
       "id": "the-kid-1921",
+      "date_added": "2026-08-27",
       "title": "The Kid",
       "year": 1921,
       "director": "Charlie Chaplin",
@@ -209,6 +219,7 @@
     },
     {
       "id": "white-zombie-1932",
+      "date_added": "2026-08-27",
       "title": "White Zombie",
       "year": 1932,
       "director": "Victor Halperin",
@@ -229,6 +240,7 @@
     },
     {
       "id": "haxan-1922",
+      "date_added": "2026-08-27",
       "title": "Häxan",
       "year": 1922,
       "director": "Benjamin Christensen",
@@ -249,6 +261,7 @@
     },
     {
       "id": "reefer-madness-1936",
+      "date_added": "2026-08-27",
       "title": "Reefer Madness",
       "year": 1936,
       "director": "Louis Gasnier",
@@ -269,6 +282,7 @@
     },
     {
       "id": "great-train-robbery-1903",
+      "date_added": "2026-08-27",
       "title": "The Great Train Robbery",
       "year": 1903,
       "director": "Edwin S. Porter",
@@ -289,6 +303,7 @@
     },
     {
       "id": "detour-1945",
+      "date_added": "2026-08-27",
       "title": "Detour",
       "year": 1945,
       "director": "Edgar G. Ulmer",
@@ -309,6 +324,7 @@
     },
     {
       "id": "charade-1963",
+      "date_added": "2026-08-27",
       "title": "Charade",
       "year": 1963,
       "director": "Stanley Donen",
@@ -329,6 +345,7 @@
     },
     {
       "id": "the-unknown-1927",
+      "date_added": "2026-08-27",
       "title": "The Unknown",
       "year": 1927,
       "director": "Tod Browning",
@@ -349,6 +366,7 @@
     },
     {
       "id": "jekyll-and-hyde-1920",
+      "date_added": "2026-08-27",
       "title": "Dr. Jekyll and Mr. Hyde",
       "year": 1920,
       "director": "John S. Robertson",
@@ -369,6 +387,7 @@
     },
     {
       "id": "the-cocaine-fiends-1935",
+      "date_added": "2026-08-27",
       "title": "The Cocaine Fiends",
       "year": 1935,
       "director": "William A. O'Connor",
@@ -389,6 +408,7 @@
     },
     {
       "id": "my-man-godfrey-1936",
+      "date_added": "2026-08-27",
       "title": "My Man Godfrey",
       "year": 1936,
       "director": "Gregory La Cava",
@@ -409,6 +429,7 @@
     },
     {
       "id": "pandoras-box-1929",
+      "date_added": "2026-08-27",
       "title": "Pandora's Box",
       "year": 1929,
       "director": "G.W. Pabst",
@@ -429,6 +450,7 @@
     },
     {
       "id": "the-phantom-carriage-1921",
+      "date_added": "2026-08-27",
       "title": "The Phantom Carriage",
       "year": 1921,
       "director": "Victor Sjöström",
@@ -449,6 +471,7 @@
     },
     {
       "id": "steamboat-willie-1928",
+      "date_added": "2026-08-27",
       "title": "Steamboat Willie",
       "year": 1928,
       "director": "Walt Disney, Ub Iwerks",
@@ -469,6 +492,7 @@
     },
     {
       "id": "battleship-potemkin-1925",
+      "date_added": "2026-08-27",
       "title": "Battleship Potemkin",
       "year": 1925,
       "director": "Sergei Eisenstein",
@@ -489,6 +513,7 @@
     },
     {
       "id": "nanook-of-the-north-1922",
+      "date_added": "2026-08-27",
       "title": "Nanook of the North",
       "year": 1922,
       "director": "Robert J. Flaherty",
@@ -509,6 +534,7 @@
     },
     {
       "id": "un-chien-andalou-1929",
+      "date_added": "2026-08-27",
       "title": "Un Chien Andalou",
       "year": 1929,
       "director": "Luis Buñuel",
@@ -529,6 +555,7 @@
     },
     {
       "id": "maniac-1934",
+      "date_added": "2026-08-27",
       "title": "Maniac",
       "year": 1934,
       "director": "Dwain Esper",
@@ -549,6 +576,7 @@
     },
     {
       "id": "tomorrows-children-1934",
+      "date_added": "2026-08-27",
       "title": "Tomorrow's Children",
       "year": 1934,
       "director": "Crane Wilbur",
@@ -569,6 +597,7 @@
     },
     {
       "id": "doa-1950",
+      "date_added": "2026-08-27",
       "title": "D.O.A.",
       "year": 1950,
       "director": "Rudolph Maté",
@@ -589,6 +618,7 @@
     },
     {
       "id": "beat-the-devil-1953",
+      "date_added": "2026-08-27",
       "title": "Beat the Devil",
       "year": 1953,
       "director": "John Huston",
@@ -609,6 +639,7 @@
     },
     {
       "id": "the-little-shop-of-horrors-1960",
+      "date_added": "2026-08-27",
       "title": "The Little Shop of Horrors",
       "year": 1960,
       "director": "Roger Corman",
@@ -629,6 +660,7 @@
     },
     {
       "id": "steamboat-bill-jr-1928",
+      "date_added": "2026-08-27",
       "title": "Steamboat Bill, Jr.",
       "year": 1928,
       "director": "Charles Reisner",
@@ -649,6 +681,7 @@
     },
     {
       "id": "sherlock-jr-1924",
+      "date_added": "2026-08-27",
       "title": "Sherlock Jr.",
       "year": 1924,
       "director": "Buster Keaton",
@@ -669,6 +702,7 @@
     },
     {
       "id": "the-hunchback-of-notre-dame-1923",
+      "date_added": "2026-08-27",
       "title": "The Hunchback of Notre Dame",
       "year": 1923,
       "director": "Wallace Worsley",
@@ -689,6 +723,7 @@
     },
     {
       "id": "the-lost-world-1925",
+      "date_added": "2026-08-28",
       "title": "The Lost World",
       "year": 1925,
       "director": "Harry O. Hoyt",
@@ -709,6 +744,7 @@
     },
     {
       "id": "the-adventures-of-prince-achmed-1926",
+      "date_added": "2026-08-28",
       "title": "The Adventures of Prince Achmed",
       "year": 1926,
       "director": "Lotte Reiniger",
@@ -729,6 +765,7 @@
     },
     {
       "id": "faust-1926",
+      "date_added": "2026-08-28",
       "title": "Faust",
       "year": 1926,
       "director": "F. W. Murnau",
@@ -749,6 +786,7 @@
     },
     {
       "id": "the-thief-of-bagdad-1924",
+      "date_added": "2026-08-28",
       "title": "The Thief of Bagdad",
       "year": 1924,
       "director": "Raoul Walsh",
@@ -769,6 +807,7 @@
     },
     {
       "id": "the-mark-of-zorro-1920",
+      "date_added": "2026-08-28",
       "title": "The Mark of Zorro",
       "year": 1920,
       "director": "Fred Niblo",
@@ -789,6 +828,7 @@
     },
     {
       "id": "body-and-soul-1925",
+      "date_added": "2026-08-28",
       "title": "Body and Soul",
       "year": 1925,
       "director": "Oscar Micheaux",
@@ -809,6 +849,7 @@
     },
     {
       "id": "the-black-pirate-1926",
+      "date_added": "2026-08-28",
       "title": "The Black Pirate",
       "year": 1926,
       "director": "Albert Parker",
@@ -829,6 +870,7 @@
     },
     {
       "id": "salome-1923",
+      "date_added": "2026-08-28",
       "title": "Salomé",
       "year": 1923,
       "director": "Charles Bryant",
@@ -849,6 +891,7 @@
     },
     {
       "id": "traffic-in-souls-1913",
+      "date_added": "2026-08-28",
       "title": "Traffic in Souls",
       "year": 1913,
       "director": "George Loane Tucker",
@@ -869,6 +912,7 @@
     },
     {
       "id": "intolerance-1916",
+      "date_added": "2026-08-28",
       "title": "Intolerance",
       "year": 1916,
       "director": "D.W. Griffith",
@@ -889,6 +933,7 @@
     },
     {
       "id": "way-down-east-1920",
+      "date_added": "2026-08-28",
       "title": "Way Down East",
       "year": 1920,
       "director": "D.W. Griffith",
@@ -909,6 +954,7 @@
     },
     {
       "id": "a-fool-there-was-1915",
+      "date_added": "2026-08-28",
       "title": "A Fool There Was",
       "year": 1915,
       "director": "Frank Powell",
@@ -929,6 +975,7 @@
     },
     {
       "id": "the-golem-1920",
+      "date_added": "2026-08-28",
       "title": "The Golem: How He Came into the World",
       "year": 1920,
       "director": "Paul Wegener, Carl Boese",
@@ -949,6 +996,7 @@
     },
     {
       "id": "grass-1925",
+      "date_added": "2026-08-28",
       "title": "Grass: A Nation's Battle for Life",
       "year": 1925,
       "director": "Merian C. Cooper, Ernest B. Schoedsack",
@@ -969,6 +1017,7 @@
     },
     {
       "id": "the-lodger-1927",
+      "date_added": "2026-08-28",
       "title": "The Lodger: A Story of the London Fog",
       "year": 1927,
       "director": "Alfred Hitchcock",
@@ -989,6 +1038,7 @@
     },
     {
       "id": "gertie-the-dinosaur-1914",
+      "date_added": "2026-08-28",
       "title": "Gertie the Dinosaur",
       "year": 1914,
       "director": "Winsor McCay",
@@ -1009,6 +1059,7 @@
     },
     {
       "id": "the-iron-horse-1924",
+      "date_added": "2026-08-28",
       "title": "The Iron Horse",
       "year": 1924,
       "director": "John Ford",
@@ -1029,6 +1080,7 @@
     },
     {
       "id": "wings-1927",
+      "date_added": "2026-08-28",
       "title": "Wings",
       "year": 1927,
       "director": "William A. Wellman",
