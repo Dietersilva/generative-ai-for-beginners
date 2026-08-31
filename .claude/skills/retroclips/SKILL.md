@@ -42,6 +42,17 @@ two copies of the CSS/JS have diverged.
 
 ## Content pipeline (sourcing a new film)
 
+0. **Before researching candidates, check what's already on the site.**
+   Read (or have any research agent read) the full current `films.json`
+   `id`/`title` list — not a manually-typed recollection of "films we
+   have so far," which will miss entries. A prompt that just lists
+   remembered titles from memory is exactly how this went wrong once:
+   two fully-sourced, clipped, and committed films (*A Trip to the Moon*,
+   *The Phantom of the Opera*) had to be discarded after the fact because
+   they already existed on the site under different film `id`s than the
+   ones being checked against. Cross-check candidate titles against the
+   actual file, by title (not just `id` — a title can recur under a
+   different slug), before spending any download/scouting effort on them.
 1. WebSearch to sanity-check PD status, then confirm on archive.org's
    `metadata` API — look for `licenseurl` containing
    `creativecommons.org/publicdomain/mark/1.0/`. Films published in the US
