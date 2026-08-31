@@ -34,6 +34,40 @@ body {
   background-image: radial-gradient(ellipse at 50% -30%, rgba(209,163,92,0.14), transparent 65%);
 }
 
+.bookmark-banner {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0 auto 0.9rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px solid var(--accent-dim);
+  border-radius: 999px;
+  background: rgba(209,163,92,0.08);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-dim);
+}
+
+.bookmark-banner strong {
+  color: var(--accent);
+  font-weight: normal;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bookmark-banner kbd {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  color: var(--ink);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 0.05rem 0.35rem;
+}
+
 .brand {
   display: flex;
   align-items: center;
