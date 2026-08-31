@@ -16,6 +16,19 @@ portfolio.
 Secure, then doubly secure.** Verify before asserting; don't guess at a film
 count, a URL, or a PD basis when the actual file is one read away.
 
+## "Public domain" in copy: site chrome vs. promotional material
+
+- **Site chrome** (header banners, taglines, anything a repeat visitor reads
+  every time) should NOT lean on the phrase "public domain" — it reads as
+  legalese, not a hook. Say what's actually appealing instead (new finds,
+  film history, etc.).
+- **Promotional/social material** (Pinterest pins, Instagram/TikTok/Reels
+  graphics, ad copy, anything meant to travel off-site) SHOULD say
+  "Public Domain · Free to Watch" or equivalent explicitly — it's a real
+  selling point there (no login, no rental, no ads-that-matter) and
+  removing it from that context was a real correction made once already,
+  don't reintroduce the removal.
+
 ## Two repos, kept in lockstep
 
 - `Dietersilva/retroclips` (`/home/user/retroclips`) — the real home,
