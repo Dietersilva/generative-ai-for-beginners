@@ -1140,6 +1140,69 @@
         "start_timestamp": "01:25:57",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "frankenstein-1910",
+      "date_added": "2026-08-31",
+      "title": "Frankenstein",
+      "year": 1910,
+      "director": "J. Searle Dawley",
+      "country": "USA",
+      "genre": "Horror / Sci-Fi",
+      "scene_label": "The creature takes shape",
+      "scene_description": "Inside a bubbling vat, a smoking, skeletal mass gradually builds itself into a full humanoid form, arms reaching up through the smoke as it comes to life.",
+      "commentary": "This is the first-ever film adaptation of Frankenstein, made by Thomas Edison's own studio just twelve years after cinema itself was born. Director J. Searle Dawley created the monster's creation scene by burning a papier-mache dummy in a controlled fire and filming it, then running that footage in reverse, so the creature appears to assemble itself out of smoke and flame rather than fall apart. It's one of the earliest documented in-camera special effects in film history, and the only surviving print for decades was a private collector's copy, not rediscovered by the public until the 1970s.",
+      "pd_basis": "US copyright term fully expired (published 1910, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/frankenstein-1910-all-versions",
+        "source_identifier": "frankenstein-1910-all-versions",
+        "start_timestamp": "00:04:26",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "he-who-gets-slapped-1924",
+      "date_added": "2026-08-31",
+      "title": "He Who Gets Slapped",
+      "year": 1924,
+      "director": "Victor Sjostrom",
+      "country": "USA",
+      "genre": "Drama / Tragedy",
+      "scene_label": "HE takes the slap",
+      "scene_description": "In close-up, the circus clown known only as HE braces as a fellow performer's open hand connects across his painted face, the crowd roaring with laughter in the stands behind him.",
+      "commentary": "He Who Gets Slapped was the very first film released by the newly formed Metro-Goldwyn-Mayer, and it made Lon Chaney one of the studio's defining stars before he ever put on the makeup he's best remembered for. Chaney plays a humiliated scientist who reinvents himself as a circus clown whose entire act is being slapped in the face by his fellow performers while the audience howls, a running bit that Chaney plays as pure showmanship on the surface and quiet devastation underneath. The image of the laughing-on-the-outside tragic clown, endlessly reproduced since, traces directly back to this performance.",
+      "pd_basis": "US copyright term fully expired (published 1924, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/he-who-gets-slapped_202510",
+        "source_identifier": "he-who-gets-slapped_202510",
+        "start_timestamp": "00:29:28",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "seven-chances-1925",
+      "date_added": "2026-08-31",
+      "title": "Seven Chances",
+      "year": 1925,
+      "director": "Buster Keaton",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "Outrunning the boulders",
+      "scene_description": "Sprinting full-tilt down a steep hillside, Jimmie dodges a barrage of massive boulders that tumble after him, one grazing past his shoulder as he weaves and stumbles to stay ahead of it.",
+      "commentary": "Seven Chances closes with one of the most celebrated physical sequences in silent comedy: Buster Keaton, fleeing an ever-growing mob, stumbles into a real avalanche of boulders and has to outrun them down an actual hillside. Keaton did the stunt himself with no safety rigging, dodging a mix of real rocks and oversized papier-mache boulders built to roll convincingly at speed, and the sequence was reportedly added only after a test screening got a bigger laugh from an accidental rockslide than anything else in the film. It's been cited by directors from Jackie Chan to Edgar Wright as a benchmark for what practical stunt comedy can do.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/seven-chances-1925-by-buster-keaton",
+        "source_identifier": "seven-chances-1925-by-buster-keaton",
+        "start_timestamp": "00:52:35",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
