@@ -1224,6 +1224,69 @@
         "start_timestamp": "00:01:30",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "cabiria-1914",
+      "date_added": "2026-08-31",
+      "title": "Cabiria",
+      "year": 1914,
+      "director": "Giovanni Pastrone",
+      "country": "Italy",
+      "genre": "Historical Epic",
+      "scene_label": "Hannibal's elephants cross the Alps",
+      "scene_description": "An armored war elephant, draped in a covered howdah, picks its way through a snowbound mountain pass as Hannibal's army streams across the ridgeline behind it.",
+      "commentary": "Cabiria was the era's defining spectacle picture, an internationally distributed sensation that directly shaped D.W. Griffith's Intolerance and set the template for every 'cast of thousands' epic that followed. Director Giovanni Pastrone staged Hannibal's crossing of the Alps with real elephants and hundreds of extras on an actual mountainside rather than a studio backlot, and the film's title cards were reportedly the first to credit a poet, Gabriele D'Annunzio, giving the production literary prestige it used to market itself worldwide. It also introduced Maciste, one of cinema's first recurring action heroes, who went on to star in dozens of his own films.",
+      "pd_basis": "US copyright term fully expired (published 1914, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/Cabiria1914",
+        "source_identifier": "Cabiria1914",
+        "start_timestamp": "00:32:23",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "aelita-1924",
+      "date_added": "2026-08-31",
+      "title": "Aelita: Queen of Mars",
+      "year": 1924,
+      "director": "Yakov Protazanov",
+      "country": "Soviet Union",
+      "genre": "Sci-Fi",
+      "scene_label": "Descending into the Martian court",
+      "scene_description": "Beneath jagged Constructivist arches, robed Martian courtiers line a vast stepped amphitheater as a figure in an angular, wing-spiked costume descends the stairs into their midst.",
+      "commentary": "Aelita: Queen of Mars was Soviet cinema's first venture into science fiction, built around a Martian civilization designed by Constructivist artist Alexandra Exter, whose jutting geometric sets and armor-plated costumes drew directly on Cubist and Suprematist theory rather than anything from earlier fantasy filmmaking. The angular, alien production design is frequently cited as a direct visual precursor to Metropolis, released three years later. Its box-office success made the queen played by Yuliya Solntseva, an enduring image of Soviet-era science fiction, reproduced on posters and book covers for decades after.",
+      "pd_basis": "US copyright term fully expired (published 1924, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/aelita-queen-of-mars-1924_202506",
+        "source_identifier": "aelita-queen-of-mars-1924_202506",
+        "start_timestamp": "00:45:16",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "gullivers-travels-1939",
+      "date_added": "2026-08-31",
+      "title": "Gulliver's Travels",
+      "year": 1939,
+      "director": "Dave Fleischer",
+      "country": "USA",
+      "genre": "Animated Feature / Fantasy",
+      "scene_label": "Staked to the beach by the Lilliputians",
+      "scene_description": "Gulliver lies asleep under a starry sky, pinned to the sand by dozens of ropes as an army of tiny torch-bearing Lilliputians swarm across his enormous body.",
+      "commentary": "Gulliver's Travels was Fleischer Studios' answer to Disney's Snow White, and only the second animated feature ever released, rushed into production specifically to prove Max and Dave Fleischer could compete at feature length. The waking-on-the-beach sequence, Gulliver dwarfing an entire kingdom's worth of tiny staked-down ropes, became the single most reproduced image from the film and the one most audiences still remember. Its copyright was never renewed at the required interval, a lapse that also freed Popeye and Superman's earliest Fleischer cartoons decades later, though this is the studio's only full animated feature to fall into the public domain this way.",
+      "pd_basis": "US copyright term fully expired via non-renewal (published 1939; the required renewal filing was never made).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/gullivers-travels-1939-fleischer",
+        "source_identifier": "gullivers-travels-1939-fleischer",
+        "start_timestamp": "00:25:57",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
