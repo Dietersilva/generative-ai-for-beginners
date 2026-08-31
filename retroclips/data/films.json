@@ -1098,6 +1098,48 @@
         "start_timestamp": "01:36:58",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-covered-wagon-1923",
+      "date_added": "2026-08-31",
+      "title": "The Covered Wagon",
+      "year": 1923,
+      "director": "James Cruze",
+      "country": "USA",
+      "genre": "Western / Epic",
+      "scene_label": "Fording the North Platte",
+      "scene_description": "A mile-long wagon train drives its oxen teams straight into the rushing river, wagon after wagon fighting the current as riders wade alongside to keep the herd moving.",
+      "commentary": "The Covered Wagon was the picture that proved the Western could be an event, not just a two-reel programmer. Paramount sent director James Cruze and a full production unit deep into Utah and Nevada to shoot with real wagon trains, real livestock, and hundreds of extras fording an actual river rather than a studio tank, and audiences in 1923 had never seen anything like it. It became one of the biggest box-office hits of the silent era and set the template every big-budget Western since, from Wagon Master to Red River, has followed.",
+      "pd_basis": "US copyright term fully expired (published 1923, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-covered-wagon-1923-by-james-cruze",
+        "source_identifier": "the-covered-wagon-1923-by-james-cruze",
+        "start_timestamp": "00:43:26",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-big-parade-1925",
+      "date_added": "2026-08-31",
+      "title": "The Big Parade",
+      "year": 1925,
+      "director": "King Vidor",
+      "country": "USA",
+      "genre": "War / Romance",
+      "scene_label": "Melisande runs for the departing truck",
+      "scene_description": "As the convoy pulls out for the front, Melisande breaks from the crowd and sprints alongside James's truck, grabbing for the tailgate and being dragged along rather than let go.",
+      "commentary": "The Big Parade was the film that made King Vidor a top-tier director and John Gilbert a superstar, and it stayed MGM's highest-grossing silent picture for years. Vidor shot the farewell sequence, a French village girl clinging to a departing supply truck as her soldier sweetheart is hauled away to the front, almost entirely with actors and extras rather than trick photography, and it became one of the most reproduced images of the silent era. The film's unsentimental battle scenes, filmed with Army cooperation and real veterans as extras, were as influential on later war pictures as its romance was on every farewell scene that followed.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-big-parade-1925-by-king-vidor",
+        "source_identifier": "the-big-parade-1925-by-king-vidor",
+        "start_timestamp": "01:25:57",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
