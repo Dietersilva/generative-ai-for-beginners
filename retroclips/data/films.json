@@ -1203,6 +1203,27 @@
         "start_timestamp": "00:52:35",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "man-with-a-movie-camera-1929",
+      "date_added": "2026-08-31",
+      "title": "Man with a Movie Camera",
+      "year": 1929,
+      "director": "Dziga Vertov",
+      "country": "Soviet Union",
+      "genre": "Documentary / Experimental",
+      "scene_label": "The cameraman atop his own camera",
+      "scene_description": "A tiny cameraman stands cranking his tripod-mounted camera while perched directly on top of an enormous superimposed movie camera, a surreal double-exposure announcing the film's obsession with the mechanics of seeing.",
+      "commentary": "Man with a Movie Camera is a city-symphony documentary with no actors, no sets, and no intertitles, built entirely from a single day in Soviet urban life and Dziga Vertov's belief that the camera could see truth the human eye couldn't. This opening image, a cameraman dwarfed atop his own giant apparatus, announces the film's constant self-awareness: it shows its own editor at work, its own audience watching it, and its own camera being carried into traffic and up factory scaffolding to get the shot. It topped Sight & Sound's directors' and critics' polls decades later as one of the greatest documentaries ever made.",
+      "pd_basis": "US copyright term fully expired (published 1929, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/man-with-a-movie-camera-1929-by-dziga-vertov",
+        "source_identifier": "man-with-a-movie-camera-1929-by-dziga-vertov",
+        "start_timestamp": "00:01:30",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
