@@ -1350,6 +1350,69 @@
         "start_timestamp": "01:13:39",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-immigrant-1917",
+      "date_added": "2026-09-01",
+      "title": "The Immigrant",
+      "year": 1917,
+      "director": "Charlie Chaplin",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "Bracing against the rolling ship",
+      "scene_description": "The Tramp braces himself against a doorway at an exaggerated angle, fighting to keep his balance as the whole steerage dining room sways with the ship, a full table of fellow immigrants eating behind him.",
+      "commentary": "The Immigrant is one of Chaplin's most acclaimed Mutual shorts, added to the National Film Registry in 1998 for its blend of physical comedy and genuine sympathy for the immigrant experience it depicts. The ship-set opening was filmed on a set mechanically rigged to rock back and forth, sending Chaplin, his fellow actors, and their soup sliding in unison, a practical effect that took real engineering to pull off in 1917. It remains one of the clearest early showcases of Chaplin's gift for turning physical discomfort into pure comic rhythm.",
+      "pd_basis": "US copyright term fully expired (published 1917, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-immigrant-1917-by-charlie-chaplin",
+        "source_identifier": "the-immigrant-1917-by-charlie-chaplin",
+        "start_timestamp": "00:03:49",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "speedy-1928",
+      "date_added": "2026-09-01",
+      "title": "Speedy",
+      "year": 1928,
+      "director": "Ted Wilde",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "Babe Ruth rides in Speedy's cab",
+      "scene_description": "Babe Ruth, playing himself, sits in the back of Harold Lloyd's taxi laughing and gesturing animatedly as they race across Manhattan, Speedy glancing back at his famous passenger through the windshield.",
+      "commentary": "Speedy was Harold Lloyd's last silent film, shot largely on real New York City streets rather than a studio backlot, giving it an almost documentary quality of 1920s Manhattan that few other films of the era captured. Babe Ruth appears as himself in a genuine cameo, playing along with the joke that his own reckless cab ride to Yankee Stadium is nearly as thrilling as anything he does on the field. The location shoot reportedly drew real crowds who had no idea they were watching a movie being made, some of whom ended up in the finished film.",
+      "pd_basis": "US copyright term fully expired (published 1928, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/speedy-1928-by-ted-wilde",
+        "source_identifier": "speedy-1928-by-ted-wilde",
+        "start_timestamp": "00:51:19",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "blackmail-1929",
+      "date_added": "2026-09-01",
+      "title": "Blackmail",
+      "year": 1929,
+      "director": "Alfred Hitchcock",
+      "country": "United Kingdom",
+      "genre": "Thriller",
+      "scene_label": "The chase across the British Museum dome",
+      "scene_description": "Silhouetted sharply against the sky atop the British Museum's Reading Room dome, a man points urgently outward, directing the chase toward a figure fleeing across the glass roof below.",
+      "commentary": "Blackmail was Britain's first sound feature, and Alfred Hitchcock famously shot it as a silent film and then, mid-production, reshot key scenes with dialogue once talkies became unavoidable, making it a genuine hybrid of two eras of cinema. The climactic chase across the British Museum's Reading Room dome combined real location footage with matte paintings and miniature work, an early example of the composite trickery Hitchcock would keep refining for the rest of his career. It's routinely cited as the moment his visual signature, vertiginous heights, silhouettes, landmark set pieces, first fully arrived.",
+      "pd_basis": "US copyright term fully expired (published 1929, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/blackmail-1929-by-alfred-hitchcock",
+        "source_identifier": "blackmail-1929-by-alfred-hitchcock",
+        "start_timestamp": "01:18:38",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
