@@ -2043,6 +2043,69 @@
         "start_timestamp": "00:05:24",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "a-trip-down-market-street-1906",
+      "date_added": "2026-09-01",
+      "title": "A Trip Down Market Street",
+      "year": 1906,
+      "director": "Miles Brothers",
+      "country": "USA",
+      "genre": "Actuality",
+      "scene_label": "A horse-drawn wagon gallops through traffic",
+      "scene_description": "A wagon marked EUREKA-CALIFORNIA rushes across a crowded San Francisco plaza pulled by a trotting horse team, cable cars and automobiles sharing the street with zero traffic control.",
+      "commentary": "This single reel of unstaged, unedited footage was long misdated until a 2010 forensic analysis, matching visible car permit numbers and shadow angles, pinned its filming to April 14, 1906, four days before the earthquake and fire that destroyed the entire street shown on screen. It was added to the National Film Registry specifically because of that discovery: nearly everyone and everything caught on camera here was gone within the week. Nothing about the shot is staged; it's simply what Market Street looked like on an ordinary morning that turned out not to be ordinary at all.",
+      "pd_basis": "Explicit CC0 (public domain dedication) confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/ATripDownMarketStreet_HD",
+        "source_identifier": "ATripDownMarketStreet_HD",
+        "start_timestamp": "00:11:24",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "regeneration-1915",
+      "date_added": "2026-09-01",
+      "title": "Regeneration",
+      "year": 1915,
+      "director": "Raoul Walsh",
+      "country": "USA",
+      "genre": "Crime Drama",
+      "scene_label": "The getaway cars pull out",
+      "scene_description": "A line of open-top touring cars waits at the curb outside a police station before pulling away down the street together, headlights cutting through the dark.",
+      "commentary": "Regeneration is widely credited as the first feature-length gangster film, a slum-kid-to-gang-leader story that a 28-year-old Raoul Walsh shot as his solo directorial debut on location in New York's actual Bowery tenements, using real residents as extras instead of a studio backlot. The film's climactic boat fire was directly inspired by the real 1904 General Slocum disaster, in which a burning excursion steamer killed roughly 1,000 people in the East River, one of the deadliest disasters in New York City history before September 11.",
+      "pd_basis": "Explicit Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/regeneration-1915-silent-film",
+        "source_identifier": "regeneration-1915-silent-film",
+        "start_timestamp": "01:02:00",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-sentimental-bloke-1919",
+      "date_added": "2026-09-01",
+      "title": "The Sentimental Bloke",
+      "year": 1919,
+      "director": "Raymond Longford",
+      "country": "Australia",
+      "genre": "Romantic Comedy",
+      "scene_label": "The Bonzer Peach",
+      "scene_description": "After haggling over a basket of vegetables, a smitten young man's daydream takes over the screen: a peach held up to the light, his sweetheart's face superimposed dreamily across it.",
+      "commentary": "The Sentimental Bloke is routinely cited as the greatest Australian silent film and broke national box-office records at its October 1919 Melbourne Town Hall premiere. It's based on C.J. Dennis's 1915 verse novel The Songs of a Sentimental Bloke, written entirely in broad Australian larrikin slang that the film's intertitles preserve straight from the poem. Co-star Lottie Lyell, who plays the sweetheart Doreen, also co-wrote and edited the film, and is now recognized as one of early Australian cinema's most significant behind-the-camera figures rather than just its leading lady.",
+      "pd_basis": "Pre-1931 release with no evidence of US copyright registration; the film was already public domain in its home country of Australia (cinematograph-film copyright of that era ran roughly 50 years from release, lapsed well before 1996) at the URAA restoration date, so URAA does not restore a US copyright.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/SentimentalBloke1919",
+        "source_identifier": "SentimentalBloke1919",
+        "start_timestamp": "00:13:35",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
