@@ -1287,6 +1287,69 @@
         "start_timestamp": "00:25:57",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-passion-of-joan-of-arc-1928",
+      "date_added": "2026-09-01",
+      "title": "The Passion of Joan of Arc",
+      "year": 1928,
+      "director": "Carl Theodor Dreyer",
+      "country": "France",
+      "genre": "Drama / Historical",
+      "scene_label": "Falconetti's face under interrogation",
+      "scene_description": "Asked whether the voice she heard had long hair, Joan's face fills the frame in unbroken close-up, eyes glistening as she looks upward, unflinching under the judges' questioning.",
+      "commentary": "The Passion of Joan of Arc is built almost entirely out of faces in extreme close-up, an approach so radical for 1928 that Carl Dreyer had sets built and then largely refused to show them, trusting Renee Jeanne Falconetti's performance to carry the film alone. She reportedly never acted again after this role, and film historians still debate how much of her visible anguish was performance versus Dreyer's famously punishing directing methods. The film was thought lost for decades until a nearly pristine print turned up in a Norwegian mental institution's closet in 1981.",
+      "pd_basis": "US copyright term fully expired (published 1928, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-passion-of-joan-of-arc-1928-by-carl-theodor-dreyer",
+        "source_identifier": "the-passion-of-joan-of-arc-1928-by-carl-theodor-dreyer",
+        "start_timestamp": "00:10:04",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "a-page-of-madness-1926",
+      "date_added": "2026-09-01",
+      "title": "A Page of Madness",
+      "year": 1926,
+      "director": "Teinosuke Kinugasa",
+      "country": "Japan",
+      "genre": "Avant-Garde / Drama",
+      "scene_label": "The dancer against the striped drum",
+      "scene_description": "A woman in a flowing white dress spins and reaches beside a huge striped drum, a jagged lightning-bolt backdrop behind her, in one of the film's stylized reverie sequences.",
+      "commentary": "A Page of Madness has no intertitles at all, telling its story entirely through Teinosuke Kinugasa's rapid-fire editing, double exposures, and expressionist staging, a technique closer to European avant-garde cinema than anything else being made in Japan at the time. The film was believed lost for over 40 years until Kinugasa found a surviving print in his own storehouse in 1971. It remains one of the only widely available windows into 1920s Japanese avant-garde film, a movement almost entirely wiped out by the reels lost in the following decades.",
+      "pd_basis": "US copyright term fully expired (published 1926, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/a-page-of-madness-1926_202507",
+        "source_identifier": "a-page-of-madness-1926_202507",
+        "start_timestamp": "00:02:50",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "carnival-of-souls-1962",
+      "date_added": "2026-09-01",
+      "title": "Carnival of Souls",
+      "year": 1962,
+      "director": "Herk Harvey",
+      "country": "USA",
+      "genre": "Horror",
+      "scene_label": "The ghoul dance at the pavilion",
+      "scene_description": "Under the pavilion's string lights, a ghoulish pale-faced dancer tilts her head back mid-embrace, dark hollowed eyes turned toward the camera as the other dancers move around her.",
+      "commentary": "Carnival of Souls was made on a shoestring budget by an industrial-film director, Herk Harvey, who financed it himself and shot it in three weeks using a cast of mostly local actors. It flopped on release and was barely seen again until it turned up on late-night television in the 1970s, where its dreamlike dread found the cult audience the theatrical run never did. Directors from George Romero to David Lynch have cited it as a direct influence, and the film's copyright lapsed into the public domain almost immediately after release when the required renewal was never filed.",
+      "pd_basis": "US copyright term expired via non-renewal (released 1962; the required renewal filing was never made).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/carnival-of-souls-1962_202010",
+        "source_identifier": "carnival-of-souls-1962_202010",
+        "start_timestamp": "01:13:39",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
