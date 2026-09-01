@@ -1791,6 +1791,69 @@
         "start_timestamp": "00:20:55",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "foolish-wives-1922",
+      "date_added": "2026-09-01",
+      "title": "Foolish Wives",
+      "year": 1922,
+      "director": "Erich von Stroheim",
+      "country": "USA",
+      "genre": "Drama",
+      "scene_label": "A full-scale Monte Carlo, rebuilt from scratch",
+      "scene_description": "A crowd of elegantly dressed extras and mounted riders moves through a sprawling plaza of palm trees and grand facades, the whole square built new rather than found.",
+      "commentary": "Foolish Wives is often cited as the first film to cost over a million dollars, and most of that budget went into having Universal build a full-scale replica of Monte Carlo's central plaza, casino, cafe, and all, on the studio backlot rather than shoot on location. Erich von Stroheim directed, wrote, and starred as a fake Russian count preying on wealthy women, and became notorious enough for the excess of his original six-hour cut that the studio took the film away from him and re-edited it down to under two hours without his approval.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/foolish-wives-1922_202505",
+        "source_identifier": "foolish-wives-1922_202505",
+        "start_timestamp": "00:20:50",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "la-souriante-madame-beudet-1923",
+      "date_added": "2026-09-01",
+      "title": "The Smiling Madame Beudet",
+      "year": 1923,
+      "director": "Germaine Dulac",
+      "country": "France",
+      "genre": "Avant-garde Drama",
+      "scene_label": "A tennis champion steps out of a magazine",
+      "scene_description": "A superimposed figure in tennis whites swings a racket in slow motion against pure black, glowing and semi-transparent, brought to life out of a photograph a bored housewife is reading.",
+      "commentary": "The Smiling Madame Beudet is widely cited as one of the first feminist films and a landmark of French avant-garde cinema, using superimposition, slow motion, and distorting lenses to put a trapped housewife's fantasy life directly on screen decades before that kind of subjective imagery became common. Germaine Dulac was one of the first major women directors in film history, at a time when the role was almost entirely closed to women, and she later became a leading theorist of what she called pure or 'integral' cinema.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/la-souriante-madame-beudet-1923-by-germaine-dulac",
+        "source_identifier": "la-souriante-madame-beudet-1923-by-germaine-dulac",
+        "start_timestamp": "00:06:40",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "big-business-1929",
+      "date_added": "2026-09-01",
+      "title": "Big Business",
+      "year": 1929,
+      "director": "James W. Horne",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "The Christmas tree that won't fit",
+      "scene_description": "Stan and Ollie wrestle a Christmas tree through a homeowner's front door, the branches whipping back and forth as the doorway fight escalates one small setback at a time.",
+      "commentary": "Big Business is one of Laurel and Hardy's most acclaimed shorts, added to the National Film Registry in 1992, built entirely on a tit-for-tat escalation structure: they're selling Christmas trees door to door in the middle of summer, and one uncooperative customer sets off a slow-motion war of attrition against their car and his house. It was directed by James W. Horne but supervised by Leo McCarey, the Hal Roach Studios producer who paired Laurel and Hardy together in the first place and effectively invented their on-screen chemistry.",
+      "pd_basis": "US copyright term fully expired (published 1929, well past the 95-year term); Internet Archive's own newly-public-domain project independently confirmed this title entered the public domain effective January 1, 2025.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/big-business_1929",
+        "source_identifier": "big-business_1929",
+        "start_timestamp": "00:04:30",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
