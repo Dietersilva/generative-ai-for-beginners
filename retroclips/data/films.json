@@ -1539,6 +1539,69 @@
         "start_timestamp": "00:02:45",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-oyster-princess-1919",
+      "date_added": "2026-09-01",
+      "title": "The Oyster Princess",
+      "year": 1919,
+      "director": "Ernst Lubitsch",
+      "country": "Germany",
+      "genre": "Comedy / Satire",
+      "scene_label": "The newlyweds race down the grand staircase",
+      "scene_description": "The bride and groom skip and spin their way down an enormous Art Deco staircase together, arms swinging, the whole hall lit like a stage set for their own private celebration.",
+      "commentary": "Lubitsch later pointed to this film as the birth of what critics would call the Lubitsch touch, his knack for turning a sight gag into social satire. He was a German director who had never been to America, yet built this farce entirely around mocking American nouveau-riche excess, with a heroine whose father is introduced as the Cotton King and then, a title card later, corrected to the Potash King. The film's real showpiece is a later ensemble dance number so wild it required its own choreographer, but this staircase run captures the same manic, joyful energy in miniature.",
+      "pd_basis": "Published in Germany 1919; US copyright term fully expired (well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-the-oyster-princess",
+        "source_identifier": "silent-the-oyster-princess",
+        "start_timestamp": "00:39:58",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-fall-of-the-house-of-usher-1928",
+      "date_added": "2026-09-01",
+      "title": "The Fall of the House of Usher",
+      "year": 1928,
+      "director": "Jean Epstein",
+      "country": "France",
+      "genre": "Horror / Avant-garde",
+      "scene_label": "Madeline, doubly exposed",
+      "scene_description": "Madeline lies motionless across the bed as a second, ghostly exposure of lace and floral texture drifts across her still form, the two images never quite settling into one.",
+      "commentary": "A young Luis Bunuel co-wrote this and worked on the production before quitting partway through over a dispute with Epstein about how faithfully to follow Poe. The following year Bunuel made Un Chien Andalou with Salvador Dali instead, a film already sitting elsewhere on this site, which makes this one something like its more patient, more formal older cousin. Epstein shot much of it with a wind machine and multiple exposures decades before that kind of layering had a name, using slow motion and superimposition for mood rather than shock in a way that reads as strikingly modern for 1928.",
+      "pd_basis": "Published in France 1928; US copyright term fully expired (well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-fall-of-the-house-of-usher-1928-jean-epstein",
+        "source_identifier": "the-fall-of-the-house-of-usher-1928-jean-epstein",
+        "start_timestamp": "00:29:15",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-perils-of-pauline-1914",
+      "date_added": "2026-09-01",
+      "title": "The Perils of Pauline",
+      "year": 1914,
+      "director": "Louis J. Gasnier, Donald MacKenzie",
+      "country": "USA",
+      "genre": "Action / Adventure Serial",
+      "scene_label": "The balloon lifts off",
+      "scene_description": "A hot air balloon rises steadily off the ground into open sky, the basket and its passenger swinging gently beneath it as the crowd and riverside pier shrink away below.",
+      "commentary": "This was the original cliffhanger blockbuster, a serial popular enough that William Randolph Hearst ran a matching newspaper serialization alongside it, an early and deliberate cross-media marketing stunt. Star Pearl White did her own stunts and nearly paid for this one for real: the balloon in this sequence broke loose during filming and carried her across the Hudson River into a storm before it could be brought down. Most of the original negatives were later lost, so what survives today is largely a European re-edit, which makes any clean surviving footage of it a little bit of a rarity in itself.",
+      "pd_basis": "Published in the US 1914; public domain via term expiration, never renewed.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-the-perils-of-pauline",
+        "source_identifier": "silent-the-perils-of-pauline",
+        "start_timestamp": "00:19:09",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
