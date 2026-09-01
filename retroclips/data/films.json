@@ -1917,6 +1917,69 @@
         "start_timestamp": "00:02:30",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "manhatta-1921",
+      "date_added": "2026-09-01",
+      "title": "Manhatta",
+      "year": 1921,
+      "director": "Charles Sheeler, Paul Strand",
+      "country": "USA",
+      "genre": "Avant-garde Documentary",
+      "scene_label": "The ferry brings the city home",
+      "scene_description": "A packed commuter ferry glides into its slip, the gangway lowering as hundreds of passengers pour down the ramp straight toward camera in one unbroken shot.",
+      "commentary": "Manhatta is widely credited as the first American avant-garde film and the direct model for the city symphony genre that followed, its clearest descendant being Dziga Vertov's Man with a Movie Camera, already on this site. It was the only film collaboration between photographer Paul Strand and Precisionist painter Charles Sheeler, and its intertitles are lines lifted straight from Walt Whitman's poem Mannahatta, pairing 1921 New York with 1860s verse about the same city.",
+      "pd_basis": "US copyright term fully expired (published 1921, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-manhatta",
+        "source_identifier": "silent-manhatta",
+        "start_timestamp": "00:01:39",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-extra-girl-1923",
+      "date_added": "2026-09-01",
+      "title": "The Extra Girl",
+      "year": 1923,
+      "director": "F. Richard Jones",
+      "country": "USA",
+      "genre": "Comedy",
+      "scene_label": "Walking the world's calmest lion",
+      "scene_description": "Sue strolls casually across the studio backlot with a full-grown lion padding along beside her on a leash, utterly convinced she's leading a costumed stand-in.",
+      "commentary": "The Extra Girl was Mabel Normand's final feature film and her last picture for producer Mack Sennett, a comedy about the movie industry itself that turns on Sue mistaking a real lion delivered to the studio for an actor in a costume. The joke very nearly stopped being funny during production: when the real lion later got loose on set, a trainer trying to wrangle it accidentally jabbed Normand with a pitchfork. It's a fitting send-off for a star whose career, like so many in silent Hollywood, was defined as much by industry chaos as by what made it onto the screen.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/TheExtraGirl1923_20",
+        "source_identifier": "TheExtraGirl1923_20",
+        "start_timestamp": "00:50:48",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "afgrunden-1910",
+      "date_added": "2026-09-01",
+      "title": "Afgrunden",
+      "year": 1910,
+      "director": "Urban Gad",
+      "country": "Denmark",
+      "genre": "Drama",
+      "scene_label": "A dance that scandalized two countries",
+      "scene_description": "Two dancers move through a dramatic embrace on a shadowed stage, her fringed dress swirling with every dip and turn, the performance pitched at an intensity silent film rarely showed.",
+      "commentary": "Afgrunden made Asta Nielsen an overnight international star on the strength of a naturalistic, physically committed acting style that had no real precedent in film at the time. This dance number was considered scandalous enough on release that the film was censored in both Norway and Sweden. Nielsen's performance here is widely cited by historians as an influence on the American screen vamp archetype that Theda Bara would make famous five years later in A Fool There Was, already on this site.",
+      "pd_basis": "CC0 (public domain dedication) confirmed directly on the archive.org item.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/Afgrunden_1910",
+        "source_identifier": "Afgrunden_1910",
+        "start_timestamp": "00:22:00",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
