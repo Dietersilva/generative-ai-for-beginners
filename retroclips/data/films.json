@@ -1980,6 +1980,69 @@
         "start_timestamp": "00:22:00",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "raja-harishchandra-1913",
+      "date_added": "2026-09-01",
+      "title": "Raja Harishchandra",
+      "year": 1913,
+      "director": "Dadasaheb Phalke",
+      "country": "India",
+      "genre": "Mythological Epic",
+      "scene_label": "A fountain in the palace garden",
+      "scene_description": "Water sprays high over an ornamental pool in a walled garden as a robed sage strides in and gestures toward the bathers below, an elaborate practical set piece for its time.",
+      "commentary": "Raja Harishchandra is widely considered India's first feature film, and this is a rare surviving fragment of it: the National Film Archive of India holds only pieces of the first and last reels. Director Dadasaheb Phalke could not find a single woman willing to appear on camera, since acting was considered indecent for women in 1913 Bombay, even actresses he approached refused, so he cast a man, Anna Salunke, to play the queen, making Salunke India's first credited screen actress. Phalke's legacy is now honored every year through the Dadasaheb Phalke Award, India's highest award in cinema.",
+      "pd_basis": "Explicit CC0 (public domain dedication) confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/RajaHarishchandra1913",
+        "source_identifier": "RajaHarishchandra1913",
+        "start_timestamp": "00:04:58",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "laborers-love-1922",
+      "date_added": "2026-09-01",
+      "title": "Laborer's Love",
+      "year": 1922,
+      "director": "Zhang Shichuan",
+      "country": "China",
+      "genre": "Comedy",
+      "scene_label": "The rigged staircase gets its victim",
+      "scene_description": "An elderly gentleman descends a wooden staircase moments after being warned not to stumble, and the secretly booby-trapped steps send him tumbling to a seated heap at the bottom.",
+      "commentary": "Laborer's Love is the oldest surviving complete Chinese film; nearly everything made before it was lost when Japanese bombing destroyed the Mingxing studio's library in 1932. Its entire plot turns on a fruit peddler rigging a staircase to drum up business for his love interest's doctor father, a Rube Goldberg-style gag that plays as pure physical comedy in the same register as Keaton and Chaplin, even though the two traditions barely knew each other in 1922. It was released with bilingual Chinese-English intertitles, aimed at Shanghai's international audiences from the start.",
+      "pd_basis": "US copyright term fully expired (published 1922, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-zhi-guo-yuan-aka-romance-of-a-fruit-peddler",
+        "source_identifier": "silent-zhi-guo-yuan-aka-romance-of-a-fruit-peddler",
+        "start_timestamp": "00:16:55",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "fragmentos-da-vida-1929",
+      "date_added": "2026-09-01",
+      "title": "Fragmentos da Vida",
+      "year": 1929,
+      "director": "José Medina",
+      "country": "Brazil",
+      "genre": "Drama",
+      "scene_label": "A city waking up into skyscrapers",
+      "scene_description": "A high-angle view looks out over a bustling São Paulo plaza, streetcars and automobiles circulating below a skyline of new high-rise construction wrapped in morning haze.",
+      "commentary": "Fragmentos da Vida is a rare surviving glimpse of Brazil's late-1920s silent film scene; only about 40 minutes of the original release survives today. This shot captures São Paulo's building boom in real time, the same year the Martinelli Building was completed nearby as Latin America's first skyscraper. A contemporary review in Cinearte called it \"the most daring portrait of Brazilian urban life,\" and decades later the Cinema Novo movement's 1962 manifesto cited it as an early precursor of Brazilian social realism.",
+      "pd_basis": "US copyright term fully expired (published 1929, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/FragmentosDaVidaJosMedina1929",
+        "source_identifier": "FragmentosDaVidaJosMedina1929",
+        "start_timestamp": "00:05:24",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
