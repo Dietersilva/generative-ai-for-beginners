@@ -1602,6 +1602,69 @@
         "start_timestamp": "00:19:09",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-cat-and-the-canary-1927",
+      "date_added": "2026-09-01",
+      "title": "The Cat and the Canary",
+      "year": 1927,
+      "director": "Paul Leni",
+      "country": "USA",
+      "genre": "Horror / Comedy",
+      "scene_label": "Down the cobwebbed hallway",
+      "scene_description": "A camera holds on a long, receding corridor draped in dust sheets, a pale curtain fluttering in an unseen draft toward a staircase at the far end, the whole house seemingly breathing.",
+      "commentary": "Paul Leni was a German Expressionist import, fresh off directing Waxworks in Berlin, and this was his American debut, a film now credited with more or less inventing the old-dark-house genre: heirs gathered for a will reading, a hooded killer, comic relief undercutting the dread. The template got reused constantly afterward, from The Old Dark House in 1932 through the 1939 Bob Hope remake and beyond. Leni died just two years after making this, only four years after arriving in Hollywood, so this stands as one of the clearest surviving records of a genuinely important but tragically short American career.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-cat-and-the-canary-1927-by-paul-leni",
+        "source_identifier": "the-cat-and-the-canary-1927-by-paul-leni",
+        "start_timestamp": "00:04:32",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "piccadilly-1929",
+      "date_added": "2026-09-01",
+      "title": "Piccadilly",
+      "year": 1929,
+      "director": "E.A. Dupont",
+      "country": "United Kingdom",
+      "genre": "Melodrama / Backstage Drama",
+      "scene_label": "Shosho's spotlight dance",
+      "scene_description": "A dancer's silhouette leaps and spins across a circular, brightly lit stage floor, flanked by two enormous ornate golden urns, the whole shot composed like a piece of moving Art Deco jewelry.",
+      "commentary": "Piccadilly gave Anna May Wong one of the only true leading roles a major studio handed a Chinese-American actress in this era, casting her as a scullery maid who becomes a nightclub's sensation. The interracial romance at the story's center was genuinely controversial for 1929, and the film is now regarded as a landmark of early Chinese-American screen representation. Cinematographer Werner Brandes shot the nightclub sequences with a level of Art Deco polish that made this one of the most visually celebrated British silents of its decade, restored decades later by the BFI as a landmark of the era.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/piccadilly-1929-by-e.a.-dupont",
+        "source_identifier": "piccadilly-1929-by-e.a.-dupont",
+        "start_timestamp": "00:58:37",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "earth-1930",
+      "date_added": "2026-09-01",
+      "title": "Earth",
+      "year": 1930,
+      "director": "Alexander Dovzhenko",
+      "country": "Soviet Union (Ukrainian SSR)",
+      "genre": "Poetic Realism / Drama",
+      "scene_label": "\"It's coming!\" — the village celebrates",
+      "scene_description": "Villagers in embroidered shirts throw their heads back laughing and singing in the open air, the news of the tractor's arrival passing from face to face in a wave of pure, uncomplicated joy.",
+      "commentary": "Earth regularly turns up on critics' all-time-greatest-films lists, which is a strange fate for something the Soviet state commissioned as straightforward collectivization propaganda. Dovzhenko instead delivered an almost pantheistic hymn to nature and rural life, so lyrical and ambiguous that Soviet authorities were reportedly unsettled by it and partly suppressed it at home even as it was celebrated abroad. Its rhythmic montage of extreme close-ups, a single apple, sunflowers, rippling wheat, became hugely influential on poetic and art cinema well beyond the Soviet Union.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/earth-1930",
+        "source_identifier": "earth-1930",
+        "start_timestamp": "00:25:00",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
