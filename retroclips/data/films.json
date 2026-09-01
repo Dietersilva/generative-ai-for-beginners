@@ -1665,6 +1665,69 @@
         "start_timestamp": "00:25:00",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "the-toll-of-the-sea-1922",
+      "date_added": "2026-09-01",
+      "title": "The Toll of the Sea",
+      "year": 1922,
+      "director": "Chester M. Franklin",
+      "country": "USA",
+      "genre": "Romantic Drama",
+      "scene_label": "An embrace in the garden",
+      "scene_description": "Lotus Flower and Allen hold each other close beneath the trees, her jade-green robe and the garden's red blossoms rendered in the era's earliest true movie color, the whole frame glowing.",
+      "commentary": "This was only the second Technicolor film ever made and the first Technicolor feature shot in Hollywood, and unlike the earlier The Gulf Between, which survives only in fragments, this one exists complete. It was also Anna May Wong's first leading role, taken at seventeen, on her way to becoming the first Chinese-American star Hollywood ever built around. The two-strip color process could only reproduce reds and greens, which is exactly why this garden setting, all jade robes and red roses, was chosen: it is a film built specifically to show off what the new color technology could do.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-toll-of-the-sea-1922-2160p-60fps",
+        "source_identifier": "the-toll-of-the-sea-1922-2160p-60fps",
+        "start_timestamp": "00:06:11",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "a-throw-of-dice-1929",
+      "date_added": "2026-09-01",
+      "title": "A Throw of Dice",
+      "year": 1929,
+      "director": "Franz Osten",
+      "country": "India / United Kingdom",
+      "genre": "Adventure / Epic Spectacle",
+      "scene_label": "A throw of dice",
+      "scene_description": "Two men crouch over a game board spread on a mat beneath the trees, tossing dice and watching the result intently while a third figure looks on, the wager that sets the whole plot in motion.",
+      "commentary": "This is the first Indian production on RetroClips, a lavish silent super-production shot entirely on Indian locations for a British studio, with a German director, Franz Osten, working alongside Indian producer and star Himansu Rai. Contemporary accounts describe roughly ten thousand extras, a thousand horses, and dozens of decorated elephants across the production, a scale rarely attempted outside Hollywood at the time. The dice game at its center is not just a plot device but the whole reason for the English title: a rigged wager between two rival kings that decides a kingdom.",
+      "pd_basis": "US copyright term fully expired (published 1929, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/prapancha-pash-aka-a-throw-of-dice_1929",
+        "source_identifier": "prapancha-pash-aka-a-throw-of-dice_1929",
+        "start_timestamp": "00:04:24",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "angel-and-the-badman-1947",
+      "date_added": "2026-09-01",
+      "title": "Angel and the Badman",
+      "year": 1947,
+      "director": "James Edward Grant",
+      "country": "USA",
+      "genre": "Western / Romance",
+      "scene_label": "Three riders against the red rock",
+      "scene_description": "Three cowboys stand talking against a sweeping canyon backdrop of striated red rock, the kind of wide-open Western vista that made this genre a spectacle in its own right.",
+      "commentary": "This was John Wayne's first film as a producer, the debut release of his own production company, and a deliberately unusual choice for that debut: Wayne plays a wounded gunslinger nursed back to health by a Quaker family, in a story that argues for pacifism winning out over gunplay. It's the first sound-era Western on this site, next to a run of silent ones, and one of the more openly gentle films Wayne ever made his name on.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; copyright was not renewed.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/AngelAndTheBadManVideoQualityUpgrade",
+        "source_identifier": "AngelAndTheBadManVideoQualityUpgrade",
+        "start_timestamp": "00:59:52",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
