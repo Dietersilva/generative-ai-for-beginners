@@ -1476,6 +1476,69 @@
         "start_timestamp": "00:03:59",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "master-of-the-house-1925",
+      "date_added": "2026-09-01",
+      "title": "Master of the House",
+      "year": 1925,
+      "director": "Carl Theodor Dreyer",
+      "country": "Denmark",
+      "genre": "Drama",
+      "scene_label": "Ida makes up the linen cupboard",
+      "scene_description": "Ida reaches high into the bedroom cupboard, arranging a great sheet overhead as it billows in the window light, the household's endless small chores rendered with quiet, absorbed care.",
+      "commentary": "Master of the House is Dreyer at his most disciplined: nearly the entire film unfolds inside one cramped Copenhagen apartment, and he insisted on building it as a real, fully wired flat rather than a set, so his actors could move through it the way people actually move through a home they have lived in for years. The film's real subject is housework itself, filmed with the same patient attention Dreyer would later bring to Falconetti's face in The Passion of Joan of Arc, and it was a massive hit in Denmark precisely because audiences recognized the unglamorous domestic labor nobody else was bothering to point a camera at.",
+      "pd_basis": "US copyright term fully expired (published 1925, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-master-of-the-house",
+        "source_identifier": "silent-master-of-the-house",
+        "start_timestamp": "00:02:20",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-ten-commandments-1923",
+      "date_added": "2026-09-01",
+      "title": "The Ten Commandments",
+      "year": 1923,
+      "director": "Cecil B. DeMille",
+      "country": "USA",
+      "genre": "Epic / Drama",
+      "scene_label": "Moses parts the Red Sea",
+      "scene_description": "Moses raises his staff over the churning water, the sea rearing and crashing in response, a special-effects sequence built from miniatures, glass shots, and real ocean footage decades before anyone had heard the word CGI.",
+      "commentary": "This is the silent, biblical-prologue half of DeMille's first Ten Commandments, made three decades before his own more famous 1956 remake with Charlton Heston, and the Red Sea effect here was achieved by combining footage of real waves with a giant tank and traveling matte work that was considered borderline miraculous in 1923. DeMille buried an entire full-scale Egyptian city set, sphinxes and all, in the Guadalupe-Nipomo Dunes in California after filming wrapped rather than pay to haul it out, and archaeologists have spent decades since digging pieces of it back up.",
+      "pd_basis": "US copyright not renewed; the film entered the public domain after its initial 28-year term expired without renewal.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/TheTenCommandments1923",
+        "source_identifier": "TheTenCommandments1923",
+        "start_timestamp": "00:30:34",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "applause-1929",
+      "date_added": "2026-09-01",
+      "title": "Applause",
+      "year": 1929,
+      "director": "Rouben Mamoulian",
+      "country": "USA",
+      "genre": "Musical / Drama",
+      "scene_label": "The burlesque finale, chorus line and all",
+      "scene_description": "A top-hatted dancer leads a full chorus line across the stage in formation, the whole proscenium visible at once, orchestra pit and packed house included, the number playing out in one unbroken, theater-scaled shot.",
+      "commentary": "Applause was one of the first sound films to break out of the static, camera-locked-in-a-booth phase early talkies were stuck in, since Mamoulian insisted on a moving camera and even rigged two separate soundtracks so dialogue and singing could overlap, something the studio's engineers told him was technically impossible. He came to Hollywood straight from directing Broadway, and it shows in how the film treats the stage number itself as the point rather than as a scene to cut away from, holding wide on the full house the way a live audience actually would have seen it.",
+      "pd_basis": "US copyright not renewed; the film entered the public domain after its initial 28-year term expired without renewal.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/Applause1929",
+        "source_identifier": "Applause1929",
+        "start_timestamp": "00:02:45",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
