@@ -1728,6 +1728,69 @@
         "start_timestamp": "00:59:52",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "suspense-1913",
+      "date_added": "2026-09-01",
+      "title": "Suspense",
+      "year": 1913,
+      "director": "Lois Weber, Phillips Smalley",
+      "country": "USA",
+      "genre": "Thriller",
+      "scene_label": "A car races to the rescue",
+      "scene_description": "An automobile barrels straight toward the camera down a dusty street, trailing a huge cloud of dust behind it, the getaway car closing the distance in one uninterrupted shot.",
+      "commentary": "Lois Weber was the highest-paid, most prolific director in Hollywood by the mid-1910s and arguably America's first major filmmaking star behind the camera, yet she's largely been written out of the standard silent-film canon. Suspense is a genuine piece of film-grammar innovation: it uses a triangular split-screen to show three lines of action happening at once, plus an early subjective point-of-view shot from inside a speeding car, techniques that were still considered daring decades later. The whole film runs about ten minutes and was made on what was, even by 1913 standards, a shoestring budget.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/suspense-1913",
+        "source_identifier": "suspense-1913",
+        "start_timestamp": "00:06:24",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-flying-ace-1926",
+      "date_added": "2026-09-01",
+      "title": "The Flying Ace",
+      "year": 1926,
+      "director": "Richard E. Norman",
+      "country": "USA",
+      "genre": "Action / Adventure",
+      "scene_label": "Up in the goggles and leather",
+      "scene_description": "A pilot in full flying helmet and goggles turns his head to scan the sky from the cockpit, wind-blown and alert, the plane's struts and wing visible just behind him.",
+      "commentary": "The Flying Ace was made by Norman Studios in Jacksonville, one of the only Black-owned film production companies of the silent era, and it's the studio's only surviving complete feature, added to the National Film Registry in 2021. The best piece of trivia here is the trick behind the trick: despite being marketed as 'the greatest airplane thriller ever filmed,' the production reportedly used almost no real in-flight photography at all, the biplane was bolted to the ground the whole time, tilted and shot against a moving-cloud backdrop with wind machines doing the rest of the work.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-flying-ace-1926_202506",
+        "source_identifier": "the-flying-ace-1926_202506",
+        "start_timestamp": "00:09:05",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "it-1927",
+      "date_added": "2026-09-01",
+      "title": "It",
+      "year": 1927,
+      "director": "Clarence G. Badger",
+      "country": "USA",
+      "genre": "Romantic Comedy",
+      "scene_label": "An entrance worth making",
+      "scene_description": "Betty Lou descends a grand staircase into a glittering nightclub on her date's arm, chandeliers and white-clothed tables spread out below, every head in the room seeming to turn.",
+      "commentary": "It is the film that put the phrase 'It Girl' into permanent circulation, adapted from a novella by Elinor Glyn, who appears in the film in person to explain exactly what 'It' means (magnetic, unselfconscious charm, in case anyone was wondering). It turned Clara Bow into the defining flapper icon of the Jazz Age almost overnight, and the term she embodied has outlived nearly everyone who used it unironically at the time. This is Hollywood's original influencer-marketing moment: a studio built an entire star, and a whole cultural vocabulary, around one word.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/it-1927",
+        "source_identifier": "it-1927",
+        "start_timestamp": "00:20:55",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
