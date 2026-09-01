@@ -1413,6 +1413,69 @@
         "start_timestamp": "01:18:38",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "feline-follies-1919",
+      "date_added": "2026-09-01",
+      "title": "Feline Follies",
+      "year": 1919,
+      "director": "Otto Messmer",
+      "country": "USA",
+      "genre": "Animated Short / Comedy",
+      "scene_label": "Serenading Miss Kitty at the trysting place",
+      "scene_description": "Master Tom strums a banjo by moonlight beside a garbage can while Miss Kitty White dances happily beside him, the two cats' silhouettes bouncing against a moonlit backyard fence.",
+      "commentary": "Feline Follies is the film where Felix the Cat effectively began, released under the name Master Tom a year before the character was rebranded and became one of the first cartoon characters to achieve real global fame, predating Mickey Mouse by nearly a decade. Animator Otto Messmer worked under producer Pat Sullivan's name, a common arrangement in the era's animation studios, and it would be decades before Messmer's authorship of Felix was widely credited. The character's rubbery, expressive movement style set the template for cartoon animals that Disney and others would build on through the rest of the silent era.",
+      "pd_basis": "US copyright term fully expired (published 1919, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/feline-follies-1919",
+        "source_identifier": "feline-follies-1919",
+        "start_timestamp": "00:02:13",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-cameramans-revenge-1912",
+      "date_added": "2026-09-01",
+      "title": "The Cameraman's Revenge",
+      "year": 1912,
+      "director": "Ladislas Starevich",
+      "country": "Russian Empire",
+      "genre": "Animated Short / Stop-Motion",
+      "scene_label": "The cabaret dancer at the Gay Dragonfly",
+      "scene_description": "On a small painted stage inside a nightclub, an articulated beetle performer tumbles and dances between two seated insect patrons, lit like a real cabaret act.",
+      "commentary": "Ladislas Starevich made this entirely with dead insects rigged into articulated stop-motion puppets, reportedly a workaround after his live beetles refused to perform under studio lights. The technique was so far ahead of anything else being attempted with animation that some contemporary audiences assumed the insects had been trained rather than animated frame by frame, and Starevich never fully explained his methods. It stands as one of the earliest and strangest examples of stop-motion character animation, made in Moscow a full generation before King Kong or the Rankin-Bass holiday specials it quietly anticipates.",
+      "pd_basis": "US copyright term fully expired (published 1912, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/TheCameramansRevenge",
+        "source_identifier": "TheCameramansRevenge",
+        "start_timestamp": "00:01:28",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-electric-hotel-1908",
+      "date_added": "2026-09-01",
+      "title": "The Electric Hotel",
+      "year": 1908,
+      "director": "Segundo de Chomon",
+      "country": "Spain / France",
+      "genre": "Fantasy / Trick Film",
+      "scene_label": "The hair styles itself",
+      "scene_description": "A guest sits still as a hairbrush moves entirely on its own, working through her long hair and gathering it into a neat bun with no visible hand guiding it.",
+      "commentary": "Segundo de Chomon is often called the Spanish Melies, and The Electric Hotel is his best-known surviving trick film, built almost entirely from stop-motion effects where luggage packs itself, boots lace themselves, and hair styles itself with no operator ever entering the frame. Working independently of Melies's own studio, Chomon achieved some of the era's most convincing object animation through frame-by-frame pixilation, painstakingly repositioning each item a fraction at a time between exposures. The film's premise, an imaginary hotel where every mundane task happens automatically, reads almost like an accidental prediction of a century of home-automation advertising.",
+      "pd_basis": "US copyright term fully expired (published 1908, well past the 95-year term).",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/silent-the-electric-hotel",
+        "source_identifier": "silent-the-electric-hotel",
+        "start_timestamp": "00:03:59",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
