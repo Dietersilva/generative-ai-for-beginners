@@ -1854,6 +1854,69 @@
         "start_timestamp": "00:04:30",
         "duration_sec": 10.0
       }
+    },
+    {
+      "id": "falling-leaves-1912",
+      "date_added": "2026-09-01",
+      "title": "Falling Leaves",
+      "year": 1912,
+      "director": "Alice Guy-Blache",
+      "country": "USA",
+      "genre": "Family Drama",
+      "scene_label": "Trixie tries to cheat death",
+      "scene_description": "A father finds his young daughter alone among the bare rose bushes, reaching up toward the branches, and kneels down as she shows him what she's been doing there.",
+      "commentary": "Alice Guy-Blache is arguably the first-ever narrative film director in cinema history, directing at Gaumont in France from 1896, years before D.W. Griffith is usually credited with inventing film grammar, and she went on to make well over a thousand films across her career. Almost none of them survive intact, which makes Falling Leaves a rare, precious exception. Its premise, a little girl who overhears a doctor say her sister will die when the last leaf falls and so ties the fallen leaves back onto the tree with string to cheat death, shares its central idea with O. Henry's short story The Last Leaf, published five years earlier.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item; also independently pre-1931 with a fully expired US copyright term.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/falling_leaves_1912",
+        "source_identifier": "falling_leaves_1912",
+        "start_timestamp": "00:07:25",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "erotikon-1920",
+      "date_added": "2026-09-01",
+      "title": "Erotikon",
+      "year": 1920,
+      "director": "Mauritz Stiller",
+      "country": "Sweden",
+      "genre": "Romantic Comedy",
+      "scene_label": "A night at the theater",
+      "scene_description": "A packed opera box erupts into applause and animated conversation as the house lights come up, furs and evening dress catching the light between acts.",
+      "commentary": "Erotikon is one of the great Continental sex comedies, a frank and witty film about an open marriage played for elegance rather than melodrama, made decades before Hollywood's Production Code would have allowed anything like it. Film historians widely credit it as a direct stylistic forerunner of what became known as the Lubitsch touch, the light, sly sophistication that Ernst Lubitsch later brought to Hollywood. Mauritz Stiller would shortly afterward discover and mentor a young Swedish actress named Greta Garbo, bringing her with him when he was hired away to America.",
+      "pd_basis": "US Public Domain Mark license confirmed directly on the archive.org item.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/erotikon_1920",
+        "source_identifier": "erotikon_1920",
+        "start_timestamp": "00:29:30",
+        "duration_sec": 10.0
+      }
+    },
+    {
+      "id": "the-life-and-death-of-9413-a-hollywood-extra-1928",
+      "date_added": "2026-09-01",
+      "title": "The Life and Death of 9413, a Hollywood Extra",
+      "year": 1928,
+      "director": "Robert Florey, Slavko Vorkapich",
+      "country": "USA",
+      "genre": "Avant-garde",
+      "scene_label": "Branded on arrival",
+      "scene_description": "A giant hand descends and stamps a number onto a hopeful young man's forehead, the digits glowing there afterward as his wide, startled eyes stare straight into camera.",
+      "commentary": "This is one of the founding works of American avant-garde cinema, reportedly made for around 97 dollars using cigar boxes, tin cans, and toy trains as miniature studio sets, shot largely by two aspiring filmmakers with borrowed equipment and no major-studio backing. It's widely credited with importing German Expressionist visual technique into American independent film, and co-director Slavko Vorkapich went on to invent the rapid-cut transition sequence that became a Golden Age Hollywood editing staple, still known in the industry as a Vorkapich montage.",
+      "pd_basis": "US copyright term fully expired (published 1928, well past the 95-year term); an independently produced and distributed 1928 film with no studio copyright-renewal infrastructure behind it, long circulated as public domain including in Library of Congress holdings with no rights restriction noted.",
+      "pd_caveat": null,
+      "clip": {
+        "status": "sourced",
+        "source_url": "https://archive.org/details/the-life-and-death-of-9413-a-hollywood-extra_1928",
+        "source_identifier": "the-life-and-death-of-9413-a-hollywood-extra_1928",
+        "start_timestamp": "00:02:30",
+        "duration_sec": 10.0
+      }
     }
   ]
 }
