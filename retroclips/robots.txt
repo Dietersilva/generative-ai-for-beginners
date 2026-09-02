@@ -1,0 +1,9 @@
+# Note on scope: this file lives at /generative-ai-for-beginners/retroclips/robots.txt,
+# not at the actual host root (dietersilva.github.io/robots.txt). robots.txt is only
+# honored by crawlers when served from a domain's true root, so this copy has no real
+# effect while the site lives at this subpath -- it's kept here for documentation, and
+# so it's already correct the day this moves to its own domain or a Pages user-site root.
+User-agent: *
+Allow: /
+
+Sitemap: https://dietersilva.github.io/generative-ai-for-beginners/retroclips/sitemap.xml
