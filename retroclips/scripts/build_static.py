@@ -58,13 +58,40 @@ def inject(text: str, start: str, end: str, body: str) -> str:
 
 
 def caption_duration_class(commentary: str) -> str:
-    # Matches the old runtime formula (script.js used to set this via
-    # element.style directly); rounded to a whole second so a fixed set
-    # of CSS classes (duration-14 .. duration-28 in styles.css) can cover
-    # it without any inline style -- inline styles need 'unsafe-inline'
-    # in the CSP, which we're avoiding.
-    seconds = min(28, max(14, round(len(commentary) * 0.09)))
+    # Rounded to a whole second so a fixed set of CSS classes
+    # (duration-20 .. duration-120 in styles.css) can cover it without any
+    # inline style -- inline styles need 'unsafe-inline' in the CSP, which
+    # we're avoiding.
+    #
+    # 0.13s/char, floor 20s/ceiling 120s. The original 0.09s/char with a
+    # 28s ceiling was tuned when commentary blurbs ran short; the catalog's
+    # commentary is now consistently 300-800 chars (batches with real
+    # trivia/history), so the 28s cap was binding for ~98% of films --
+    # every card scrolled its caption at the same fixed pace regardless of
+    # how much text it actually had, turning the longer, richer blurbs
+    # into an unreadable blur. The new ceiling (120s) comfortably clears
+    # today's longest commentary (~800 chars -> ~104s) so duration once
+    # again reflects actual content length across the real range.
+    seconds = min(120, max(20, round(len(commentary) * 0.13)))
     return f"duration-{seconds}"
+
+
+def poster_strip_duration_class(num_tiles: int) -> str:
+    # Same reasoning as caption_duration_class: a fixed set of CSS classes
+    # (strip-duration-180 .. strip-duration-1800 in styles.css, step 30)
+    # instead of an inline animation-duration.
+    #
+    # The strip's animation always scrolls exactly 50% of its own width
+    # (the tile sequence is duplicated back to back for a seamless loop),
+    # so a *fixed* duration means its px/s speed rises every time a batch
+    # adds more tiles -- the strip has been getting faster with every
+    # film shipped, not just taking longer to loop. ~2.5s per tile keeps
+    # the crossing speed roughly constant as the catalog grows (currently
+    # ~400 tiles -> ~1000s/loop; at 180x9 fixed it had sped up to ~2.2
+    # tiles/s, a blur), clamped to a wide range so it stays sane at both
+    # a small and a very large catalog size.
+    seconds = min(1800, max(180, round(num_tiles * 2.5 / 30) * 30))
+    return f"strip-duration-{seconds}"
 
 
 CATEGORIES = ["horror", "comedy", "sci-fi", "drama"]
@@ -189,9 +216,10 @@ def render_ad_slot(films: list, variant: str, slot_id: str) -> str:
 
     entries = poster_strip_images(films)
     imgs = "\n          ".join(tile(src, film) for src, film in entries)
+    duration_class = poster_strip_duration_class(len(entries))
     return f"""    <div class="poster-strip poster-strip--{variant}" data-poster-strip="{slot_id}">
       <div class="poster-strip-frame">
-        <div class="poster-strip-track">
+        <div class="poster-strip-track {duration_class}">
           {imgs}
           {imgs}
         </div>
