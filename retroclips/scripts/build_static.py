@@ -237,8 +237,8 @@ def render_filter_bar(films: list) -> str:
     return '  <div class="filter-bar" role="group" aria-label="Filter by genre">\n' + "\n".join(buttons) + "\n  </div>"
 
 
-IN_FEED_AD_FIRST = 5  # 0-indexed: insert after the 6th card
-IN_FEED_AD_REPEAT = 8  # ...then every 8 cards after that
+IN_FEED_AD_FIRST = 9  # 0-indexed: insert after the 10th card
+IN_FEED_AD_REPEAT = 10  # ...then every 10 cards after that
 
 
 def render_cards(films: list) -> str:
