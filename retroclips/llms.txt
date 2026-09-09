@@ -1,0 +1,18 @@
+# RetroClips
+
+> A site pairing ~10 second clips from public-domain classic films with
+> ~20 seconds of commentary on why each scene matters, plus narration
+> audio and an illustrated "reaction cam." Every film's US copyright has
+> expired or lapsed -- no fair-use claim is being made for any clip.
+
+## Pages
+
+- [Home](https://dietersilva.github.io/generative-ai-for-beginners/retroclips/): the film grid -- clip, commentary, narration, and a link to watch the full film free on archive.org.
+- [About](https://dietersilva.github.io/generative-ai-for-beginners/retroclips/about.html): the public-domain legal rationale, with the specific basis (term expiration or notice/renewal lapse) cited per film.
+- Every film also has its own page at `/<film-id>.html` (e.g. `/nosferatu-1922.html`), linked from its card.
+
+## Notes
+
+- 52 films as of 2026-08, still growing.
+- All clips and narration audio are static assets, generated once by the scripts in /scripts and committed to the repo -- nothing on this site is fetched live from a third-party API at request time.
+- Source and full sourcing methodology: https://github.com/dietersilva/generative-ai-for-beginners/tree/main/retroclips
