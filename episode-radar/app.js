@@ -1,13 +1,25 @@
 'use strict';
 
-// Episode Radar: new-series, new-season and new-episode alerts for the streaming
-// services you pay for, plus a planner that shows which services you can pause.
-// Data comes from the public TVmaze API. Everything the user saves stays in this
-// device's localStorage. The page never uses innerHTML: every string from the API
-// is rendered as text, and every link or image URL is checked before it reaches
-// the DOM.
+// Episode Radar: one monthly streaming plan for a household, built from
+// everyone's shows, their teams' games and the streaming they already get
+// through memberships, phone plans and cards. Also alerts for new series,
+// seasons, episodes and games.
+//
+// TV data comes from the public TVmaze API; sports data from TheSportsDB via
+// this site's own /api/sports function (which holds the paid key). Everything
+// the user saves stays in this device's localStorage. The page never uses
+// innerHTML: every outside string is rendered as text, and every link or image
+// URL is checked before it reaches the DOM.
 (() => {
+  const DATA = window.EPISODE_RADAR_DATA;
+  if (!DATA) {
+    document.getElementById('status').textContent = 'Episode Radar could not load its data. Reload the page.';
+    return;
+  }
+  const { services: SERVICES, networks: NETWORKS, perks: PERKS } = DATA;
+
   const API = 'https://api.tvmaze.com';
+  const SPORTS_API = 'api/sports';
   const STORE_KEY = 'episodeRadar.v1';
   const CACHE_KEY = 'episodeRadar.cache.v1';
   const MINUTE = 60e3;
@@ -16,30 +28,23 @@
   const STALE_AFTER = 6 * HOUR;
   // TVmaze allows roughly 20 requests per 10 seconds per IP; stay well under it.
   const REQUEST_GAP_MS = 550;
-
-  // `names` are TVmaze web channel names, lower-cased. `hosts` decide whether a
-  // show's official site is a direct link into that service.
-  const SERVICES = [
-    { id: 'netflix', label: 'Netflix', names: ['netflix'], hosts: ['netflix.com'], home: 'https://www.netflix.com/' },
-    { id: 'hulu', label: 'Hulu', names: ['hulu'], hosts: ['hulu.com'], home: 'https://www.hulu.com/' },
-    { id: 'prime', label: 'Prime Video', names: ['prime video', 'amazon prime video', 'amazon prime', 'amazon video'], hosts: ['primevideo.com', 'amazon.com'], home: 'https://www.primevideo.com/' },
-    { id: 'hbomax', label: 'HBO Max', names: ['hbo max', 'max'], hosts: ['hbomax.com', 'max.com'], home: 'https://www.hbomax.com/' },
-    { id: 'disney', label: 'Disney+', names: ['disney+'], hosts: ['disneyplus.com'], home: 'https://www.disneyplus.com/' },
-    { id: 'appletv', label: 'Apple TV+', names: ['apple tv+', 'apple tv'], hosts: ['tv.apple.com'], home: 'https://tv.apple.com/' },
-    { id: 'paramount', label: 'Paramount+', names: ['paramount+', 'cbs all access'], hosts: ['paramountplus.com'], home: 'https://www.paramountplus.com/' },
-    { id: 'peacock', label: 'Peacock', names: ['peacock', 'peacock premium'], hosts: ['peacocktv.com'], home: 'https://www.peacocktv.com/' },
-  ];
   const DEFAULT_SERVICES = ['netflix', 'hulu', 'prime'];
-  const TABS = ['alerts', 'shows', 'downloads', 'savings', 'settings'];
+  const TABS = ['alerts', 'plan', 'shows', 'sports', 'downloads', 'settings'];
+  const MAX_MEMBERS = 8;
+  const PLAN_PERIODS = 3; // 30-day periods, matching how streaming bills
+  const PERIOD_DAYS = 30;
+  const TVMAZE_IMG = ['static.tvmaze.com'];
+  const SPORTS_IMG = ['www.thesportsdb.com', 'r2.thesportsdb.com'];
 
   // ---------- small helpers ----------
 
   const $ = (sel) => document.querySelector(sel);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
-  const posInt = (v) => (Number.isInteger(v) && v > 0 && v < 1e9 ? v : null);
+  const posInt = (v) => (Number.isInteger(v) && v > 0 && v < 1e12 ? v : null);
   const isIso = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
   const svcById = (id) => SERVICES.find((s) => s.id === id) || null;
+  const own = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
 
   function safeUrl(v) {
     if (typeof v !== 'string') return null;
@@ -51,10 +56,11 @@
     }
   }
 
-  function safeImg(v) {
+  function safeImg(v, hosts = TVMAZE_IMG) {
     const u = safeUrl(v);
-    return u && new URL(u).hostname === 'static.tvmaze.com' ? u : null;
+    return u && hosts.includes(new URL(u).hostname) ? u : null;
   }
+  const anyImg = (v) => safeImg(v, TVMAZE_IMG) || safeImg(v, SPORTS_IMG);
 
   function hostMatches(url, hosts) {
     const safe = safeUrl(url);
@@ -93,6 +99,8 @@
     return d.toLocaleDateString(undefined, opts);
   }
 
+  const shortDate = (iso) => noon(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
   function listJoin(items) {
     try {
       return new Intl.ListFormat(undefined, { style: 'long', type: 'conjunction' }).format(items);
@@ -121,7 +129,7 @@
           el.rel = 'noopener noreferrer';
         }
       } else if (k === 'src') {
-        const u = safeImg(v);
+        const u = anyImg(v);
         if (u) el.src = u;
       } else el.setAttribute(k, v === true ? '' : String(v));
     }
@@ -151,15 +159,20 @@
     }
   }
 
+  const newMemberId = () => 'm' + Math.random().toString(36).slice(2, 8);
+
   function defaults() {
     return {
       version: 1,
       onboarded: false,
+      members: [{ id: 'me', name: 'Me' }],
       services: DEFAULT_SERVICES.slice(),
       prices: {},
+      perks: {},
       lookBackDays: 7,
       lookAheadDays: 21,
       tracked: {},
+      teams: {},
       downloads: [],
       dismissed: {},
       notified: {},
@@ -168,7 +181,11 @@
     };
   }
 
-  function cleanShowRef(v) {
+  function cleanMembers(list, valid) {
+    return Array.isArray(list) ? [...new Set(list.filter((id) => valid.has(id)))] : [];
+  }
+
+  function cleanShowRef(v, valid) {
     if (!v || typeof v !== 'object' || !posInt(v.id)) return null;
     return {
       id: v.id,
@@ -176,6 +193,19 @@
       channel: str(v.channel, 100),
       image: safeImg(v.image),
       site: safeUrl(v.site),
+      members: cleanMembers(v.members, valid),
+    };
+  }
+
+  function cleanTeamRef(v, valid) {
+    if (!v || typeof v !== 'object' || !posInt(v.id)) return null;
+    return {
+      id: v.id,
+      name: str(v.name, 80) || 'Team',
+      league: str(v.league, 80),
+      sport: str(v.sport, 40),
+      badge: safeImg(v.badge, SPORTS_IMG),
+      members: cleanMembers(v.members, valid),
     };
   }
 
@@ -204,6 +234,19 @@
   function normalizeState(raw) {
     const s = defaults();
     if (!raw || typeof raw !== 'object') return s;
+
+    if (Array.isArray(raw.members)) {
+      const seen = new Set();
+      const members = [];
+      for (const m of raw.members.slice(0, MAX_MEMBERS)) {
+        if (!m || typeof m.id !== 'string' || !/^[a-z0-9]{1,12}$/.test(m.id) || seen.has(m.id)) continue;
+        seen.add(m.id);
+        members.push({ id: m.id, name: str(m.name, 24).trim() || 'Someone' });
+      }
+      if (members.length) s.members = members;
+    }
+    const valid = new Set(s.members.map((m) => m.id));
+
     if (Array.isArray(raw.services)) s.services = SERVICES.map((x) => x.id).filter((id) => raw.services.includes(id));
     if (raw.prices && typeof raw.prices === 'object') {
       for (const x of SERVICES) {
@@ -211,25 +254,33 @@
         if (c) s.prices[x.id] = c;
       }
     }
+    if (raw.perks && typeof raw.perks === 'object') {
+      for (const p of PERKS) {
+        const v = raw.perks[p.id];
+        if (p.options ? p.options.some((o) => o.id === v) : v === true) s.perks[p.id] = v;
+      }
+    }
     if ([3, 7, 14].includes(raw.lookBackDays)) s.lookBackDays = raw.lookBackDays;
     if ([7, 14, 21, 30].includes(raw.lookAheadDays)) s.lookAheadDays = raw.lookAheadDays;
-    if (raw.tracked && typeof raw.tracked === 'object') {
-      for (const [k, v] of Object.entries(raw.tracked).slice(0, 500)) {
-        const t = cleanShowRef(v);
-        if (t && String(t.id) === k) s.tracked[k] = t;
+    for (const [field, clean] of [['tracked', cleanShowRef], ['teams', cleanTeamRef]]) {
+      if (raw[field] && typeof raw[field] === 'object') {
+        for (const [k, v] of Object.entries(raw[field]).slice(0, 500)) {
+          const t = clean(v, valid);
+          if (t && String(t.id) === k) s[field][k] = t;
+        }
       }
     }
     if (Array.isArray(raw.downloads)) s.downloads = raw.downloads.map(cleanDownload).filter(Boolean).slice(0, 500);
     for (const field of ['dismissed', 'notified']) {
       if (raw[field] && typeof raw[field] === 'object') {
         for (const k of Object.keys(raw[field]).slice(0, 5000)) {
-          if (/^(prem|ep):[\w:]{1,40}$/.test(k)) s[field][k] = true;
+          if (/^(prem|ep|game):[\w:]{1,40}$/.test(k)) s[field][k] = true;
         }
       }
     }
     s.notify = raw.notify === true;
     s.lastRefresh = Number.isFinite(raw.lastRefresh) ? raw.lastRefresh : 0;
-    // People upgrading from the first version already set things up.
+    // People upgrading from an earlier version already set things up.
     s.onboarded = raw.onboarded === true || s.lastRefresh > 0 || Object.keys(s.tracked).length > 0;
     return s;
   }
@@ -237,7 +288,7 @@
   let state = normalizeState(readJSON(STORE_KEY));
   const save = () => writeJSON(STORE_KEY, state);
 
-  // Cache of trimmed API results, keyed "sched:YYYY-MM-DD" and "show:ID".
+  // Cache of trimmed API results: "sched:YYYY-MM-DD", "show:ID", "team:ID".
   let cache = readJSON(CACHE_KEY);
   if (!cache || typeof cache !== 'object' || Array.isArray(cache)) cache = {};
   const cacheAny = (key) => (cache[key] ? cache[key].v : undefined);
@@ -252,10 +303,114 @@
       if (!cache[k] || !Number.isFinite(cache[k].t) || cache[k].t < cutoff) delete cache[k];
     }
     if (!writeJSON(CACHE_KEY, cache)) {
-      // Storage full: drop the cache rather than the user's lists.
+      // Storage full: drop the cache rather than the user's data.
       cache = {};
       writeJSON(CACHE_KEY, cache);
     }
+  }
+
+  // ---------- household ----------
+
+  const memberName = (id) => (state.members.find((m) => m.id === id) || {}).name || 'Someone';
+  // An empty list means everyone in the household.
+  const membersOf = (item) => (item && item.members && item.members.length ? item.members : state.members.map((m) => m.id));
+  function whoLabel(item) {
+    if (state.members.length < 2) return null;
+    const ids = membersOf(item);
+    return ids.length === state.members.length ? 'Everyone' : listJoin(ids.map(memberName));
+  }
+
+  // ---------- perks and coverage ----------
+
+  function activePerks() {
+    const out = [];
+    for (const p of PERKS) {
+      const v = state.perks[p.id];
+      if (!v) continue;
+      if (p.options) {
+        const o = p.options.find((x) => x.id === v);
+        if (o) out.push({ perk: p, grants: o.grants || [], label: `${p.label} (${o.label.replace(/ chosen$/, '')})` });
+      } else out.push({ perk: p, grants: p.grants || [], label: p.label });
+    }
+    return out;
+  }
+
+  const normChannel = (name) => str(name, 60).toLowerCase().replace(/\((us|usa)\)/g, '').replace(/\b(usa|us|hd)\b/g, '').replace(/\s+/g, ' ').trim();
+  const networkRule = (channel) => {
+    const n = normChannel(channel);
+    return NETWORKS.find((r) => r.names.includes(n)) || null;
+  };
+
+  function tierOk(serviceId, have, need) {
+    const svc = svcById(serviceId);
+    if (!svc || !svc.tiers || !need || !have) return true;
+    return svc.tiers.indexOf(have) >= svc.tiers.indexOf(need);
+  }
+
+  function coverageIndex() {
+    const active = activePerks();
+    const grants = [];
+    const nets = new Map();
+    const credits = [];
+    for (const a of active) {
+      for (const g of a.grants) grants.push({ service: g.service, tier: g.tier || null, by: a.label });
+      for (const n of a.perk.networks || []) if (!nets.has(n)) nets.set(n, a.label);
+      if (a.perk.credit) credits.push({ cents: a.perk.credit.cents, services: a.perk.credit.services, by: a.label });
+    }
+    return { grants, nets, credits };
+  }
+
+  // Returns the label of what already covers this need, or null.
+  function coveredBy(cov, need) {
+    if (need.channel) {
+      const by = cov.nets.get(normChannel(need.channel));
+      if (by) return by;
+    }
+    const svc = svcById(need.service);
+    if (svc && svc.free) return `${svc.label} (free)`;
+    const g = cov.grants.find((x) => x.service === need.service && tierOk(need.service, x.tier, need.tier));
+    return g ? g.by : null;
+  }
+
+  // How to watch one game given its US channels and what the household has.
+  function gameWatch(cov, game) {
+    if (!Array.isArray(game.channels) || !game.channels.length) return { status: 'unlisted' };
+    const options = game.channels.map((channel) => ({ channel, rule: networkRule(channel) }));
+    for (const o of options) {
+      const viaChannel = cov.nets.get(normChannel(o.channel));
+      if (viaChannel) return { status: 'covered', by: viaChannel, channel: o.channel, service: null, tier: null };
+    }
+    for (const o of options) {
+      const by = o.rule && coveredBy(cov, { service: o.rule.service, tier: o.rule.tier });
+      if (by) return { status: 'covered', by, channel: o.channel, service: o.rule.service, tier: o.rule.tier || null };
+    }
+    const mapped = options.filter((o) => o.rule);
+    const paid = mapped.find((o) => state.services.includes(o.rule.service));
+    if (paid) return { status: 'paid', channel: paid.channel, service: paid.rule.service, tier: paid.rule.tier || null, note: paid.rule.note };
+    if (mapped.length) {
+      const price = (o) => state.prices[o.rule.service] || Infinity;
+      const best = mapped.slice().sort((a, b) => price(a) - price(b))[0];
+      return { status: 'need', channel: best.channel, service: best.rule.service, tier: best.rule.tier || null, note: best.rule.note };
+    }
+    return { status: 'unknown', channels: game.channels };
+  }
+
+  function tierName(serviceId, tier) {
+    const svc = svcById(serviceId);
+    if (!svc) return 'a service';
+    if (!svc.tiers || !tier) return svc.label;
+    const label = svc.tierLabels[tier];
+    return label.startsWith(svc.label) ? label : `${svc.label} ${label}`;
+  }
+
+  function watchText(w) {
+    const svcName = w.service ? tierName(w.service, w.tier) : '';
+    const via = svcName.toLowerCase().startsWith(normChannel(w.channel || '')) ? '' : ` (${w.channel})`;
+    if (w.status === 'covered') return { cls: 'watch-ok', text: `Free with ${w.by}${w.by.toLowerCase().includes(normChannel(w.channel)) ? '' : ` (${w.channel})`}` };
+    if (w.status === 'paid') return { cls: 'watch-ok', text: `On ${svcName}, which you pay for${via}` };
+    if (w.status === 'need') return { cls: 'watch-need', text: `Needs ${svcName}${via}` };
+    if (w.status === 'unknown') return { cls: 'watch-unknown', text: `On ${listJoin(w.channels)}: needs cable, a live TV service or the league's own package` };
+    return { cls: 'watch-unknown', text: 'TV channel not announced yet' };
   }
 
   // ---------- TVmaze API ----------
@@ -308,12 +463,7 @@
       const show = ep && ((ep._embedded && ep._embedded.show) || ep.show);
       if (!show || !posInt(show.id) || ep.number !== 1 || !posInt(ep.season)) continue;
       if (ep.type && ep.type !== 'regular') continue;
-      out.push({
-        ...showRef(show),
-        season: ep.season,
-        airdate: isIso(ep.airdate) ? ep.airdate : date,
-        summary: plain(show.summary),
-      });
+      out.push({ ...showRef(show), season: ep.season, airdate: isIso(ep.airdate) ? ep.airdate : date, summary: plain(show.summary) });
     }
     cacheSet(key, out);
     return out;
@@ -355,6 +505,77 @@
       .map((s) => ({ ...showRef(s), premiered: isIso(s.premiered) ? s.premiered : '', status: str(s.status, 40), summary: plain(s.summary, 200) }));
   }
 
+  // ---------- sports API (this site's /api/sports) ----------
+
+  let sportsStatus = 'unknown'; // 'ok' | 'not_configured' | 'no_server' | 'error'
+
+  async function sportsApi(params) {
+    let res;
+    try {
+      res = await fetch(`${SPORTS_API}?${new URLSearchParams(params)}`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+    } catch {
+      const e = new Error('network');
+      e.code = 'error';
+      throw e;
+    }
+    let body = null;
+    try {
+      body = await res.json();
+    } catch {
+      body = null;
+    }
+    if (res.ok && body) {
+      sportsStatus = 'ok';
+      return body;
+    }
+    const e = new Error('sports unavailable');
+    e.code = res.status === 503 && body && body.error === 'not_configured' ? 'not_configured' : res.status === 404 || !body ? 'no_server' : 'error';
+    throw e;
+  }
+
+  function cleanGame(g) {
+    if (!g || !posInt(g.id)) return null;
+    const start = typeof g.start === 'string' && !Number.isNaN(Date.parse(g.start)) ? new Date(g.start).toISOString() : null;
+    return {
+      id: g.id,
+      name: str(g.name, 120),
+      league: str(g.league, 80),
+      home: str(g.home, 80),
+      away: str(g.away, 80),
+      date: isIso(g.date) ? g.date : '',
+      start,
+      channels: Array.isArray(g.channels) ? g.channels.filter((c) => typeof c === 'string').map((c) => str(c, 60)).slice(0, 8) : null,
+    };
+  }
+
+  async function searchTeams(q) {
+    const body = await sportsApi({ action: 'teams', q });
+    return (Array.isArray(body.teams) ? body.teams : [])
+      .map((t) => t && posInt(t.id) && { id: t.id, name: str(t.name, 80) || 'Team', league: str(t.league, 80), sport: str(t.sport, 40), badge: safeImg(t.badge, SPORTS_IMG) })
+      .filter(Boolean)
+      .slice(0, 10);
+  }
+
+  async function teamGames(id, ttl) {
+    const key = 'team:' + id;
+    const hit = cacheFresh(key, ttl);
+    if (hit) return hit;
+    const body = await sportsApi({ action: 'games', id: String(id) });
+    const games = (Array.isArray(body.games) ? body.games : []).map(cleanGame).filter(Boolean).slice(0, 15);
+    cacheSet(key, games);
+    return games;
+  }
+
+  const gameDate = (g) => (g.start ? isoDate(new Date(g.start)) : g.date);
+  const gameTitle = (g) => g.name || (g.away && g.home ? `${g.away} at ${g.home}` : 'Game');
+  function gameWhen(g) {
+    if (g.start) {
+      const d = new Date(g.start);
+      return `${d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}, ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+    }
+    return fmtDate(g.date);
+  }
+
   // ---------- model ----------
 
   function windowDates() {
@@ -380,12 +601,19 @@
       const d = cacheAny('show:' + id);
       if (d) details[id] = d;
     }
-    return { premieres: [...seen.values()], details };
+    const games = {};
+    for (const id of Object.keys(state.teams)) {
+      const g = cacheAny('team:' + id);
+      if (Array.isArray(g)) games[id] = g;
+    }
+    return { premieres: [...seen.values()], details, games, cov: coverageIndex() };
   }
 
   function buildAlerts(model) {
+    const t = today();
     const from = isoDate(addDays(new Date(), -state.lookBackDays));
     const until = isoDate(addDays(new Date(), state.lookAheadDays));
+    const soonGames = isoDate(addDays(new Date(), 2));
     const selected = new Set(state.services);
     const alerts = [];
     const keys = new Set();
@@ -417,42 +645,134 @@
       if (next && next.number === 1 && next.airdate <= until) premiere(id, d, svc, next.season, next.airdate);
     }
 
+    // Games in the next three days for followed teams.
+    for (const [id, games] of Object.entries(model.games)) {
+      const team = state.teams[id];
+      if (!team) continue;
+      for (const g of games) {
+        const d = gameDate(g);
+        if (!d || d < t || d > soonGames) continue;
+        const w = gameWatch(model.cov, g);
+        push({ key: `game:${g.id}`, kind: 'game', team, game: g, watch: w, svc: w.service ? svcById(w.service) : null, airdate: d });
+      }
+    }
+
     return alerts.filter((a) => !state.dismissed[a.key]);
   }
 
-  // Keep a service while a followed show is mid-season (an episode in the last
-  // 14 days or the next 30). Otherwise suggest pausing until the next return.
-  function buildPlan(model) {
-    const t = today();
-    const recent = isoDate(addDays(new Date(), -14));
-    const soon = isoDate(addDays(new Date(), 30));
-    return state.services.map((id) => {
-      const svc = svcById(id);
-      const price = state.prices[id] || 0;
-      const shows = Object.values(model.details).filter((d) => {
-        const s = serviceFor(d.channel);
-        return s && s.id === id;
-      });
-      const premieresSoon = model.premieres.filter((p) => {
-        const s = serviceFor(p.channel);
-        return s && s.id === id && p.airdate >= t;
-      }).length;
-      const nexts = shows
-        .filter((d) => d.future[0])
-        .map((d) => ({ show: d, ep: d.future[0] }))
-        .sort((a, b) => a.ep.airdate.localeCompare(b.ep.airdate));
-      const next = nexts[0] || null;
-      const active = shows.filter((d) => {
-        const last = d.past[d.past.length - 1];
-        return (last && last.airdate >= recent) || (d.future[0] && d.future[0].airdate <= soon);
-      });
+  // ---------- household plan ----------
 
-      if (!shows.length) return { svc, price, shows, premieresSoon, kind: 'idle', save: price };
-      if (active.length) return { svc, price, shows, premieresSoon, kind: 'keep', next, active, save: 0 };
-      const days = next ? daysBetween(t, next.ep.airdate) : null;
-      const months = days == null ? null : Math.max(1, Math.floor(days / 30));
-      return { svc, price, shows, premieresSoon, kind: 'pause', next, days, months, save: price };
+  function planPeriods() {
+    const base = new Date();
+    return Array.from({ length: PLAN_PERIODS }, (_, i) => ({
+      start: isoDate(addDays(base, i * PERIOD_DAYS)),
+      end: isoDate(addDays(base, (i + 1) * PERIOD_DAYS - 1)),
+      first: i === 0,
+    }));
+  }
+
+  // Everything the household wants to watch in one 30-day period, and what it needs.
+  function periodNeeds(period, model) {
+    const t = today();
+    const inPeriod = (d) => d >= period.start && d <= period.end;
+    const needs = [];
+    const unknown = [];
+    for (const [id, d] of Object.entries(model.details)) {
+      const svc = serviceFor(d.channel);
+      const ref = state.tracked[id];
+      if (!svc || !ref) continue;
+      const eps = d.future.filter((e) => inPeriod(e.airdate));
+      const last = d.past[d.past.length - 1];
+      const midSeason = period.first && last && daysBetween(last.airdate, t) <= 14;
+      if (!eps.length && !midSeason) continue;
+      const detail = eps.length
+        ? `${epCode(eps[0].season, eps[0].number)}, ${fmtDate(eps[0].airdate)}${eps.length > 1 ? ` + ${eps.length - 1} more` : ''}`
+        : 'Mid-season now';
+      needs.push({ kind: 'show', service: svc.id, tier: null, title: d.name, detail, date: eps.length ? eps[0].airdate : t, item: ref });
+    }
+    for (const [id, games] of Object.entries(model.games)) {
+      const team = state.teams[id];
+      if (!team) continue;
+      for (const g of games) {
+        const d = gameDate(g);
+        if (!d || d < t || !inPeriod(d)) continue;
+        const w = gameWatch(model.cov, g);
+        if (w.status === 'unknown' || w.status === 'unlisted') {
+          unknown.push({ title: gameTitle(g), detail: `${fmtDate(d)} · ${watchText(w).text}`, date: d, item: team });
+          continue;
+        }
+        needs.push({ kind: 'game', service: w.service, tier: w.tier, channel: w.channel, title: gameTitle(g), detail: `${fmtDate(d)} on ${w.channel}`, date: d, item: team, by: w.status === 'covered' ? w.by : null });
+      }
+    }
+    return { needs, unknown };
+  }
+
+  function buildPlan(model) {
+    const perMonth = planPeriods().map((p) => ({ ...p, ...periodNeeds(p, model) }));
+    const plans = perMonth.map((pm, i) => {
+      const covered = new Map();
+      const uncovered = new Map();
+      for (const n of pm.needs) {
+        const by = n.by || coveredBy(model.cov, n);
+        if (by) {
+          if (!covered.has(by)) covered.set(by, []);
+          covered.get(by).push(n);
+        } else if (n.service) {
+          if (!uncovered.has(n.service)) uncovered.set(n.service, []);
+          uncovered.get(n.service).push(n);
+        }
+      }
+      const rows = [];
+      for (const [serviceId, needs] of uncovered) {
+        const svc = svcById(serviceId);
+        const paying = state.services.includes(serviceId);
+        const tiers = needs.map((n) => n.tier).filter(Boolean);
+        const tier = svc.tiers && tiers.length ? tiers.sort((a, b) => svc.tiers.indexOf(b) - svc.tiers.indexOf(a))[0] : null;
+        const partial = model.cov.grants.find((g) => g.service === serviceId);
+        const note = partial && tier ? `${partial.by} includes ${svc.tierLabels[partial.tier] || svc.label}, which doesn't include these games.` : null;
+        rows.push({ kind: paying ? 'keep' : 'add', svc, tier, needs, price: state.prices[serviceId] || 0, note, from: needs.map((n) => n.date).sort()[0] });
+      }
+      for (const serviceId of state.services) {
+        if (uncovered.has(serviceId)) continue;
+        const svc = svcById(serviceId);
+        const grant = model.cov.grants.find((g) => g.service === serviceId);
+        if (grant) {
+          rows.push({ kind: 'double', svc, by: grant.by, needs: [], price: state.prices[serviceId] || 0 });
+          continue;
+        }
+        let rejoin = null;
+        for (const later of perMonth.slice(i + 1)) {
+          const n = later.needs.filter((x) => x.service === serviceId && !(x.by || coveredBy(model.cov, x))).sort((a, b) => a.date.localeCompare(b.date))[0];
+          if (n) {
+            rejoin = n;
+            break;
+          }
+        }
+        rows.push({ kind: 'pause', svc, needs: [], price: state.prices[serviceId] || 0, rejoin, first: pm.first });
+      }
+      for (const [by, needs] of covered) rows.push({ kind: 'covered', by, needs });
+
+      const order = { add: 0, keep: 1, double: 2, pause: 3, covered: 4 };
+      rows.sort((a, b) => order[a.kind] - order[b.kind] || (a.svc && b.svc ? a.svc.label.localeCompare(b.svc.label) : 0));
+
+      const payRows = rows.filter((r) => r.kind === 'keep' || r.kind === 'add');
+      const cost = payRows.reduce((s, r) => s + r.price, 0);
+      let credit = 0;
+      const creditNotes = [];
+      for (const c of model.cov.credits) {
+        const eligible = payRows.filter((r) => c.services.includes(r.svc.id)).reduce((s, r) => s + r.price, 0);
+        const used = Math.min(c.cents, eligible);
+        if (used > 0) {
+          credit += used;
+          creditNotes.push(`${c.by} pays back ${money(used)}`);
+        }
+      }
+      const current = state.services.reduce((s, id) => s + (state.prices[id] || 0), 0);
+      const net = Math.max(0, cost - credit);
+      const missingPrices = [...new Set([...payRows.map((r) => r.svc), ...state.services.map(svcById)].filter((s) => s && !state.prices[s.id]).map((s) => s.label))];
+      return { start: pm.start, end: pm.end, first: pm.first, rows, unknown: pm.unknown, cost, credit, creditNotes, net, current, save: current - net, missingPrices };
     });
+    return plans;
   }
 
   // ---------- actions ----------
@@ -463,10 +783,12 @@
     return safeUrl(show.site) || `https://www.tvmaze.com/shows/${show.id}`;
   }
 
-  const isTracked = (id) => Object.prototype.hasOwnProperty.call(state.tracked, String(id));
+  const isTracked = (id) => own(state.tracked, String(id));
+  const isTeamFollowed = (id) => own(state.teams, String(id));
+  const validMembers = () => new Set(state.members.map((m) => m.id));
 
   async function track(show) {
-    const ref = cleanShowRef(show);
+    const ref = cleanShowRef({ ...show, members: [] }, validMembers());
     if (!ref) return;
     state.tracked[String(ref.id)] = ref;
     save();
@@ -482,6 +804,28 @@
 
   function untrack(id) {
     delete state.tracked[String(id)];
+    save();
+    renderAll();
+  }
+
+  async function followTeam(team) {
+    const ref = cleanTeamRef({ ...team, members: [] }, validMembers());
+    if (!ref) return;
+    state.teams[String(ref.id)] = ref;
+    save();
+    renderAll();
+    try {
+      await teamGames(ref.id, 0);
+      saveCache();
+    } catch (e) {
+      sportsStatus = e.code || 'error';
+      setBanner(`Following ${ref.name}. Its games will load when sports data is available.`);
+    }
+    renderAll();
+  }
+
+  function unfollowTeam(id) {
+    delete state.teams[String(id)];
     save();
     renderAll();
   }
@@ -553,53 +897,78 @@
     return out.join('\r\n ');
   }
 
-  function icsEvent(lines, stamp, uid, iso, summary, description) {
-    const start = iso.replace(/-/g, '');
-    const end = isoDate(addDays(noon(iso), 1)).replace(/-/g, '');
+  const icsStamp = (d) => d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+  // `when` is either { date } for an all-day event or { start } for a timed one.
+  function icsEvent(lines, stamp, uid, when, summary, description, alarm) {
+    lines.push('BEGIN:VEVENT', `UID:${uid}@episode-radar`, `DTSTAMP:${stamp}`);
+    if (when.start) {
+      const s = new Date(when.start);
+      lines.push(`DTSTART:${icsStamp(s)}`, `DTEND:${icsStamp(new Date(s.getTime() + 3 * HOUR))}`);
+    } else {
+      lines.push(`DTSTART;VALUE=DATE:${when.date.replace(/-/g, '')}`, `DTEND;VALUE=DATE:${isoDate(addDays(noon(when.date), 1)).replace(/-/g, '')}`);
+    }
     lines.push(
-      'BEGIN:VEVENT',
-      `UID:${uid}@episode-radar`,
-      `DTSTAMP:${stamp}`,
-      `DTSTART;VALUE=DATE:${start}`,
-      `DTEND;VALUE=DATE:${end}`,
       `SUMMARY:${icsEscape(summary)}`,
       `DESCRIPTION:${icsEscape(description)}`,
       'TRANSP:TRANSPARENT',
       'BEGIN:VALARM',
       'ACTION:DISPLAY',
       `DESCRIPTION:${icsEscape(summary)}`,
-      'TRIGGER;RELATED=START:PT9H',
+      alarm,
       'END:VALARM',
       'END:VEVENT',
     );
   }
 
   function buildICS(model) {
-    const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+    const stamp = icsStamp(new Date());
     const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Episode Radar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Episode Radar'];
-    let episodes = 0;
-    let reminders = 0;
+    const counts = { episodes: 0, games: 0, reminders: 0 };
+    const t = today();
     for (const d of Object.values(model.details)) {
       for (const e of d.future.slice(0, 26)) {
         const summary = `${d.name} ${epCode(e.season, e.number)}` + (e.name ? ` · ${e.name}` : '');
         const where = d.channel ? `Streaming on ${d.channel}.` : 'Check your streaming service.';
-        icsEvent(lines, stamp, `tvmaze-episode-${e.id}`, e.airdate, summary, `${where} Data from TVmaze.`);
-        episodes++;
+        icsEvent(lines, stamp, `tvmaze-episode-${e.id}`, { date: e.airdate }, summary, `${where} Data from TVmaze.`, 'TRIGGER;RELATED=START:PT9H');
+        counts.episodes++;
       }
     }
-    // A reminder to resubscribe 3 days before a paused service's show returns.
-    const t = today();
-    for (const p of buildPlan(model)) {
-      if (p.kind !== 'pause' || !p.next) continue;
-      const when = isoDate(addDays(noon(p.next.ep.airdate), -3));
+    for (const [id, games] of Object.entries(model.games)) {
+      if (!state.teams[id]) continue;
+      for (const g of games) {
+        const d = gameDate(g);
+        if (!d || d < t) continue;
+        const w = watchText(gameWatch(model.cov, g));
+        icsEvent(lines, stamp, `tsdb-event-${g.id}`, g.start ? { start: g.start } : { date: d }, gameTitle(g), `${w.text}. Data from TheSportsDB.`, g.start ? 'TRIGGER:-PT30M' : 'TRIGGER;RELATED=START:PT9H');
+        counts.games++;
+      }
+    }
+    // Resubscribe reminders 3 days before a paused service is needed again.
+    const plans = buildPlan(model);
+    const reminded = new Set();
+    for (const row of plans[0].rows) {
+      if (row.kind !== 'pause' || !row.rejoin || reminded.has(row.svc.id)) continue;
+      const when = isoDate(addDays(noon(row.rejoin.date), -3));
       if (when <= t) continue;
-      icsEvent(lines, stamp, `resubscribe-${p.svc.id}-${p.next.ep.id}`, when,
-        `Resubscribe to ${p.svc.label}`,
-        `${p.next.show.name} returns ${fmtDate(p.next.ep.airdate)}. Reminder from Episode Radar.`);
-      reminders++;
+      reminded.add(row.svc.id);
+      icsEvent(lines, stamp, `resubscribe-${row.svc.id}-${row.rejoin.date}`, { date: when }, `Resubscribe to ${row.svc.label}`,
+        `${row.rejoin.title} (${row.rejoin.detail}). Reminder from Episode Radar.`, 'TRIGGER;RELATED=START:PT9H');
+      counts.reminders++;
+    }
+    for (const plan of plans.slice(1)) {
+      for (const row of plan.rows) {
+        if (row.kind !== 'add' || reminded.has(row.svc.id)) continue;
+        const when = isoDate(addDays(noon(row.from), -3));
+        if (when <= t) continue;
+        reminded.add(row.svc.id);
+        icsEvent(lines, stamp, `subscribe-${row.svc.id}-${row.from}`, { date: when }, `Subscribe to ${tierName(row.svc.id, row.tier)}`,
+          `${row.needs[0].title} (${row.needs[0].detail}). Reminder from Episode Radar.`, 'TRIGGER;RELATED=START:PT9H');
+        counts.reminders++;
+      }
     }
     lines.push('END:VCALENDAR');
-    return { text: lines.map(icsFold).join('\r\n') + '\r\n', episodes, reminders };
+    return { text: lines.map(icsFold).join('\r\n') + '\r\n', ...counts };
   }
 
   // ---------- refresh ----------
@@ -618,10 +987,11 @@
     const futureTtl = force ? 30 * MINUTE : STALE_AFTER;
     const dates = windowDates();
     const ids = Object.keys(state.tracked);
-    const total = dates.length + ids.length;
+    const teamIds = Object.keys(state.teams);
+    const total = dates.length + ids.length + teamIds.length;
     let done = 0;
     let failed = 0;
-    const tick = () => setStatus(`Checking TVmaze… ${++done} of ${total}`);
+    const tick = () => setStatus(`Checking for news… ${++done} of ${total}`);
 
     for (const d of dates) {
       try {
@@ -640,16 +1010,32 @@
       }
       tick();
     }
+    let sportsProblem = false;
+    for (const id of teamIds) {
+      if (sportsProblem) {
+        tick();
+        continue;
+      }
+      try {
+        await teamGames(id, futureTtl);
+      } catch (e) {
+        sportsStatus = e.code || 'error';
+        // Sports isn't set up (or the server is missing): skip the rest quietly.
+        sportsProblem = sportsStatus !== 'error';
+        if (!sportsProblem) failed++;
+      }
+      tick();
+    }
     saveCache();
 
     if (failed < total) {
       state.lastRefresh = Date.now();
       save();
     }
-    if (failed === total) {
+    if (total && failed === total) {
       setBanner(navigator.onLine === false
         ? "You're offline. Showing the results saved from your last check."
-        : "Couldn't reach TVmaze. Showing the results saved from your last check. Try again in a few minutes.");
+        : "Couldn't reach the TV listings. Showing the results saved from your last check. Try again in a few minutes.");
     } else if (failed) {
       setBanner(`${failed} of ${total} checks failed, so some alerts may be missing. Try again later.`);
     }
@@ -681,6 +1067,8 @@
     }
   }
 
+  const alertName = (a) => (a.kind === 'game' ? gameTitle(a.game) : a.show.name);
+
   function maybeNotify(alerts) {
     if (!state.notify || !canNotify() || Notification.permission !== 'granted') return;
     const t = today();
@@ -688,7 +1076,7 @@
     if (!fresh.length) return;
     for (const a of fresh) state.notified[a.key] = true;
     save();
-    const names = fresh.slice(0, 3).map((a) => a.show.name).join(', ');
+    const names = fresh.slice(0, 3).map(alertName).join(', ');
     showNotification('Episode Radar', `${fresh.length} new: ${names}${fresh.length > 3 ? ' and more' : ''}`);
   }
 
@@ -714,7 +1102,7 @@
     if (canNotify()) return null;
     if (isIOS() && !isStandalone()) return 'On iPhone and iPad, notifications work after you add Episode Radar to your Home Screen: tap Share, then Add to Home Screen, and open it from there.';
     if (!window.isSecureContext) return 'Notifications need the app served over https.';
-    return "This browser doesn't support notifications. Use Add to calendar on My shows instead.";
+    return "This browser doesn't support notifications. Use Add to calendar instead.";
   }
 
   function installHelp() {
@@ -735,13 +1123,15 @@
       // Dismissed or unsupported.
     }
     renderSettings();
-    renderOnboardingStep3();
+    renderOnboardingStep4();
   }
 
-  // ---------- rendering ----------
+  // ---------- rendering: shared pieces ----------
 
   let filter = 'all';
   let searchResults = null;
+  let teamResults = null;
+  let planMonth = 0;
 
   function setStatus(text) {
     $('#status').textContent = text;
@@ -760,20 +1150,50 @@
     return `Updated ${sameDay ? 'today' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${time}`;
   }
 
-  function blankPoster(show) {
-    return h('div', { class: 'poster-blank', 'aria-hidden': 'true' }, (show.name || '?').charAt(0).toUpperCase());
+  function blankPoster(name) {
+    return h('div', { class: 'poster-blank', 'aria-hidden': 'true' }, (name || '?').charAt(0).toUpperCase());
   }
   function poster(show) {
     const src = safeImg(show.image);
-    if (!src) return blankPoster(show);
+    if (!src) return blankPoster(show.name);
     const img = h('img', { class: 'poster', src, alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
-    img.addEventListener('error', () => img.replaceWith(blankPoster(show)), { once: true });
+    img.addEventListener('error', () => img.replaceWith(blankPoster(show.name)), { once: true });
+    return img;
+  }
+  function teamBadge(team) {
+    const src = safeImg(team.badge, SPORTS_IMG);
+    if (!src) return blankPoster(team.name);
+    const img = h('img', { class: 'badge-img', src, alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
+    img.addEventListener('error', () => img.replaceWith(blankPoster(team.name)), { once: true });
     return img;
   }
 
   function serviceChip(show, svc) {
     if (svc) return h('span', { class: 'svc' }, svc.label);
     return show.channel ? h('span', { class: 'meta' }, show.channel) : null;
+  }
+
+  // Who in the household a show or team is for. Hidden for one-person households.
+  function whoChips(item, onChange) {
+    if (state.members.length < 2) return null;
+    const ids = new Set(membersOf(item));
+    return h('div', { class: 'who' },
+      h('span', { class: 'meta' }, 'For'),
+      state.members.map((m) => h('button', {
+        class: 'chip',
+        type: 'button',
+        'aria-pressed': ids.has(m.id) ? 'true' : 'false',
+        onclick: () => {
+          const next = new Set(ids);
+          if (next.has(m.id)) {
+            if (next.size === 1) return; // Someone must watch it.
+            next.delete(m.id);
+          } else next.add(m.id);
+          item.members = next.size === state.members.length ? [] : [...next];
+          save();
+          onChange();
+        },
+      }, m.name)));
   }
 
   function trackButton(show) {
@@ -783,6 +1203,16 @@
       type: 'button',
       'aria-pressed': on ? 'true' : 'false',
       onclick: () => (on ? untrack(show.id) : track(show)),
+    }, on ? 'Following' : 'Follow');
+  }
+
+  function teamButton(team) {
+    const on = isTeamFollowed(team.id);
+    return h('button', {
+      class: 'btn' + (on ? ' btn-on' : ''),
+      type: 'button',
+      'aria-pressed': on ? 'true' : 'false',
+      onclick: () => (on ? unfollowTeam(team.id) : followTeam(team)),
     }, on ? 'Following' : 'Follow');
   }
 
@@ -801,7 +1231,34 @@
     return h('a', { class: 'btn', href: linkFor(show, svc) }, svc ? `Open ${svc.label}` : 'Show details');
   }
 
+  function empty(title, body) {
+    return h('div', { class: 'empty' }, h('strong', null, title), body);
+  }
+
+  // ---------- rendering: alerts ----------
+
+  function gameAlertCard(a) {
+    const g = a.game;
+    const w = watchText(a.watch);
+    const d = gameDate(g);
+    const label = d === today() ? 'Game today' : d === isoDate(addDays(new Date(), 1)) ? 'Game tomorrow' : 'Game soon';
+    return h('article', { class: 'card team' },
+      teamBadge(a.team),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-top' }, h('span', { class: 'badge badge-game' }, label), h('span', { class: 'meta' }, a.team.league)),
+        h('h3', null, gameTitle(g)),
+        h('div', { class: 'meta' }, gameWhen(g)),
+        h('div', { class: w.cls }, w.text),
+        h('div', { class: 'actions' },
+          a.svc ? h('a', { class: 'btn', href: a.svc.home }, `Open ${a.svc.label}`) : null,
+          h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => dismiss(a.key), 'aria-label': `Dismiss alert for ${gameTitle(g)}` }, 'Dismiss'),
+        ),
+      ),
+    );
+  }
+
   function alertCard(a) {
+    if (a.kind === 'game') return gameAlertCard(a);
     const out = a.airdate <= today();
     let badge;
     let when;
@@ -833,27 +1290,106 @@
     );
   }
 
-  function empty(title, body) {
-    return h('div', { class: 'empty' }, h('strong', null, title), body);
-  }
-
   function renderAlerts(alerts) {
     const t = today();
     const shown = alerts.filter((a) => filter === 'all' || a.kind === filter);
-    const outNow = shown.filter((a) => a.airdate <= t).sort((x, y) => y.airdate.localeCompare(x.airdate));
-    const soon = shown.filter((a) => a.airdate > t).sort((x, y) => x.airdate.localeCompare(y.airdate));
+    const games = shown.filter((a) => a.kind === 'game').sort((x, y) => (x.game.start || x.airdate).localeCompare(y.game.start || y.airdate));
+    const rest = shown.filter((a) => a.kind !== 'game');
+    const outNow = rest.filter((a) => a.airdate <= t).sort((x, y) => y.airdate.localeCompare(x.airdate));
+    const soon = rest.filter((a) => a.airdate > t).sort((x, y) => x.airdate.localeCompare(y.airdate));
     const kids = [];
-    if (!state.services.length && !Object.keys(state.tracked).length) {
+    if (!state.services.length && !Object.keys(state.tracked).length && !Object.keys(state.teams).length) {
       kids.push(empty('Choose your services', 'Pick the services you pay for in Settings, and new series and seasons will show up here.'));
     } else if (!shown.length) {
       kids.push(state.lastRefresh
-        ? empty('Nothing new right now', `No ${filter === 'all' ? 'premieres or new episodes' : 'alerts of this type'} in the last ${state.lookBackDays} days or the next ${state.lookAheadDays}. Episode Radar checks again automatically.`)
-        : empty('Checking for premieres', 'Reading the streaming schedule from TVmaze. The first check takes about 20 seconds.'));
+        ? empty('Nothing new right now', `No alerts of this type in the last ${state.lookBackDays} days or the next ${state.lookAheadDays}. Episode Radar checks again automatically.`)
+        : empty('Checking for news', 'Reading the TV schedule. The first check takes about 20 seconds.'));
     }
+    if (games.length) kids.push(h('h3', { class: 'section-title' }, 'Game days'), h('div', { class: 'list' }, games.map(alertCard)));
     if (outNow.length) kids.push(h('h3', { class: 'section-title' }, 'Out now'), h('div', { class: 'list' }, outNow.map(alertCard)));
     if (soon.length) kids.push(h('h3', { class: 'section-title' }, 'Coming up'), h('div', { class: 'list' }, soon.map(alertCard)));
     $('#alerts').replaceChildren(...kids);
   }
+
+  // ---------- rendering: plan ----------
+
+  function reasonList(needs) {
+    return h('ul', { class: 'reasons' }, needs.slice(0, 6).map((n) => {
+      const who = whoLabel(n.item);
+      return h('li', null, who ? h('span', { class: 'who-tag' }, who) : null, h('span', null, `${n.title}: ${n.detail}`));
+    }), needs.length > 6 ? h('li', null, `+ ${needs.length - 6} more`) : null);
+  }
+
+  function planRow(row) {
+    const priceTag = row.price ? h('span', { class: 'meta' }, `${money(row.price)}/mo`) : null;
+    let title;
+    let pill;
+    let line = null;
+    if (row.kind === 'add' || row.kind === 'keep') {
+      title = h('h3', null, tierName(row.svc.id, row.tier), priceTag);
+      pill = row.kind === 'add'
+        ? h('span', { class: 'verdict verdict-add' }, row.from > today() ? `Subscribe by ${fmtDate(row.from)}` : 'Subscribe')
+        : h('span', { class: 'verdict verdict-keep' }, 'Keep');
+      line = row.note;
+    } else if (row.kind === 'pause') {
+      title = h('h3', null, row.svc.label, priceTag);
+      pill = h('span', { class: 'verdict verdict-pause' }, row.rejoin ? `Pause, rejoin ${fmtDate(isoDate(addDays(noon(row.rejoin.date), -3)))}` : 'Pause');
+      line = row.rejoin
+        ? `Nothing your household follows is on ${row.svc.label} until ${row.rejoin.title} (${fmtDate(row.rejoin.date)}).`
+        : `Nothing your household follows is on ${row.svc.label} ${row.first ? `in the next ${PLAN_PERIODS * PERIOD_DAYS} days` : `for the rest of this ${PLAN_PERIODS * PERIOD_DAYS}-day plan`}.`;
+    } else if (row.kind === 'double') {
+      title = h('h3', null, row.svc.label, priceTag);
+      pill = h('span', { class: 'verdict verdict-double' }, 'Paying twice?');
+      line = `You pay for ${row.svc.label}, but ${row.by} already includes it. Check whether you can cancel the separate subscription.`;
+    } else {
+      title = h('h3', null, row.by);
+      pill = h('span', { class: 'verdict verdict-covered' }, 'Already covered');
+    }
+    return h('article', { class: 'plan-row' },
+      h('div', { class: 'plan-top' }, title, pill),
+      line ? h('div', { class: 'meta' }, line) : null,
+      row.needs.length ? reasonList(row.needs) : null);
+  }
+
+  function renderPlan(model) {
+    const plans = buildPlan(model);
+    planMonth = Math.min(planMonth, plans.length - 1);
+    $('#month-chips').replaceChildren(...plans.map((p, i) => h('button', {
+      class: 'chip', type: 'button', 'aria-pressed': i === planMonth ? 'true' : 'false',
+      onclick: () => { planMonth = i; renderAll(); },
+    }, p.first ? 'Next 30 days' : `From ${shortDate(p.start)}`)));
+
+    const p = plans[planMonth];
+    const root = $('#plan');
+    const nothing = !Object.keys(state.tracked).length && !Object.keys(state.teams).length;
+    if (nothing && !state.services.length) {
+      root.replaceChildren(empty('Start your plan', 'Follow shows and teams, and tick the services you pay for in Settings. The plan then shows what to keep, pause or add each month.'));
+      return plans;
+    }
+    const doubles = p.rows.filter((r) => r.kind === 'double');
+    const summary = h('div', { class: 'plan-summary' },
+      h('div', { class: 'stat' }, h('span', { class: 'stat-label' }, p.first ? 'Next 30 days' : `${shortDate(p.start)} to ${shortDate(p.end)}`), h('span', { class: 'stat-value' }, money(p.net))),
+      h('div', { class: 'stat' }, h('span', { class: 'stat-label' }, 'You pay now'), h('span', { class: 'stat-value' }, money(p.current))),
+      h('div', { class: 'stat' }, h('span', { class: 'stat-label' }, p.save >= 0 ? 'You save' : 'Extra this period'), h('span', { class: 'stat-value' + (p.save > 0 ? ' good' : '') }, money(Math.abs(p.save)))),
+    );
+    const notes = [];
+    if (p.creditNotes.length) notes.push(h('p', { class: 'hint' }, `${p.creditNotes.join('; ')} (included above).`));
+    if (p.missingPrices.length) notes.push(h('p', { class: 'hint' }, `Add a monthly price for ${listJoin(p.missingPrices)} in Settings for exact totals.`));
+    const callout = doubles.length
+      ? h('div', { class: 'callout' }, h('strong', null, 'You may be paying twice'),
+          h('ul', { class: 'reasons' }, doubles.map((d) => h('li', null, h('span', { class: 'who-tag' }, d.svc.label), h('span', null, `also included with ${d.by}`)))))
+      : null;
+    const rows = p.rows.length
+      ? h('div', { class: 'list' }, p.rows.map(planRow))
+      : empty('Nothing needed in this period', 'None of the shows or teams your household follows has anything scheduled in these 30 days.');
+    const unknown = p.unknown.length
+      ? [h('h3', { class: 'section-title' }, 'Check how to watch'), h('div', { class: 'plan-row' }, reasonList(p.unknown))]
+      : [];
+    root.replaceChildren(summary, ...notes, callout || '', rows, ...unknown);
+    return plans;
+  }
+
+  // ---------- rendering: shows, sports, downloads ----------
 
   const epLine = (e) => (e ? `${epCode(e.season, e.number)} · ${fmtDate(e.airdate)}` : null);
 
@@ -863,10 +1399,7 @@
     const last = d && d.past[d.past.length - 1];
     const next = d && d.future[0];
     const rows = d
-      ? [
-          ['Latest', epLine(last) || 'No episodes yet'],
-          ['Next', epLine(next) || (d.status === 'Ended' ? 'Series ended' : 'Not announced')],
-        ]
+      ? [['Latest', epLine(last) || 'No episodes yet'], ['Next', epLine(next) || (d.status === 'Ended' ? 'Series ended' : 'Not announced')]]
       : [['Episodes', 'Load on the next check']];
     return h('article', { class: 'card' },
       poster(show),
@@ -874,6 +1407,7 @@
         h('div', { class: 'card-top' }, serviceChip(show, svc), d && d.status ? h('span', { class: 'meta' }, d.status) : null),
         h('h3', null, show.name),
         h('dl', { class: 'ep-grid' }, rows.map(([k, v]) => h('div', null, h('dt', null, k), h('dd', null, v)))),
+        whoChips(ref, renderAll),
         h('div', { class: 'actions' },
           last ? downloadButton({ show, season: last.season, number: last.number, title: last.name, airdate: last.airdate }) : null,
           openLink(show, svc),
@@ -897,7 +1431,18 @@
     );
   }
 
-  function renderSearch(target, results, onClear) {
+  function teamSearchCard(tm) {
+    return h('article', { class: 'card team' },
+      teamBadge(tm),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-top' }, h('span', { class: 'meta' }, [tm.league, tm.sport].filter(Boolean).join(' · '))),
+        h('h3', null, tm.name),
+        h('div', { class: 'actions' }, teamButton(tm)),
+      ),
+    );
+  }
+
+  function renderResults(target, results, cardFn, onClear) {
     if (!results) {
       target.replaceChildren();
       return;
@@ -906,7 +1451,7 @@
       h('h3', { class: 'section-title' }, `Search results (${results.length})`),
       h('button', { class: 'btn btn-quiet', type: 'button', onclick: onClear }, 'Clear'));
     const list = results.length
-      ? h('div', { class: 'list' }, results.map(searchCard))
+      ? h('div', { class: 'list' }, results.map(cardFn))
       : empty('No matches', 'Check the spelling, or try fewer words.');
     target.replaceChildren(head, list);
   }
@@ -921,7 +1466,55 @@
     $('#shows').replaceChildren(refs.length
       ? h('div', { class: 'list' }, refs.map((r) => showCard(r, model.details[r.id])))
       : empty('No shows yet', 'Search above, or tap Follow on any alert. You get an alert for every new episode of a show you follow, on any service.'));
-    renderSearch($('#search-results'), searchResults, () => { searchResults = null; renderAll(); });
+    renderResults($('#search-results'), searchResults, searchCard, () => { searchResults = null; renderAll(); });
+  }
+
+  function sportsNotice() {
+    if (sportsStatus === 'not_configured') return empty('Sports is not switched on yet', 'This copy of Episode Radar needs a TheSportsDB key on its server. The README explains the one-time setup.');
+    if (sportsStatus === 'no_server') return empty('Sports needs the Episode Radar server', 'Game listings come through this site\'s own server, which runs on Vercel or with "node dev-server.js". A plain file server can\'t provide them.');
+    if (sportsStatus === 'error') return empty("Couldn't load games right now", 'Your teams are saved. Try Refresh again in a few minutes.');
+    return null;
+  }
+
+  function teamCard(team, games, cov) {
+    const t = today();
+    const upcoming = (games || []).filter((g) => (gameDate(g) || '9999') >= t).slice(0, 5);
+    const list = upcoming.length
+      ? h('ul', { class: 'games' }, upcoming.map((g) => {
+          const w = watchText(gameWatch(cov, g));
+          return h('li', { class: 'game' },
+            h('span', { class: 'game-name' }, gameTitle(g)),
+            h('span', { class: 'game-when' }, gameWhen(g)),
+            h('div', { class: 'game-watch' },
+              (g.channels || []).map((c) => h('span', { class: 'tv' }, c)),
+              h('span', { class: w.cls }, w.text)));
+        }))
+      : h('p', { class: 'meta' }, games ? 'No upcoming games listed yet.' : 'Games load on the next check.');
+    const who = whoChips(team, renderAll);
+    if (who) who.classList.add('span');
+    list.classList.add('span');
+    return h('article', { class: 'card team' },
+      teamBadge(team),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-top' }, h('span', { class: 'meta' }, [team.league, team.sport].filter(Boolean).join(' · '))),
+        h('h3', null, team.name),
+      ),
+      list,
+      who,
+      h('div', { class: 'actions span' }, h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => unfollowTeam(team.id) }, 'Unfollow')),
+    );
+  }
+
+  function renderSports(model) {
+    const teams = Object.values(state.teams).sort((a, b) => a.name.localeCompare(b.name));
+    const notice = sportsNotice();
+    const kids = [];
+    if (notice) kids.push(notice);
+    kids.push(teams.length
+      ? h('div', { class: 'list' }, teams.map((tm) => teamCard(tm, model.games[tm.id], model.cov)))
+      : empty('No teams yet', 'Search for a team above. Episode Radar lists its games, which channel carries each one, and whether something you already have covers it.'));
+    $('#teams').replaceChildren(...kids);
+    renderResults($('#team-results'), teamResults, teamSearchCard, () => { teamResults = null; renderAll(); });
   }
 
   function renderDownloads() {
@@ -969,68 +1562,66 @@
     $('#downloads').replaceChildren(h('div', { class: 'list' }, cards));
   }
 
-  function renderSavings(model) {
-    const root = $('#savings');
-    if (!state.services.length) {
-      root.replaceChildren(empty('No services yet', 'Tick the services you pay for in Settings to see which ones you could pause.'));
-      return;
+  // ---------- rendering: settings editors ----------
+
+  // Re-rendering replaces inputs; put focus back on the field being edited.
+  function keepFocus(target, prefix, build) {
+    const active = document.activeElement && document.activeElement.id;
+    target.replaceChildren(...build());
+    if (active && active.startsWith(prefix)) {
+      const el = document.getElementById(active);
+      if (el) el.focus();
     }
-    const plan = buildPlan(model);
-    const pausable = plan.filter((p) => p.kind !== 'keep');
-    const monthly = pausable.reduce((sum, p) => sum + p.save, 0);
-    const missingPrices = plan.filter((p) => !p.price).map((p) => p.svc.label);
-    const summary = h('div', { class: 'save-summary' },
-      pausable.length
-        ? [
-            h('span', { class: 'meta' }, 'You could pause'),
-            h('span', { class: 'save-amount' }, monthly ? `${money(monthly)} a month` : `${pausable.length} service${pausable.length === 1 ? '' : 's'}`),
-            h('span', { class: 'meta' }, `Nothing you follow airs on ${listJoin(pausable.map((p) => p.svc.label))} in the next 30 days.`),
-          ]
-        : [
-            h('span', { class: 'save-amount' }, 'Keep them all'),
-            h('span', { class: 'meta' }, 'Every service you pay for has a show you follow airing now or within 30 days.'),
-          ],
-      missingPrices.length ? h('span', { class: 'hint' }, `Add a monthly price for ${listJoin(missingPrices)} in Settings to include ${missingPrices.length === 1 ? 'it' : 'them'} in the total.`) : null,
-    );
+  }
 
-    const cards = plan.map((p) => {
-      let pill;
-      let line;
-      if (p.kind === 'keep') {
-        pill = h('span', { class: 'verdict verdict-keep' }, 'Keep');
-        const lead = p.next || null;
-        line = lead && lead.ep.airdate <= isoDate(addDays(new Date(), 30))
-          ? `${lead.show.name}: ${epCode(lead.ep.season, lead.ep.number)} on ${fmtDate(lead.ep.airdate)}.`
-          : `${p.active[0].name} is mid-season.`;
-      } else if (p.kind === 'pause') {
-        pill = h('span', { class: 'verdict verdict-pause' }, p.next ? `Pause, rejoin ${fmtDate(isoDate(addDays(noon(p.next.ep.airdate), -3)))}` : 'Pause');
-        line = p.next
-          ? `${p.next.show.name} returns ${fmtDate(p.next.ep.airdate)}, about ${p.months} month${p.months === 1 ? '' : 's'} away.${p.price ? ` Pausing saves about ${money(p.price * p.months)}.` : ''}`
-          : 'No new episodes announced for the shows you follow here.';
-      } else {
-        pill = h('span', { class: 'verdict verdict-idle' }, 'Not following anything');
-        line = p.premieresSoon
-          ? `You don't follow any shows here. ${p.premieresSoon} premiere${p.premieresSoon === 1 ? '' : 's'} coming up; see Alerts.`
-          : "You don't follow any shows here.";
-      }
-      return h('article', { class: 'save-card' },
-        h('div', { class: 'save-top' },
-          h('h3', null, p.svc.label, p.price ? h('span', { class: 'meta' }, ` · ${money(p.price)}/mo`) : null),
-          pill),
-        h('div', { class: 'meta' }, line),
-        p.shows.length ? h('ul', { class: 'save-shows' }, p.shows.map((d) => h('li', null, d.name))) : null,
-      );
+  function renderMembers(target, prefix) {
+    keepFocus(target, prefix, () => {
+      const pills = state.members.map((m) => {
+        const input = h('input', { id: `${prefix}-member-${m.id}`, type: 'text', maxlength: '24', autocomplete: 'off', 'aria-label': 'Name' });
+        input.value = m.name;
+        input.addEventListener('change', () => {
+          m.name = input.value.trim().slice(0, 24) || 'Someone';
+          save();
+          renderAll();
+        });
+        const remove = state.members.length > 1
+          ? h('button', {
+              type: 'button', 'aria-label': `Remove ${m.name}`,
+              onclick: () => {
+                state.members = state.members.filter((x) => x.id !== m.id);
+                for (const item of [...Object.values(state.tracked), ...Object.values(state.teams)]) {
+                  item.members = (item.members || []).filter((x) => x !== m.id);
+                }
+                save();
+                renderAll();
+              },
+            }, '×')
+          : null;
+        return h('span', { class: 'member' }, input, remove);
+      });
+      const add = state.members.length < MAX_MEMBERS
+        ? h('button', {
+            class: 'btn', type: 'button', id: `${prefix}-add-member`,
+            onclick: () => {
+              const id = newMemberId();
+              state.members.push({ id, name: `Person ${state.members.length + 1}` });
+              save();
+              renderAll();
+              const el = document.getElementById(`${prefix}-member-${id}`);
+              if (el) {
+                el.focus();
+                el.select();
+              }
+            },
+          }, 'Add person')
+        : null;
+      return [...pills, add].filter(Boolean);
     });
-
-    const reminder = pausable.some((p) => p.kind === 'pause' && p.next)
-      ? h('p', { class: 'hint' }, 'Add to calendar on My shows includes a reminder to resubscribe 3 days before each show returns.')
-      : null;
-    root.replaceChildren(summary, h('div', { class: 'list' }, cards), reminder);
   }
 
   // Service checkboxes with monthly prices, shared by Settings and setup.
   function renderServiceRows(target, prefix) {
-    const rows = SERVICES.map((s) => {
+    keepFocus(target, prefix, () => SERVICES.filter((s) => !s.free).map((s) => {
       const on = state.services.includes(s.id);
       const box = h('input', { type: 'checkbox', id: `${prefix}-svc-${s.id}` });
       box.checked = on;
@@ -1056,18 +1647,47 @@
       return h('div', { class: 'svc-row' + (on ? ' on' : '') },
         h('label', { for: `${prefix}-svc-${s.id}` }, box, s.label),
         h('span', { class: 'price' }, '$', price, '/mo'));
-    });
-    // Keep focus on the field being edited when this re-renders.
-    const active = document.activeElement && document.activeElement.id;
-    target.replaceChildren(...rows);
-    if (active && active.startsWith(prefix + '-')) {
-      const el = document.getElementById(active);
-      if (el) el.focus();
-    }
+    }));
+  }
+
+  function renderPerks(target, prefix) {
+    keepFocus(target, prefix, () => PERKS.map((p) => {
+      const v = state.perks[p.id];
+      let control;
+      if (p.options) {
+        const sel = h('select', { id: `${prefix}-perk-${p.id}`, 'aria-label': `${p.label} streaming choice` },
+          h('option', { value: '' }, "Don't have it"),
+          p.options.map((o) => h('option', { value: o.id }, o.label)));
+        sel.value = v || '';
+        sel.addEventListener('change', () => {
+          if (sel.value) state.perks[p.id] = sel.value;
+          else delete state.perks[p.id];
+          save();
+          renderAll();
+        });
+        control = h('div', { class: 'perk-top' }, h('label', { for: `${prefix}-perk-${p.id}` }, p.label), sel);
+      } else {
+        const box = h('input', { type: 'checkbox', id: `${prefix}-perk-${p.id}` });
+        box.checked = v === true;
+        box.addEventListener('change', () => {
+          if (box.checked) state.perks[p.id] = true;
+          else delete state.perks[p.id];
+          save();
+          renderAll();
+        });
+        control = h('div', { class: 'perk-top' }, h('label', { for: `${prefix}-perk-${p.id}` }, box, p.label));
+      }
+      return h('div', { class: 'perk' + (v ? ' on' : '') },
+        control,
+        h('p', { class: 'hint' }, p.detail, p.source ? [' ', h('a', { href: p.source }, 'Source')] : null));
+    }));
   }
 
   function renderSettings() {
+    renderMembers($('#members'), 'set');
     renderServiceRows($('#services'), 'set');
+    renderPerks($('#perks'), 'set');
+    $('#perks-hint').textContent = `Memberships, phone plans and cards that include streaming. They count as free in your plan. Terms were checked on ${fmtDate(DATA.checked)}; they change often, so confirm your own plan.`;
     $('#look-back').value = String(state.lookBackDays);
     $('#look-ahead').value = String(state.lookAheadDays);
     const notify = $('#notify');
@@ -1089,13 +1709,16 @@
     const model = collect();
     lastAlerts = buildAlerts(model);
     renderAlerts(lastAlerts);
+    const plans = renderPlan(model);
     renderShows(model);
+    renderSports(model);
     renderDownloads();
-    renderSavings(model);
     renderSettings();
     if (!$('#onboarding').hidden) renderOnboarding(model);
     setCount('#count-alerts', lastAlerts.length);
+    setCount('#count-plan', plans[0].rows.filter((r) => r.kind === 'add' || r.kind === 'pause' || r.kind === 'double').length);
     setCount('#count-shows', Object.keys(state.tracked).length);
+    setCount('#count-sports', Object.keys(state.teams).length);
     setCount('#count-downloads', state.downloads.filter((d) => !d.done).length);
     document.title = lastAlerts.length ? `(${lastAlerts.length}) Episode Radar` : 'Episode Radar';
     if (!busy) setStatus(statusText());
@@ -1103,25 +1726,39 @@
 
   // ---------- setup ----------
 
+  const OB_STEPS = 4;
   let obStep = 1;
+  let obKind = 'shows';
   let obResults = null;
+
+  function setMainInert(on) {
+    for (const id of ['.top', '#tabs', '#main']) {
+      if (on) $(id).setAttribute('inert', '');
+      else $(id).removeAttribute('inert');
+    }
+  }
+
+  function focusTitle(n) {
+    const title = $(`#ob-title-${n}`);
+    title.setAttribute('tabindex', '-1');
+    title.focus();
+  }
 
   function openOnboarding() {
     obStep = 1;
     obResults = null;
     $('#onboarding').hidden = false;
-    for (const id of ['.top', '#tabs', '#main']) $(id).setAttribute('inert', '');
+    setMainInert(true);
     renderOnboarding(collect());
-    $('#ob-title-1').setAttribute('tabindex', '-1');
-    $('#ob-title-1').focus();
+    focusTitle(1);
   }
 
   function closeOnboarding() {
     state.onboarded = true;
     save();
     $('#onboarding').hidden = true;
-    for (const id of ['.top', '#tabs', '#main']) $(id).removeAttribute('inert');
-    showTab('alerts');
+    setMainInert(false);
+    showTab('plan');
     renderAll();
     if (Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
   }
@@ -1129,13 +1766,11 @@
   function goStep(n) {
     obStep = n;
     renderOnboarding(collect());
-    const title = $(`#ob-title-${n}`);
-    title.setAttribute('tabindex', '-1');
-    title.focus();
+    focusTitle(n);
     $('#onboarding').scrollTop = 0;
   }
 
-  function renderOnboardingStep3() {
+  function renderOnboardingStep4() {
     const help = notifyHelp();
     const btn = $('#ob-notify');
     const granted = canNotify() && Notification.permission === 'granted' && state.notify;
@@ -1151,13 +1786,23 @@
   }
 
   function renderOnboarding(model) {
-    $('#ob-step').textContent = `Step ${obStep} of 3`;
+    $('#ob-step').textContent = `Step ${obStep} of ${OB_STEPS}`;
     for (const dot of document.querySelectorAll('.ob-dot')) dot.classList.toggle('on', Number(dot.dataset.dot) <= obStep);
     for (const pane of document.querySelectorAll('.ob-pane')) pane.hidden = Number(pane.dataset.step) !== obStep;
     $('#onboarding').setAttribute('aria-labelledby', `ob-title-${obStep}`);
-    if (obStep === 1) renderServiceRows($('#ob-services'), 'ob');
-    if (obStep === 2) {
-      renderSearch($('#ob-results'), obResults, () => { obResults = null; renderOnboarding(collect()); });
+    if (obStep === 1) {
+      renderMembers($('#ob-members'), 'ob');
+      renderServiceRows($('#ob-services'), 'ob');
+    }
+    if (obStep === 2) renderPerks($('#ob-perks'), 'ob');
+    if (obStep === 3) {
+      for (const c of document.querySelectorAll('[data-obkind]')) c.setAttribute('aria-pressed', c.dataset.obkind === obKind ? 'true' : 'false');
+      $('#ob-q').placeholder = obKind === 'teams' ? 'For example Eagles' : 'For example The Pitt';
+      const clear = () => { obResults = null; renderOnboarding(collect()); };
+      renderResults($('#ob-results'), obResults, obKind === 'teams' ? teamSearchCard : searchCard, clear);
+      if (obKind === 'teams' && sportsStatus !== 'ok' && sportsStatus !== 'unknown' && obResults === null) {
+        $('#ob-results').replaceChildren(sportsNotice());
+      }
       const t = today();
       const selected = new Set(state.services);
       const soon = model.premieres
@@ -1173,15 +1818,16 @@
               h('strong', null, p.name),
               h('span', { class: 'meta' }, `${serviceFor(p.channel).label} · ${p.season === 1 ? 'New series' : `Season ${p.season}`} · ${fmtDate(p.airdate)}`)),
             trackButton(p))))
-        : empty(busy ? 'Loading premieres…' : 'No premieres found yet', busy ? 'Reading the schedule from TVmaze. This takes about 20 seconds.' : 'Search for a show above instead.'));
+        : empty(busy ? 'Loading premieres…' : 'No premieres found yet', busy ? 'Reading the schedule. This takes about 20 seconds.' : 'Search above instead.'));
     }
-    if (obStep === 3) renderOnboardingStep3();
+    if (obStep === 4) renderOnboardingStep4();
   }
 
   // ---------- tabs ----------
 
   function showTab(name, focus) {
     if (name === 'tracking') name = 'shows';
+    if (name === 'savings') name = 'plan';
     if (!TABS.includes(name)) name = 'alerts';
     for (const t of TABS) {
       const tab = $(`#tab-${t}`);
@@ -1200,17 +1846,35 @@
 
   // ---------- wiring ----------
 
-  async function doSearch(q, assign) {
-    q = q.trim().slice(0, 100);
+  async function doSearch(q, kind, assign) {
+    q = q.trim().slice(0, kind === 'teams' ? 40 : 100);
     if (!q) return;
     setStatus(`Searching for "${q}"…`);
     try {
-      assign(await searchShows(q));
+      assign(kind === 'teams' ? await searchTeams(q) : await searchShows(q));
       setBanner('');
-    } catch {
-      setBanner("Search couldn't reach TVmaze. Check your connection and try again.");
+    } catch (e) {
+      if (kind === 'teams') {
+        sportsStatus = e.code || 'error';
+        assign(null);
+      } else setBanner("Search couldn't reach the TV listings. Check your connection and try again.");
     }
     renderAll();
+  }
+
+  function exportCalendar() {
+    const { text, episodes, games, reminders } = buildICS(collect());
+    if (!episodes && !games && !reminders) {
+      setBanner('Nothing you follow has an announced upcoming episode or game yet, so there is nothing to add to your calendar.');
+      return;
+    }
+    setBanner('');
+    saveFile('episode-radar.ics', text, 'text/calendar;charset=utf-8');
+    const parts = [];
+    if (episodes) parts.push(`${episodes} episode${episodes === 1 ? '' : 's'}`);
+    if (games) parts.push(`${games} game${games === 1 ? '' : 's'}`);
+    if (reminders) parts.push(`${reminders} subscription reminder${reminders === 1 ? '' : 's'}`);
+    setStatus(`Saved ${listJoin(parts)}. Open episode-radar.ics to add them to your calendar.`);
   }
 
   function wire() {
@@ -1234,21 +1898,15 @@
 
     $('#search-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      doSearch($('#search-q').value, (r) => { searchResults = r; });
+      doSearch($('#search-q').value, 'shows', (r) => { searchResults = r; });
+    });
+    $('#team-form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      doSearch($('#team-q').value, 'teams', (r) => { teamResults = r; });
     });
 
-    $('#export-ics').addEventListener('click', () => {
-      const { text, episodes, reminders } = buildICS(collect());
-      if (!episodes && !reminders) {
-        setBanner('None of your shows has an announced upcoming episode yet, so there is nothing to add to your calendar.');
-        return;
-      }
-      setBanner('');
-      saveFile('episode-radar.ics', text, 'text/calendar;charset=utf-8');
-      const parts = [`${episodes} episode${episodes === 1 ? '' : 's'}`];
-      if (reminders) parts.push(`${reminders} resubscribe reminder${reminders === 1 ? '' : 's'}`);
-      setStatus(`Saved ${parts.join(' and ')}. Open episode-radar.ics to add them to your calendar.`);
-    });
+    $('#export-ics').addEventListener('click', exportCalendar);
+    $('#export-ics-2').addEventListener('click', exportCalendar);
 
     $('#look-back').addEventListener('change', (e) => {
       state.lookBackDays = Number(e.target.value);
@@ -1312,6 +1970,7 @@
       save();
       saveCache();
       searchResults = null;
+      teamResults = null;
       $('#reset-confirm').hidden = true;
       renderAll();
       openOnboarding();
@@ -1321,20 +1980,29 @@
     $('#ob-skip').addEventListener('click', closeOnboarding);
     $('#ob-next-1').addEventListener('click', () => {
       goStep(2);
-      // Load premieres for the chosen services while the person picks shows.
+      // Load premieres for the chosen services while the person continues.
       refresh(false);
     });
     $('#ob-back-2').addEventListener('click', () => goStep(1));
     $('#ob-next-2').addEventListener('click', () => goStep(3));
     $('#ob-back-3').addEventListener('click', () => goStep(2));
+    $('#ob-next-3').addEventListener('click', () => goStep(4));
+    $('#ob-back-4').addEventListener('click', () => goStep(3));
     $('#ob-done').addEventListener('click', closeOnboarding);
+    for (const c of document.querySelectorAll('[data-obkind]')) {
+      c.addEventListener('click', () => {
+        obKind = c.dataset.obkind;
+        obResults = null;
+        renderOnboarding(collect());
+      });
+    }
     $('#ob-search').addEventListener('submit', (e) => {
       e.preventDefault();
-      doSearch($('#ob-q').value, (r) => { obResults = r; });
+      doSearch($('#ob-q').value, obKind, (r) => { obResults = r; });
     });
     $('#ob-notify').addEventListener('click', async () => {
       await enableNotifications();
-      renderOnboardingStep3();
+      renderOnboardingStep4();
     });
     $('#ob-install').addEventListener('click', promptInstall);
 
@@ -1343,7 +2011,7 @@
       e.preventDefault();
       installPrompt = e;
       renderSettings();
-      if (!$('#onboarding').hidden) renderOnboardingStep3();
+      if (!$('#onboarding').hidden) renderOnboardingStep4();
     });
     window.addEventListener('appinstalled', () => {
       installPrompt = null;

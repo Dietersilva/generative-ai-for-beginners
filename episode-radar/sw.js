@@ -2,14 +2,15 @@
 
 // Service worker: makes the app installable and usable offline, and shows
 // notifications on phones (where only a service worker may show them).
-// It only ever handles this site's own files. Requests to TVmaze or any other
-// host pass straight through and are never cached here.
+// It only ever handles this site's own app files. Requests to TVmaze, to other
+// hosts and to this site's /api/ pass straight through and are never cached here.
 
-const VERSION = 'episode-radar-v2.0.0';
+const VERSION = 'episode-radar-v2.1.0';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
+  './data.js',
   './app.js',
   './manifest.webmanifest',
   './icons/icon.svg',
@@ -35,7 +36,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const req = event.request;
   const url = new URL(req.url);
-  if (req.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (req.method !== 'GET' || url.origin !== self.location.origin || url.pathname.includes('/api/')) return;
   event.respondWith(
     fetch(req)
       .then((res) => {

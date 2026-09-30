@@ -1,67 +1,93 @@
 # Episode Radar
 
-A standalone, installable web app for streaming households. It alerts you to
-**new series**, **new seasons** and **new episodes** on the services you pay
-for, and shows **which services you can pause** to save money.
+**One streaming plan for the whole household.** Episode Radar looks at the
+shows everyone follows, your teams' games, and the streaming you already get
+through memberships, phone plans, cards or a TV antenna. It then tells you what
+to keep, pause or add over the next 90 days, and flags services you may be
+paying for twice.
 
-Static site: no framework, no build step, no server, no accounts, no API keys.
-It installs to a phone's home screen and works offline.
+It installs to a phone's home screen and works offline. It never asks for
+streaming passwords or bank logins.
 
-## What it does
+## What makes it different
+
+Other apps each cover one piece: episode trackers, cancel-and-resubscribe
+planners, sports cost calculators, credit-card perk trackers. Episode Radar
+combines them into one household plan:
+
+- **Household:** each show and team belongs to one or more people, and the
+  plan shows who needs each service.
+- **Streaming you already get:** Walmart+, Instacart+, Amazon Prime, T-Mobile,
+  Verizon perks, Spotify Student, Chase Sapphire Reserve, the Amex Platinum
+  credit, a TV antenna or a live TV package all count as covered.
+- **Sports:** every game is matched to its US channel and then to the cheapest
+  way you can watch it, including the plan tier that game needs (for example,
+  HBO Max Basic with Ads has no live sports).
+- **Paying twice:** if you pay for Netflix and T-Mobile already includes it,
+  the plan says so.
+- **Privacy:** no accounts, passwords or bank links. Data stays on the device.
+
+## Tabs
 
 | Tab | What you get |
 | --- | --- |
-| **Setup** (first run) | Three steps: pick your services and what they cost, pick shows to follow, then turn on notifications and install. Takes about a minute. |
-| **Alerts** | Series and season premieres on your services, from 7 days back to 21 days ahead (both adjustable), plus new episodes of every show you follow, on any service. Each alert has Follow, Add to downloads, Open (service) and Dismiss. |
-| **My shows** | Search any show, see its latest and next episode, and export upcoming episodes to your calendar (`.ics`) with a 9 AM reminder. |
-| **Downloads** | A checklist of episodes or seasons to download **in the service's own app**. Episode Radar never downloads, records or decrypts video. |
-| **Savings** | For each service: **Keep** while a show you follow is airing (an episode in the last 14 days or the next 30), or **Pause** and rejoin 3 days before the next show returns, with the money saved. The calendar export includes those resubscribe reminders. |
-| **Settings** | Services and prices, alert window, notifications, install, backup/restore, run setup again, erase. |
+| **Setup** (first run) | Four steps: household and services with prices, streaming you already get, shows and teams to follow, notifications and install. |
+| **Alerts** | Game days (the next 3 days) with how to watch; new series and seasons on your services; new episodes of followed shows. |
+| **Plan** | Three rolling 30-day periods (matching how streaming bills): Subscribe, Keep, Pause (with a rejoin date), Paying twice, Already covered, and games that need cable or a league package. Totals include the Amex credit. |
+| **Shows** | Follow shows, choose who they're for, see latest and next episodes. |
+| **Sports** | Follow teams, see upcoming games with channels and how you can watch each one. |
+| **Downloads** | A checklist for downloading in each service's own app. Episode Radar never downloads, records or decrypts video. |
+| **Settings** | Household, services and prices, perks (each with a source link), alert window, notifications, install, backup and restore. |
 
-## How it gets data
+**Add to calendar** exports episodes (all-day, 9 AM reminder), games (timed,
+30-minute reminder) and "Resubscribe to …" reminders 3 days before a paused
+service is needed again.
 
-The browser calls the public [TVmaze API](https://www.tvmaze.com/api) directly:
+## Data sources
 
-- `GET /schedule/web?date=YYYY-MM-DD` for each day in the alert window. Episode 1
-  of a season is a premiere. Season 1 means a new series.
-- `GET /shows/:id?embed=episodes` for each followed show.
-- `GET /search/shows?q=` for search.
+| Data | Source | Cost | Where it's called |
+| --- | --- | --- | --- |
+| TV schedules and episodes | [TVmaze API](https://www.tvmaze.com/api), CC BY-SA 4.0 | Free | From the browser |
+| Teams, games, US TV channels | [TheSportsDB](https://www.thesportsdb.com/) v1 API | $9 a month (premium key) | From `api/sports.js` on the server, so the key stays secret |
+| Perks and which service carries which channel | `data.js`, checked by hand with a source link for each fact | Your time | Bundled with the app |
 
-Requests are spaced 550 ms apart to stay under TVmaze's rate limit (about 20
-requests per 10 seconds). Results are cached on the device for 6 hours. The
-first check takes about 20 seconds.
+TheSportsDB's terms allow paid subscribers to build apps and require crediting
+it as the source; the footer does. Its TV listings are community-maintained, so
+a channel can be missing or late.
 
-TVmaze data is licensed CC BY-SA 4.0, and the footer credits TVmaze as that
-license requires.
+**`data.js` must be reviewed monthly.** Perks change often. While this was
+being built, DoorDash's free HBO Max perk ended and Amex stopped counting
+bundled Peacock plans. Update the facts, their `source` links and `checked`
+date together.
 
-### Known limits
+## Set up sports (one time)
 
-- **Where a show is made, not everywhere it streams.** TVmaze lists a show's
-  home channel. A show licensed to Hulu from another network isn't flagged as
-  a Hulu premiere. Follow it directly and you'll still get its episode alerts.
-- **Checks happen while the app is open.** There is no server yet (that's
-  Phase 2), so notifications fire when the app checks: on open, when it comes
-  back to the foreground, and every 6 hours while it stays open. For reminders
-  at any time, use **Add to calendar**.
-- **iPhone and iPad** only allow notifications after the app is added to the
-  Home Screen (Share → Add to Home Screen). The setup screen explains this.
-- **Savings advice counts only shows you follow.** Movies, sports and shows you
-  don't follow are not considered.
-- **Your data is stored per device.** Use **Save backup** / **Restore backup**
-  to move it to another device.
+1. Subscribe to TheSportsDB's premium API ($9 a month) through their Patreon
+   and copy your API key.
+2. In Vercel, open the project → **Settings → Environment Variables** and add
+   `THESPORTSDB_KEY` with your key, for Production (and Preview if you want).
+   Never put the key in the code, in chat or in a commit.
+3. Redeploy. The Sports tab then finds teams and games.
+4. Recommended: in Vercel **Firewall**, add a rate-limit rule for
+   `/api/sports` (for example, 60 requests a minute per IP). The function also
+   has a per-instance limit, but that doesn't hold across instances.
+
+Without the key the rest of the app works normally, and the Sports tab
+explains that sports is not switched on.
 
 ## Run it
 
-It must be served over **https** or **localhost**. Installing, offline mode and
-notifications don't work from a `file://` page.
-
-**Locally:**
+**Locally, with sports:**
 
 ```
 cd episode-radar
-python3 -m http.server 8080
+THESPORTSDB_KEY=yourkey node dev-server.js
 # open http://localhost:8080
 ```
+
+`dev-server.js` serves the app and `/api/sports` with the same security
+headers as production, and only listens on your own computer. Without a key it
+still runs; sports shows as not set up.
 
 **On Vercel** (same setup as `thesecondhalfguide`):
 
@@ -70,13 +96,15 @@ python3 -m http.server 8080
 - **Build Command:** *(none)*
 - **Output Directory:** *(none; serves the root)*
 
-`vercel.json` sets the security headers and caching.
+Vercel runs `api/sports.js` as a serverless function automatically.
+`vercel.json` sets the security headers, and `.vercelignore` keeps
+`dev-server.js` out of the deploy.
 
 ### Shipping an update
 
-The service worker uses a network-first strategy, so people get new code the
-next time they open the app while online. When you change the list of app
-files in `sw.js`, bump `VERSION` in `sw.js` so old offline caches are cleared.
+The service worker is network-first, so people get new code the next time they
+open the app online. When you add or rename app files, update the list in
+`sw.js` and bump its `VERSION`.
 
 ## Files
 
@@ -84,43 +112,51 @@ files in `sw.js`, bump `VERSION` in `sw.js` so old offline caches are cleared.
 | --- | --- |
 | `index.html` | Page structure and the setup screens |
 | `styles.css` | Design tokens (light and dark), layout, phone tab bar |
-| `app.js` | All app logic: data, alerts, planner, calendar export, setup |
+| `data.js` | Services, sports channel rules and perks, each with sources |
+| `app.js` | App logic: alerts, household plan, coverage, calendar, setup |
+| `api/sports.js` | Server function that proxies TheSportsDB with the secret key |
 | `sw.js` | Service worker: offline app files and notifications on phones |
 | `manifest.webmanifest`, `icons/` | Makes the app installable |
-| `vercel.json` | Security headers, caching |
+| `dev-server.js` | Local preview server (not deployed) |
+| `vercel.json`, `.vercelignore` | Security headers, caching, deploy exclusions |
 
 ## Security and privacy
 
-- A strict Content-Security-Policy, set both in `vercel.json` and as a `<meta>`
-  tag. It allows only this site's own script, styles, manifest and service
-  worker, TVmaze API calls and TVmaze poster images. There are no inline
-  scripts, third-party scripts, analytics or web fonts.
-- No `innerHTML`. API text is always rendered as text. TVmaze's HTML summaries
-  are reduced to plain text through an inert `DOMParser` document, with script
-  and style contents removed.
-- Links must be `https:` and open with `noopener noreferrer`. Images must come
-  from `static.tvmaze.com`.
-- The service worker only handles this site's own files. It never caches or
-  touches requests to TVmaze or any other host.
-- Stored data and restored backups are validated field by field. Prices are
-  whole cents between 0 and $1,000.
-- There are no passwords, cookies or accounts. Nothing is sent anywhere except
-  the TVmaze requests above, and those carry no referrer.
+- **Strict Content-Security-Policy** (in `vercel.json` and a `<meta>` tag):
+  only this site's own scripts and styles, TVmaze and this site's API for data,
+  TVmaze and TheSportsDB for images. No inline or third-party scripts, no
+  analytics, no web fonts.
+- **No `innerHTML`.** All outside text is rendered as text. TVmaze's HTML
+  summaries are reduced to plain text through an inert `DOMParser` document.
+- **Links must be `https:`.** Images must come from the TVmaze or TheSportsDB
+  image hosts.
+- **`api/sports.js`** accepts only two fixed lookups. It validates every input
+  (team names up to 40 letters, numeric IDs only), never takes a URL from the
+  caller, returns only known fields, times out after 8 seconds, hides upstream
+  errors, and keeps the key in an environment variable. Successful answers are
+  cached at Vercel's edge, so one lookup serves everyone.
+- **The service worker** caches only the app's own files. It never touches
+  TVmaze, other hosts or `/api/`.
+- **Local data is validated field by field**, including restored backups.
+  Household names stay on the device.
+- **No passwords, cookies, accounts or bank links.**
+
+## Known limits
+
+- **Checks happen while the app is open.** Server-side push alerts come with
+  accounts in Phase 2. Until then, the calendar export covers reminders when
+  the app is closed.
+- **iPhone and iPad** allow notifications only after Add to Home Screen.
+- **TV shows are matched by the channel they're made for** (TVmaze), not every
+  service that licenses them.
+- **Sports listings are US channels only.** Local blackouts, regional sports
+  networks and league packages (NFL Sunday Ticket, NBA League Pass, MLB.tv)
+  show up as "check how to watch".
+- **The plan counts only what the household follows.** Movies and unfollowed
+  shows aren't considered.
 
 ## Search engines
 
-The page is set to **noindex** (a `<meta name="robots">` tag, an
-`X-Robots-Tag` header and `robots.txt`). It's a personal tool, and all the data
-that matters lives on the user's device. To make it a public, indexable page
-instead:
-
-1. Change the robots meta tag to `index, follow`.
-2. Remove the `X-Robots-Tag` header from `vercel.json`.
-3. Delete `robots.txt`, or replace it with one that allows crawling and points
-   to a sitemap.
-
-## Roadmap
-
-See the v2 plan: Phase 2 adds accounts, sync, server-side alerts (push even
-when the app is closed) and a live calendar feed. It needs a database and
-sign-in provider, which are decisions for the owner.
+The app is set to **noindex** (robots meta tag, `X-Robots-Tag` header,
+`robots.txt`), because it's a personal tool. For a public marketing page,
+build a separate landing page rather than indexing the app.

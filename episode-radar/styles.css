@@ -107,13 +107,13 @@ svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width:
 @media (max-width: 640px) {
   .tabs {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-width: none;
-    display: grid; grid-template-columns: repeat(5, 1fr); gap: 0;
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 0;
     padding: 0 0 env(safe-area-inset-bottom, 0px);
     background: var(--surface); border-top: 1px solid var(--line);
   }
   .tabs button {
     flex-direction: column; gap: 2px; justify-content: center;
-    height: var(--tabbar-h); padding: 6px 2px; border-bottom: 0; font-size: 0.68rem;
+    height: var(--tabbar-h); padding: 6px 1px; border-bottom: 0; font-size: 0.64rem;
   }
   .tabs button svg { width: 22px; height: 22px; }
   .tabs button[aria-selected="true"] { color: var(--accent); }
@@ -233,6 +233,80 @@ main.wrap { padding-block: 18px 32px; }
   padding: 5px 7px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface); color: var(--fg);
 }
 .price input:disabled { opacity: 0.5; }
+
+/* Household members */
+.members { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.member {
+  display: flex; align-items: center; gap: 4px; padding: 3px 4px 3px 10px;
+  border: 1px solid var(--line); border-radius: 99px; background: var(--surface);
+}
+.member input {
+  width: 9ch; min-width: 0; font: inherit; font-weight: 600; border: 0; background: none; color: var(--fg); padding: 4px 0;
+}
+.member button { appearance: none; border: 0; background: none; color: var(--muted); cursor: pointer; font: inherit; padding: 4px 8px; border-radius: 99px; }
+.member button:hover { color: var(--danger); }
+.who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.who .chip { padding: 3px 9px; font-size: 0.75rem; }
+
+/* Perks */
+.perk-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+.perk {
+  display: grid; gap: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface);
+}
+.perk.on { border-color: var(--ok); background: var(--ok-soft); }
+.perk-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.perk label { display: flex; align-items: center; gap: 9px; font-weight: 600; cursor: pointer; min-width: 0; }
+.perk input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--ok); flex: none; }
+.perk select {
+  font: inherit; font-size: 0.85rem; padding: 4px 6px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--fg); max-width: 100%;
+}
+.perk .hint a { color: var(--muted); }
+
+/* Household plan */
+#plan { display: grid; gap: 12px; }
+.card > .span { grid-column: 1 / -1; }
+.plan-summary {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;
+  padding: 16px 18px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--line); box-shadow: var(--shadow);
+}
+.stat { display: grid; gap: 2px; min-width: 0; }
+.stat-label { color: var(--muted); font-size: 0.78rem; font-weight: 600; letter-spacing: 0.02em; }
+.stat-value { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.stat-value.good { color: var(--ok); }
+.callout {
+  padding: 12px 14px; border-radius: var(--radius); border: 1px solid var(--warn); background: var(--warn-soft); color: var(--fg);
+  display: grid; gap: 4px;
+}
+.callout strong { color: var(--warn); }
+.plan-row { display: grid; gap: 8px; padding: 14px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow); }
+.plan-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.plan-top h3 { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
+.reasons { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: 0.86rem; }
+.reasons li { display: flex; gap: 8px; align-items: baseline; color: var(--muted); min-width: 0; }
+.reasons .who-tag { font-weight: 600; color: var(--fg); flex: none; }
+.verdict-add { background: var(--accent-soft); color: var(--accent); }
+.verdict-covered { background: var(--ok-soft); color: var(--ok); }
+.verdict-double { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+.count-warn { background: var(--warn); color: var(--surface); }
+
+/* Teams and games */
+.badge-img { width: 56px; height: 56px; object-fit: contain; border-radius: 8px; background: var(--surface-2); padding: 4px; }
+.card.team { grid-template-columns: 56px 1fr; }
+.card.team .poster-blank { width: 56px; aspect-ratio: 1; }
+.games { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.game {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; align-items: center;
+  padding: 8px 10px; border-radius: 10px; background: var(--surface-2); border: 1px solid var(--line);
+}
+.game-name { font-weight: 600; font-size: 0.88rem; min-width: 0; }
+.game-when { color: var(--muted); font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.game-watch { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 0.8rem; }
+.tv { font-size: 0.72rem; font-weight: 600; padding: 1px 7px; border-radius: 5px; border: 1px solid var(--line); color: var(--muted); }
+.watch-ok { color: var(--ok); font-weight: 600; }
+.watch-need { color: var(--accent); font-weight: 600; }
+.watch-unknown { color: var(--warn); font-weight: 600; }
+.badge-game { color: var(--warn); }
 
 /* Savings planner */
 .save-summary {
