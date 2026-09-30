@@ -1,16 +1,18 @@
 'use strict';
 
 // Episode Radar: new-series, new-season and new-episode alerts for the streaming
-// services you pay for. Data comes from the public TVmaze API. Everything the
-// user saves stays in this browser's localStorage. The page never uses innerHTML:
-// every string from the API is rendered as text, and every link or image URL is
-// checked before it reaches the DOM.
+// services you pay for, plus a planner that shows which services you can pause.
+// Data comes from the public TVmaze API. Everything the user saves stays in this
+// device's localStorage. The page never uses innerHTML: every string from the API
+// is rendered as text, and every link or image URL is checked before it reaches
+// the DOM.
 (() => {
   const API = 'https://api.tvmaze.com';
   const STORE_KEY = 'episodeRadar.v1';
   const CACHE_KEY = 'episodeRadar.cache.v1';
   const MINUTE = 60e3;
   const HOUR = 60 * MINUTE;
+  const DAY = 24 * HOUR;
   const STALE_AFTER = 6 * HOUR;
   // TVmaze allows roughly 20 requests per 10 seconds per IP; stay well under it.
   const REQUEST_GAP_MS = 550;
@@ -28,6 +30,7 @@
     { id: 'peacock', label: 'Peacock', names: ['peacock', 'peacock premium'], hosts: ['peacocktv.com'], home: 'https://www.peacocktv.com/' },
   ];
   const DEFAULT_SERVICES = ['netflix', 'hulu', 'prime'];
+  const TABS = ['alerts', 'shows', 'downloads', 'savings', 'settings'];
 
   // ---------- small helpers ----------
 
@@ -36,6 +39,7 @@
   const str = (v, max) => (typeof v === 'string' ? v.slice(0, max) : '');
   const posInt = (v) => (Number.isInteger(v) && v > 0 && v < 1e9 ? v : null);
   const isIso = (v) => typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v);
+  const svcById = (id) => SERVICES.find((s) => s.id === id) || null;
 
   function safeUrl(v) {
     if (typeof v !== 'string') return null;
@@ -59,8 +63,8 @@
     return hosts.some((h) => host === h || host.endsWith('.' + h));
   }
 
-  // TVmaze summaries are HTML. DOMParser builds an inert document (no scripts,
-  // no image loads), so reading textContent from it is safe.
+  // TVmaze summaries are HTML. DOMParser builds an inert document (no scripts
+  // run, no images load); script and style contents are dropped before reading text.
   function plain(html, max = 280) {
     if (typeof html !== 'string' || !html) return '';
     const body = new DOMParser().parseFromString(html, 'text/html').body;
@@ -78,15 +82,26 @@
     return x;
   }
   const today = () => isoDate(new Date());
+  const noon = (iso) => new Date(iso + 'T12:00:00');
+  const daysBetween = (a, b) => Math.round((noon(b) - noon(a)) / DAY);
 
   function fmtDate(iso) {
     if (!isIso(iso)) return 'date not announced';
-    const d = new Date(iso + 'T12:00:00');
+    const d = noon(iso);
     const opts = { weekday: 'short', month: 'short', day: 'numeric' };
     if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
     return d.toLocaleDateString(undefined, opts);
   }
 
+  function listJoin(items) {
+    try {
+      return new Intl.ListFormat(undefined, { style: 'long', type: 'conjunction' }).format(items);
+    } catch {
+      return items.join(', ');
+    }
+  }
+
+  const money = (cents) => (cents / 100).toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: cents % 100 ? 2 : 0 });
   const epCode = (season, number) => (number ? `S${season} E${number}` : `Season ${season}`);
 
   // Builds DOM nodes. Strings always become text nodes; href and src go through
@@ -139,7 +154,9 @@
   function defaults() {
     return {
       version: 1,
+      onboarded: false,
       services: DEFAULT_SERVICES.slice(),
+      prices: {},
       lookBackDays: 7,
       lookAheadDays: 21,
       tracked: {},
@@ -181,11 +198,19 @@
     };
   }
 
+  const cleanCents = (v) => (Number.isInteger(v) && v >= 0 && v <= 100000 ? v : null);
+
   // Validates anything read from storage or a restored backup, field by field.
   function normalizeState(raw) {
     const s = defaults();
     if (!raw || typeof raw !== 'object') return s;
-    if (Array.isArray(raw.services)) s.services = raw.services.filter((id) => SERVICES.some((x) => x.id === id));
+    if (Array.isArray(raw.services)) s.services = SERVICES.map((x) => x.id).filter((id) => raw.services.includes(id));
+    if (raw.prices && typeof raw.prices === 'object') {
+      for (const x of SERVICES) {
+        const c = cleanCents(raw.prices[x.id]);
+        if (c) s.prices[x.id] = c;
+      }
+    }
     if ([3, 7, 14].includes(raw.lookBackDays)) s.lookBackDays = raw.lookBackDays;
     if ([7, 14, 21, 30].includes(raw.lookAheadDays)) s.lookAheadDays = raw.lookAheadDays;
     if (raw.tracked && typeof raw.tracked === 'object') {
@@ -204,6 +229,8 @@
     }
     s.notify = raw.notify === true;
     s.lastRefresh = Number.isFinite(raw.lastRefresh) ? raw.lastRefresh : 0;
+    // People upgrading from the first version already set things up.
+    s.onboarded = raw.onboarded === true || s.lastRefresh > 0 || Object.keys(s.tracked).length > 0;
     return s;
   }
 
@@ -220,7 +247,7 @@
   }
   const cacheSet = (key, v) => { cache[key] = { t: Date.now(), v }; };
   function saveCache() {
-    const cutoff = Date.now() - 3 * 24 * HOUR;
+    const cutoff = Date.now() - 3 * DAY;
     for (const k of Object.keys(cache)) {
       if (!cache[k] || !Number.isFinite(cache[k].t) || cache[k].t < cutoff) delete cache[k];
     }
@@ -286,7 +313,6 @@
         season: ep.season,
         airdate: isIso(ep.airdate) ? ep.airdate : date,
         summary: plain(show.summary),
-        genres: Array.isArray(show.genres) ? show.genres.filter((g) => typeof g === 'string').slice(0, 3) : [],
       });
     }
     cacheSet(key, out);
@@ -318,6 +344,15 @@
     };
     cacheSet(key, v);
     return v;
+  }
+
+  async function searchShows(q) {
+    const data = await api(`/search/shows?q=${encodeURIComponent(q)}`);
+    return (Array.isArray(data) ? data : [])
+      .map((r) => r && r.show)
+      .filter((s) => s && posInt(s.id))
+      .slice(0, 10)
+      .map((s) => ({ ...showRef(s), premiered: isIso(s.premiered) ? s.premiered : '', status: str(s.status, 40), summary: plain(s.summary, 200) }));
   }
 
   // ---------- model ----------
@@ -360,32 +395,64 @@
         alerts.push(a);
       }
     };
+    const premiere = (id, show, svc, season, airdate) =>
+      push({ key: `prem:${id}:s${season}`, kind: season === 1 ? 'series' : 'season', show, svc, season, number: null, airdate });
 
     for (const p of model.premieres) {
       const svc = serviceFor(p.channel);
       if (!svc || !selected.has(svc.id) || p.airdate < from) continue;
-      push({ key: `prem:${p.id}:s${p.season}`, kind: p.season === 1 ? 'series' : 'season', show: p, svc, season: p.season, number: null, airdate: p.airdate });
+      premiere(p.id, p, svc, p.season, p.airdate);
     }
 
-    // Tracked shows alert on any service, including ones not selected above.
+    // Followed shows alert on any service, including ones not selected above.
     for (const [id, d] of Object.entries(model.details)) {
       const svc = serviceFor(d.channel);
       const last = d.past[d.past.length - 1];
       if (last && last.airdate >= from) {
         // Episode 1 alone, or a drop that starts at episode 1, is a premiere.
-        if (last.number === d.lastBatch) {
-          push({ key: `prem:${id}:s${last.season}`, kind: last.season === 1 ? 'series' : 'season', show: d, svc, season: last.season, number: null, airdate: last.airdate });
-        } else {
-          push({ key: `ep:${last.id}`, kind: 'episode', show: d, svc, season: last.season, number: last.number, title: last.name, count: d.lastBatch, airdate: last.airdate });
-        }
+        if (last.number === d.lastBatch) premiere(id, d, svc, last.season, last.airdate);
+        else push({ key: `ep:${last.id}`, kind: 'episode', show: d, svc, season: last.season, number: last.number, title: last.name, count: d.lastBatch, airdate: last.airdate });
       }
       const next = d.future[0];
-      if (next && next.number === 1 && next.airdate <= until) {
-        push({ key: `prem:${id}:s${next.season}`, kind: next.season === 1 ? 'series' : 'season', show: d, svc, season: next.season, number: null, airdate: next.airdate });
-      }
+      if (next && next.number === 1 && next.airdate <= until) premiere(id, d, svc, next.season, next.airdate);
     }
 
     return alerts.filter((a) => !state.dismissed[a.key]);
+  }
+
+  // Keep a service while a followed show is mid-season (an episode in the last
+  // 14 days or the next 30). Otherwise suggest pausing until the next return.
+  function buildPlan(model) {
+    const t = today();
+    const recent = isoDate(addDays(new Date(), -14));
+    const soon = isoDate(addDays(new Date(), 30));
+    return state.services.map((id) => {
+      const svc = svcById(id);
+      const price = state.prices[id] || 0;
+      const shows = Object.values(model.details).filter((d) => {
+        const s = serviceFor(d.channel);
+        return s && s.id === id;
+      });
+      const premieresSoon = model.premieres.filter((p) => {
+        const s = serviceFor(p.channel);
+        return s && s.id === id && p.airdate >= t;
+      }).length;
+      const nexts = shows
+        .filter((d) => d.future[0])
+        .map((d) => ({ show: d, ep: d.future[0] }))
+        .sort((a, b) => a.ep.airdate.localeCompare(b.ep.airdate));
+      const next = nexts[0] || null;
+      const active = shows.filter((d) => {
+        const last = d.past[d.past.length - 1];
+        return (last && last.airdate >= recent) || (d.future[0] && d.future[0].airdate <= soon);
+      });
+
+      if (!shows.length) return { svc, price, shows, premieresSoon, kind: 'idle', save: price };
+      if (active.length) return { svc, price, shows, premieresSoon, kind: 'keep', next, active, save: 0 };
+      const days = next ? daysBetween(t, next.ep.airdate) : null;
+      const months = days == null ? null : Math.max(1, Math.floor(days / 30));
+      return { svc, price, shows, premieresSoon, kind: 'pause', next, days, months, save: price };
+    });
   }
 
   // ---------- actions ----------
@@ -408,7 +475,7 @@
       await showDetail(ref.id, 0);
       saveCache();
     } catch {
-      setBanner(`Tracking ${ref.name}. Its episode dates will load on the next refresh.`);
+      setBanner(`Following ${ref.name}. Its episode dates will load on the next check.`);
     }
     renderAll();
   }
@@ -486,37 +553,53 @@
     return out.join('\r\n ');
   }
 
-  function buildICS(details) {
+  function icsEvent(lines, stamp, uid, iso, summary, description) {
+    const start = iso.replace(/-/g, '');
+    const end = isoDate(addDays(noon(iso), 1)).replace(/-/g, '');
+    lines.push(
+      'BEGIN:VEVENT',
+      `UID:${uid}@episode-radar`,
+      `DTSTAMP:${stamp}`,
+      `DTSTART;VALUE=DATE:${start}`,
+      `DTEND;VALUE=DATE:${end}`,
+      `SUMMARY:${icsEscape(summary)}`,
+      `DESCRIPTION:${icsEscape(description)}`,
+      'TRANSP:TRANSPARENT',
+      'BEGIN:VALARM',
+      'ACTION:DISPLAY',
+      `DESCRIPTION:${icsEscape(summary)}`,
+      'TRIGGER;RELATED=START:PT9H',
+      'END:VALARM',
+      'END:VEVENT',
+    );
+  }
+
+  function buildICS(model) {
     const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
     const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Episode Radar//EN', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH', 'X-WR-CALNAME:Episode Radar'];
-    let count = 0;
-    for (const d of Object.values(details)) {
+    let episodes = 0;
+    let reminders = 0;
+    for (const d of Object.values(model.details)) {
       for (const e of d.future.slice(0, 26)) {
-        const start = e.airdate.replace(/-/g, '');
-        const end = isoDate(addDays(new Date(e.airdate + 'T12:00:00'), 1)).replace(/-/g, '');
         const summary = `${d.name} ${epCode(e.season, e.number)}` + (e.name ? ` · ${e.name}` : '');
         const where = d.channel ? `Streaming on ${d.channel}.` : 'Check your streaming service.';
-        lines.push(
-          'BEGIN:VEVENT',
-          `UID:tvmaze-episode-${e.id}@episode-radar`,
-          `DTSTAMP:${stamp}`,
-          `DTSTART;VALUE=DATE:${start}`,
-          `DTEND;VALUE=DATE:${end}`,
-          `SUMMARY:${icsEscape(summary)}`,
-          `DESCRIPTION:${icsEscape(where + ' Data from TVmaze.')}`,
-          'TRANSP:TRANSPARENT',
-          'BEGIN:VALARM',
-          'ACTION:DISPLAY',
-          `DESCRIPTION:${icsEscape(summary)}`,
-          'TRIGGER;RELATED=START:PT9H',
-          'END:VALARM',
-          'END:VEVENT',
-        );
-        count++;
+        icsEvent(lines, stamp, `tvmaze-episode-${e.id}`, e.airdate, summary, `${where} Data from TVmaze.`);
+        episodes++;
       }
     }
+    // A reminder to resubscribe 3 days before a paused service's show returns.
+    const t = today();
+    for (const p of buildPlan(model)) {
+      if (p.kind !== 'pause' || !p.next) continue;
+      const when = isoDate(addDays(noon(p.next.ep.airdate), -3));
+      if (when <= t) continue;
+      icsEvent(lines, stamp, `resubscribe-${p.svc.id}-${p.next.ep.id}`, when,
+        `Resubscribe to ${p.svc.label}`,
+        `${p.next.show.name} returns ${fmtDate(p.next.ep.airdate)}. Reminder from Episode Radar.`);
+      reminders++;
+    }
     lines.push('END:VCALENDAR');
-    return { text: lines.map(icsFold).join('\r\n') + '\r\n', count };
+    return { text: lines.map(icsFold).join('\r\n') + '\r\n', episodes, reminders };
   }
 
   // ---------- refresh ----------
@@ -527,7 +610,9 @@
   async function refresh(force) {
     if (busy) return;
     busy = true;
-    $('#refresh').disabled = true;
+    const btn = $('#refresh');
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
     setBanner('');
     const t = today();
     const futureTtl = force ? 30 * MINUTE : STALE_AFTER;
@@ -540,7 +625,7 @@
 
     for (const d of dates) {
       try {
-        await premieresFor(d, d < t ? 24 * HOUR : futureTtl);
+        await premieresFor(d, d < t ? DAY : futureTtl);
       } catch {
         failed++;
       }
@@ -564,19 +649,37 @@
     if (failed === total) {
       setBanner(navigator.onLine === false
         ? "You're offline. Showing the results saved from your last check."
-        : "Couldn't reach TVmaze. Showing the results saved from your last check. Try Refresh again in a few minutes.");
+        : "Couldn't reach TVmaze. Showing the results saved from your last check. Try again in a few minutes.");
     } else if (failed) {
-      setBanner(`${failed} of ${total} checks failed, so some alerts may be missing. Try Refresh again later.`);
+      setBanner(`${failed} of ${total} checks failed, so some alerts may be missing. Try again later.`);
     }
     busy = false;
-    $('#refresh').disabled = false;
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
     renderAll();
     maybeNotify(lastAlerts);
   }
 
-  // ---------- notifications ----------
+  // ---------- notifications and install ----------
 
   const canNotify = () => 'Notification' in window && window.isSecureContext;
+  const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  let swReg = null;
+  let installPrompt = null;
+
+  // Phones only allow notifications from a service worker; desktops accept either.
+  async function showNotification(title, body) {
+    try {
+      if (swReg) {
+        await swReg.showNotification(title, { body, tag: 'episode-radar', icon: 'icons/icon-192.png' });
+        return;
+      }
+      new Notification(title, { body, tag: 'episode-radar' });
+    } catch {
+      // Refused by the browser; the in-app alerts still show.
+    }
+  }
 
   function maybeNotify(alerts) {
     if (!state.notify || !canNotify() || Notification.permission !== 'granted') return;
@@ -586,14 +689,53 @@
     for (const a of fresh) state.notified[a.key] = true;
     save();
     const names = fresh.slice(0, 3).map((a) => a.show.name).join(', ');
-    try {
-      new Notification('Episode Radar', {
-        body: `${fresh.length} new: ${names}${fresh.length > 3 ? ' and more' : ''}`,
-        tag: 'episode-radar',
-      });
-    } catch {
-      // Some mobile browsers only allow notifications from a service worker.
+    showNotification('Episode Radar', `${fresh.length} new: ${names}${fresh.length > 3 ? ' and more' : ''}`);
+  }
+
+  // Returns true when notifications end up allowed.
+  async function enableNotifications() {
+    if (!canNotify()) return false;
+    let perm = Notification.permission;
+    if (perm === 'default') {
+      try {
+        perm = await Notification.requestPermission();
+      } catch {
+        perm = 'denied';
+      }
     }
+    state.notify = perm === 'granted';
+    // Start from now: don't notify about alerts already on screen.
+    if (state.notify) for (const a of lastAlerts) state.notified[a.key] = true;
+    save();
+    return state.notify;
+  }
+
+  function notifyHelp() {
+    if (canNotify()) return null;
+    if (isIOS() && !isStandalone()) return 'On iPhone and iPad, notifications work after you add Episode Radar to your Home Screen: tap Share, then Add to Home Screen, and open it from there.';
+    if (!window.isSecureContext) return 'Notifications need the app served over https.';
+    return "This browser doesn't support notifications. Use Add to calendar on My shows instead.";
+  }
+
+  function installHelp() {
+    if (isStandalone()) return null;
+    if (installPrompt) return 'Install Episode Radar to open it from your home screen, full screen, even offline.';
+    if (isIOS()) return 'To install: tap Share, then Add to Home Screen.';
+    return null;
+  }
+
+  async function promptInstall() {
+    if (!installPrompt) return;
+    const p = installPrompt;
+    installPrompt = null;
+    try {
+      await p.prompt();
+      await p.userChoice;
+    } catch {
+      // Dismissed or unsupported.
+    }
+    renderSettings();
+    renderOnboardingStep3();
   }
 
   // ---------- rendering ----------
@@ -618,11 +760,14 @@
     return `Updated ${sameDay ? 'today' : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} at ${time}`;
   }
 
+  function blankPoster(show) {
+    return h('div', { class: 'poster-blank', 'aria-hidden': 'true' }, (show.name || '?').charAt(0).toUpperCase());
+  }
   function poster(show) {
     const src = safeImg(show.image);
-    if (!src) return h('div', { class: 'poster-blank', 'aria-hidden': 'true' }, (show.name || '?').charAt(0).toUpperCase());
+    if (!src) return blankPoster(show);
     const img = h('img', { class: 'poster', src, alt: '', loading: 'lazy', decoding: 'async', referrerpolicy: 'no-referrer' });
-    img.addEventListener('error', () => img.replaceWith(h('div', { class: 'poster-blank', 'aria-hidden': 'true' }, (show.name || '?').charAt(0).toUpperCase())), { once: true });
+    img.addEventListener('error', () => img.replaceWith(blankPoster(show)), { once: true });
     return img;
   }
 
@@ -638,7 +783,7 @@
       type: 'button',
       'aria-pressed': on ? 'true' : 'false',
       onclick: () => (on ? untrack(show.id) : track(show)),
-    }, on ? 'Tracking' : 'Track');
+    }, on ? 'Following' : 'Follow');
   }
 
   function downloadButton(args) {
@@ -693,29 +838,26 @@
   }
 
   function renderAlerts(alerts) {
-    const root = $('#alerts');
     const t = today();
     const shown = alerts.filter((a) => filter === 'all' || a.kind === filter);
     const outNow = shown.filter((a) => a.airdate <= t).sort((x, y) => y.airdate.localeCompare(x.airdate));
     const soon = shown.filter((a) => a.airdate > t).sort((x, y) => x.airdate.localeCompare(y.airdate));
     const kids = [];
     if (!state.services.length && !Object.keys(state.tracked).length) {
-      kids.push(empty('Choose your services', 'Pick the services you subscribe to in Settings, and new series and seasons will show up here.'));
+      kids.push(empty('Choose your services', 'Pick the services you pay for in Settings, and new series and seasons will show up here.'));
     } else if (!shown.length) {
       kids.push(state.lastRefresh
-        ? empty('Nothing new right now', `No ${filter === 'all' ? 'premieres or new episodes' : 'alerts of this type'} in the last ${state.lookBackDays} days or the next ${state.lookAheadDays}. Tap Refresh to check again.`)
-        : empty('Checking for premieres', 'Episode Radar is reading the streaming schedule from TVmaze. This takes about 20 seconds the first time.'));
+        ? empty('Nothing new right now', `No ${filter === 'all' ? 'premieres or new episodes' : 'alerts of this type'} in the last ${state.lookBackDays} days or the next ${state.lookAheadDays}. Episode Radar checks again automatically.`)
+        : empty('Checking for premieres', 'Reading the streaming schedule from TVmaze. The first check takes about 20 seconds.'));
     }
     if (outNow.length) kids.push(h('h3', { class: 'section-title' }, 'Out now'), h('div', { class: 'list' }, outNow.map(alertCard)));
     if (soon.length) kids.push(h('h3', { class: 'section-title' }, 'Coming up'), h('div', { class: 'list' }, soon.map(alertCard)));
-    root.replaceChildren(...kids);
+    $('#alerts').replaceChildren(...kids);
   }
 
-  function epLine(e) {
-    return e ? `${epCode(e.season, e.number)} · ${fmtDate(e.airdate)}` : null;
-  }
+  const epLine = (e) => (e ? `${epCode(e.season, e.number)} · ${fmtDate(e.airdate)}` : null);
 
-  function trackedCard(ref, d) {
+  function showCard(ref, d) {
     const show = d || ref;
     const svc = serviceFor(show.channel);
     const last = d && d.past[d.past.length - 1];
@@ -725,7 +867,7 @@
           ['Latest', epLine(last) || 'No episodes yet'],
           ['Next', epLine(next) || (d.status === 'Ended' ? 'Series ended' : 'Not announced')],
         ]
-      : [['Episodes', 'Load on next refresh']];
+      : [['Episodes', 'Load on the next check']];
     return h('article', { class: 'card' },
       poster(show),
       h('div', { class: 'card-body' },
@@ -735,54 +877,57 @@
         h('div', { class: 'actions' },
           last ? downloadButton({ show, season: last.season, number: last.number, title: last.name, airdate: last.airdate }) : null,
           openLink(show, svc),
-          h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => untrack(show.id) }, 'Stop tracking'),
+          h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => untrack(show.id) }, 'Unfollow'),
         ),
       ),
     );
   }
 
-  function renderTracking(model) {
+  function searchCard(s) {
+    const svc = serviceFor(s.channel);
+    const year = isIso(s.premiered) ? s.premiered.slice(0, 4) : '';
+    return h('article', { class: 'card' },
+      poster(s),
+      h('div', { class: 'card-body' },
+        h('div', { class: 'card-top' }, serviceChip(s, svc), year ? h('span', { class: 'meta' }, year) : null, s.status ? h('span', { class: 'meta' }, s.status) : null),
+        h('h3', null, s.name),
+        s.summary ? h('p', { class: 'summary' }, s.summary) : null,
+        h('div', { class: 'actions' }, trackButton(s), openLink(s, svc)),
+      ),
+    );
+  }
+
+  function renderSearch(target, results, onClear) {
+    if (!results) {
+      target.replaceChildren();
+      return;
+    }
+    const head = h('div', { class: 'panel-head' },
+      h('h3', { class: 'section-title' }, `Search results (${results.length})`),
+      h('button', { class: 'btn btn-quiet', type: 'button', onclick: onClear }, 'Clear'));
+    const list = results.length
+      ? h('div', { class: 'list' }, results.map(searchCard))
+      : empty('No matches', 'Check the spelling, or try fewer words.');
+    target.replaceChildren(head, list);
+  }
+
+  function renderShows(model) {
     const refs = Object.values(state.tracked);
     const key = (r) => {
       const d = model.details[r.id];
       return (d && d.future[0] && d.future[0].airdate) || '9999';
     };
     refs.sort((a, b) => key(a).localeCompare(key(b)) || a.name.localeCompare(b.name));
-    const kids = refs.length
-      ? [h('div', { class: 'list' }, refs.map((r) => trackedCard(r, model.details[r.id])))]
-      : [empty('No tracked shows yet', 'Search for a show above, or tap Track on any alert. Tracked shows alert you about new episodes on any service.')];
-    $('#tracking').replaceChildren(...kids);
-
-    const sr = $('#search-results');
-    if (!searchResults) {
-      sr.replaceChildren();
-      return;
-    }
-    const head = h('div', { class: 'panel-head' },
-      h('h3', { class: 'section-title' }, `Search results (${searchResults.length})`),
-      h('button', { class: 'btn btn-quiet', type: 'button', onclick: () => { searchResults = null; renderAll(); } }, 'Clear'));
-    const list = searchResults.length
-      ? h('div', { class: 'list' }, searchResults.map((s) => {
-          const svc = serviceFor(s.channel);
-          const year = isIso(s.premiered) ? s.premiered.slice(0, 4) : '';
-          return h('article', { class: 'card' },
-            poster(s),
-            h('div', { class: 'card-body' },
-              h('div', { class: 'card-top' }, serviceChip(s, svc), year ? h('span', { class: 'meta' }, year) : null, s.status ? h('span', { class: 'meta' }, s.status) : null),
-              h('h3', null, s.name),
-              s.summary ? h('p', { class: 'summary' }, s.summary) : null,
-              h('div', { class: 'actions' }, trackButton(s), openLink(s, svc)),
-            ),
-          );
-        }))
-      : empty('No matches', 'Check the spelling, or try fewer words.');
-    sr.replaceChildren(head, list);
+    $('#shows').replaceChildren(refs.length
+      ? h('div', { class: 'list' }, refs.map((r) => showCard(r, model.details[r.id])))
+      : empty('No shows yet', 'Search above, or tap Follow on any alert. You get an alert for every new episode of a show you follow, on any service.'));
+    renderSearch($('#search-results'), searchResults, () => { searchResults = null; renderAll(); });
   }
 
   function renderDownloads() {
     const items = state.downloads.slice().sort((a, b) => Number(a.done) - Number(b.done) || b.addedAt - a.addedAt);
     if (!items.length) {
-      $('#downloads').replaceChildren(empty('Nothing to download', 'Tap "Add to downloads" on an alert or a tracked show to build your list.'));
+      $('#downloads').replaceChildren(empty('Nothing to download', 'Tap "Add to downloads" on an alert or a show to build your list.'));
       return;
     }
     const t = today();
@@ -824,26 +969,116 @@
     $('#downloads').replaceChildren(h('div', { class: 'list' }, cards));
   }
 
-  function renderSettings() {
-    const boxes = SERVICES.map((s) => {
-      const box = h('input', { type: 'checkbox', id: `svc-${s.id}` });
-      box.checked = state.services.includes(s.id);
+  function renderSavings(model) {
+    const root = $('#savings');
+    if (!state.services.length) {
+      root.replaceChildren(empty('No services yet', 'Tick the services you pay for in Settings to see which ones you could pause.'));
+      return;
+    }
+    const plan = buildPlan(model);
+    const pausable = plan.filter((p) => p.kind !== 'keep');
+    const monthly = pausable.reduce((sum, p) => sum + p.save, 0);
+    const missingPrices = plan.filter((p) => !p.price).map((p) => p.svc.label);
+    const summary = h('div', { class: 'save-summary' },
+      pausable.length
+        ? [
+            h('span', { class: 'meta' }, 'You could pause'),
+            h('span', { class: 'save-amount' }, monthly ? `${money(monthly)} a month` : `${pausable.length} service${pausable.length === 1 ? '' : 's'}`),
+            h('span', { class: 'meta' }, `Nothing you follow airs on ${listJoin(pausable.map((p) => p.svc.label))} in the next 30 days.`),
+          ]
+        : [
+            h('span', { class: 'save-amount' }, 'Keep them all'),
+            h('span', { class: 'meta' }, 'Every service you pay for has a show you follow airing now or within 30 days.'),
+          ],
+      missingPrices.length ? h('span', { class: 'hint' }, `Add a monthly price for ${listJoin(missingPrices)} in Settings to include ${missingPrices.length === 1 ? 'it' : 'them'} in the total.`) : null,
+    );
+
+    const cards = plan.map((p) => {
+      let pill;
+      let line;
+      if (p.kind === 'keep') {
+        pill = h('span', { class: 'verdict verdict-keep' }, 'Keep');
+        const lead = p.next || null;
+        line = lead && lead.ep.airdate <= isoDate(addDays(new Date(), 30))
+          ? `${lead.show.name}: ${epCode(lead.ep.season, lead.ep.number)} on ${fmtDate(lead.ep.airdate)}.`
+          : `${p.active[0].name} is mid-season.`;
+      } else if (p.kind === 'pause') {
+        pill = h('span', { class: 'verdict verdict-pause' }, p.next ? `Pause, rejoin ${fmtDate(isoDate(addDays(noon(p.next.ep.airdate), -3)))}` : 'Pause');
+        line = p.next
+          ? `${p.next.show.name} returns ${fmtDate(p.next.ep.airdate)}, about ${p.months} month${p.months === 1 ? '' : 's'} away.${p.price ? ` Pausing saves about ${money(p.price * p.months)}.` : ''}`
+          : 'No new episodes announced for the shows you follow here.';
+      } else {
+        pill = h('span', { class: 'verdict verdict-idle' }, 'Not following anything');
+        line = p.premieresSoon
+          ? `You don't follow any shows here. ${p.premieresSoon} premiere${p.premieresSoon === 1 ? '' : 's'} coming up; see Alerts.`
+          : "You don't follow any shows here.";
+      }
+      return h('article', { class: 'save-card' },
+        h('div', { class: 'save-top' },
+          h('h3', null, p.svc.label, p.price ? h('span', { class: 'meta' }, ` · ${money(p.price)}/mo`) : null),
+          pill),
+        h('div', { class: 'meta' }, line),
+        p.shows.length ? h('ul', { class: 'save-shows' }, p.shows.map((d) => h('li', null, d.name))) : null,
+      );
+    });
+
+    const reminder = pausable.some((p) => p.kind === 'pause' && p.next)
+      ? h('p', { class: 'hint' }, 'Add to calendar on My shows includes a reminder to resubscribe 3 days before each show returns.')
+      : null;
+    root.replaceChildren(summary, h('div', { class: 'list' }, cards), reminder);
+  }
+
+  // Service checkboxes with monthly prices, shared by Settings and setup.
+  function renderServiceRows(target, prefix) {
+    const rows = SERVICES.map((s) => {
+      const on = state.services.includes(s.id);
+      const box = h('input', { type: 'checkbox', id: `${prefix}-svc-${s.id}` });
+      box.checked = on;
+      const price = h('input', {
+        type: 'number', id: `${prefix}-price-${s.id}`, inputmode: 'decimal', min: '0', max: '1000', step: '0.01',
+        placeholder: '0.00', 'aria-label': `${s.label} monthly price in US dollars`,
+      });
+      if (state.prices[s.id]) price.value = (state.prices[s.id] / 100).toFixed(2);
+      price.disabled = !on;
       box.addEventListener('change', () => {
         state.services = SERVICES.filter((x) => (x.id === s.id ? box.checked : state.services.includes(x.id))).map((x) => x.id);
         save();
         renderAll();
       });
-      return h('label', { for: `svc-${s.id}` }, box, s.label);
+      price.addEventListener('change', () => {
+        const n = Number(price.value);
+        const cents = Number.isFinite(n) && n > 0 ? Math.round(n * 100) : 0;
+        if (cleanCents(cents) && cents > 0) state.prices[s.id] = cents;
+        else delete state.prices[s.id];
+        save();
+        renderAll();
+      });
+      return h('div', { class: 'svc-row' + (on ? ' on' : '') },
+        h('label', { for: `${prefix}-svc-${s.id}` }, box, s.label),
+        h('span', { class: 'price' }, '$', price, '/mo'));
     });
-    $('#services').replaceChildren(...boxes);
+    // Keep focus on the field being edited when this re-renders.
+    const active = document.activeElement && document.activeElement.id;
+    target.replaceChildren(...rows);
+    if (active && active.startsWith(prefix + '-')) {
+      const el = document.getElementById(active);
+      if (el) el.focus();
+    }
+  }
+
+  function renderSettings() {
+    renderServiceRows($('#services'), 'set');
     $('#look-back').value = String(state.lookBackDays);
     $('#look-ahead').value = String(state.lookAheadDays);
     const notify = $('#notify');
     notify.checked = state.notify && canNotify() && Notification.permission === 'granted';
     notify.disabled = !canNotify();
-    if (!canNotify()) {
-      $('#notify-hint').textContent = 'Notifications need the page served over https. For reminders when the page is closed, use "Add upcoming to calendar" on the Tracking tab.';
-    }
+    const help = notifyHelp();
+    if (help) $('#notify-hint').textContent = help;
+    const ih = installHelp();
+    $('#install-box').hidden = !ih;
+    $('#install').hidden = !installPrompt;
+    $('#install-hint').textContent = ih || '';
   }
 
   function setCount(id, n) {
@@ -854,20 +1089,99 @@
     const model = collect();
     lastAlerts = buildAlerts(model);
     renderAlerts(lastAlerts);
-    renderTracking(model);
+    renderShows(model);
     renderDownloads();
+    renderSavings(model);
     renderSettings();
+    if (!$('#onboarding').hidden) renderOnboarding(model);
     setCount('#count-alerts', lastAlerts.length);
-    setCount('#count-tracking', Object.keys(state.tracked).length);
+    setCount('#count-shows', Object.keys(state.tracked).length);
     setCount('#count-downloads', state.downloads.filter((d) => !d.done).length);
     document.title = lastAlerts.length ? `(${lastAlerts.length}) Episode Radar` : 'Episode Radar';
     if (!busy) setStatus(statusText());
   }
 
+  // ---------- setup ----------
+
+  let obStep = 1;
+  let obResults = null;
+
+  function openOnboarding() {
+    obStep = 1;
+    obResults = null;
+    $('#onboarding').hidden = false;
+    for (const id of ['.top', '#tabs', '#main']) $(id).setAttribute('inert', '');
+    renderOnboarding(collect());
+    $('#ob-title-1').setAttribute('tabindex', '-1');
+    $('#ob-title-1').focus();
+  }
+
+  function closeOnboarding() {
+    state.onboarded = true;
+    save();
+    $('#onboarding').hidden = true;
+    for (const id of ['.top', '#tabs', '#main']) $(id).removeAttribute('inert');
+    showTab('alerts');
+    renderAll();
+    if (Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
+  }
+
+  function goStep(n) {
+    obStep = n;
+    renderOnboarding(collect());
+    const title = $(`#ob-title-${n}`);
+    title.setAttribute('tabindex', '-1');
+    title.focus();
+    $('#onboarding').scrollTop = 0;
+  }
+
+  function renderOnboardingStep3() {
+    const help = notifyHelp();
+    const btn = $('#ob-notify');
+    const granted = canNotify() && Notification.permission === 'granted' && state.notify;
+    btn.hidden = !canNotify();
+    btn.textContent = granted ? 'On' : 'Turn on';
+    btn.className = 'btn' + (granted ? ' btn-on' : '');
+    btn.disabled = granted;
+    $('#ob-notify-hint').textContent = help || 'Get a notification when something new shows up.';
+    const ih = installHelp();
+    $('#ob-install-row').hidden = !ih;
+    $('#ob-install').hidden = !installPrompt;
+    $('#ob-install-hint').textContent = ih || '';
+  }
+
+  function renderOnboarding(model) {
+    $('#ob-step').textContent = `Step ${obStep} of 3`;
+    for (const dot of document.querySelectorAll('.ob-dot')) dot.classList.toggle('on', Number(dot.dataset.dot) <= obStep);
+    for (const pane of document.querySelectorAll('.ob-pane')) pane.hidden = Number(pane.dataset.step) !== obStep;
+    $('#onboarding').setAttribute('aria-labelledby', `ob-title-${obStep}`);
+    if (obStep === 1) renderServiceRows($('#ob-services'), 'ob');
+    if (obStep === 2) {
+      renderSearch($('#ob-results'), obResults, () => { obResults = null; renderOnboarding(collect()); });
+      const t = today();
+      const selected = new Set(state.services);
+      const soon = model.premieres
+        .filter((p) => {
+          const s = serviceFor(p.channel);
+          return s && selected.has(s.id) && p.airdate >= isoDate(addDays(new Date(), -state.lookBackDays));
+        })
+        .sort((a, b) => Math.abs(daysBetween(t, a.airdate)) - Math.abs(daysBetween(t, b.airdate)))
+        .slice(0, 8);
+      $('#ob-premieres').replaceChildren(soon.length
+        ? h('div', { class: 'list' }, soon.map((p) => h('div', { class: 'mini' },
+            h('div', null,
+              h('strong', null, p.name),
+              h('span', { class: 'meta' }, `${serviceFor(p.channel).label} · ${p.season === 1 ? 'New series' : `Season ${p.season}`} · ${fmtDate(p.airdate)}`)),
+            trackButton(p))))
+        : empty(busy ? 'Loading premieres…' : 'No premieres found yet', busy ? 'Reading the schedule from TVmaze. This takes about 20 seconds.' : 'Search for a show above instead.'));
+    }
+    if (obStep === 3) renderOnboardingStep3();
+  }
+
   // ---------- tabs ----------
 
-  const TABS = ['alerts', 'tracking', 'downloads', 'settings'];
   function showTab(name, focus) {
+    if (name === 'tracking') name = 'shows';
     if (!TABS.includes(name)) name = 'alerts';
     for (const t of TABS) {
       const tab = $(`#tab-${t}`);
@@ -880,19 +1194,32 @@
     try {
       history.replaceState(null, '', '#' + name);
     } catch {
-      // file:// pages can refuse history changes; the tab still switches.
+      // Some contexts refuse history changes; the tab still switches.
     }
   }
 
   // ---------- wiring ----------
 
+  async function doSearch(q, assign) {
+    q = q.trim().slice(0, 100);
+    if (!q) return;
+    setStatus(`Searching for "${q}"…`);
+    try {
+      assign(await searchShows(q));
+      setBanner('');
+    } catch {
+      setBanner("Search couldn't reach TVmaze. Check your connection and try again.");
+    }
+    renderAll();
+  }
+
   function wire() {
     for (const t of TABS) $(`#tab-${t}`).addEventListener('click', () => showTab(t));
-    $('.tabs').addEventListener('keydown', (e) => {
+    $('#tabs').addEventListener('keydown', (e) => {
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
       const cur = TABS.findIndex((t) => $(`#tab-${t}`).getAttribute('aria-selected') === 'true');
       const next = (cur + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length;
-      showTab(TABS[next], true);
+      showTab(TABS.at(next), true);
     });
 
     $('#refresh').addEventListener('click', () => refresh(true));
@@ -905,34 +1232,22 @@
       });
     }
 
-    $('#search-form').addEventListener('submit', async (e) => {
+    $('#search-form').addEventListener('submit', (e) => {
       e.preventDefault();
-      const q = $('#search-q').value.trim().slice(0, 100);
-      if (!q) return;
-      setStatus(`Searching for "${q}"…`);
-      try {
-        const data = await api(`/search/shows?q=${encodeURIComponent(q)}`);
-        searchResults = (Array.isArray(data) ? data : [])
-          .map((r) => r && r.show)
-          .filter((s) => s && posInt(s.id))
-          .slice(0, 10)
-          .map((s) => ({ ...showRef(s), premiered: isIso(s.premiered) ? s.premiered : '', status: str(s.status, 40), summary: plain(s.summary, 200) }));
-        setBanner('');
-      } catch {
-        setBanner("Search couldn't reach TVmaze. Check your connection and try again.");
-      }
-      renderAll();
+      doSearch($('#search-q').value, (r) => { searchResults = r; });
     });
 
     $('#export-ics').addEventListener('click', () => {
-      const { text, count } = buildICS(collect().details);
-      if (!count) {
-        setBanner('None of your tracked shows has an announced upcoming episode yet, so there is nothing to add to your calendar.');
+      const { text, episodes, reminders } = buildICS(collect());
+      if (!episodes && !reminders) {
+        setBanner('None of your shows has an announced upcoming episode yet, so there is nothing to add to your calendar.');
         return;
       }
       setBanner('');
       saveFile('episode-radar.ics', text, 'text/calendar;charset=utf-8');
-      setStatus(`Saved ${count} upcoming episode${count === 1 ? '' : 's'} to episode-radar.ics. Open it to add them to your calendar.`);
+      const parts = [`${episodes} episode${episodes === 1 ? '' : 's'}`];
+      if (reminders) parts.push(`${reminders} resubscribe reminder${reminders === 1 ? '' : 's'}`);
+      setStatus(`Saved ${parts.join(' and ')}. Open episode-radar.ics to add them to your calendar.`);
     });
 
     $('#look-back').addEventListener('change', (e) => {
@@ -954,24 +1269,12 @@
         save();
         return;
       }
-      let perm = Notification.permission;
-      if (perm === 'default') {
-        try {
-          perm = await Notification.requestPermission();
-        } catch {
-          perm = 'denied';
-        }
-      }
-      state.notify = perm === 'granted';
-      if (state.notify) {
-        // Start from now: don't fire a notification for alerts already on screen.
-        for (const a of lastAlerts) state.notified[a.key] = true;
-      } else {
-        setBanner('Notifications are blocked for this site. Allow them in your browser settings, then turn this on again.');
-      }
-      save();
+      const ok = await enableNotifications();
+      if (!ok) setBanner('Notifications are blocked for this app. Allow them in your browser or phone settings, then turn this on again.');
       renderSettings();
     });
+
+    $('#install').addEventListener('click', promptInstall);
 
     $('#export-json').addEventListener('click', () => {
       saveFile('episode-radar-backup.json', JSON.stringify(state, null, 2), 'application/json');
@@ -989,6 +1292,7 @@
         const raw = JSON.parse(await file.text());
         if (!raw || raw.version !== 1) throw new Error('not a backup');
         state = normalizeState(raw);
+        state.onboarded = true;
         save();
         setBanner('');
         setStatus('Backup restored.');
@@ -999,6 +1303,7 @@
       }
     });
 
+    $('#rerun-setup').addEventListener('click', openOnboarding);
     $('#reset').addEventListener('click', () => { $('#reset-confirm').hidden = false; });
     $('#reset-no').addEventListener('click', () => { $('#reset-confirm').hidden = true; });
     $('#reset-yes').addEventListener('click', () => {
@@ -1009,12 +1314,48 @@
       searchResults = null;
       $('#reset-confirm').hidden = true;
       renderAll();
-      refresh(false);
+      openOnboarding();
     });
 
-    // Re-check while the page stays open, and when it comes back to the foreground.
+    // Setup
+    $('#ob-skip').addEventListener('click', closeOnboarding);
+    $('#ob-next-1').addEventListener('click', () => {
+      goStep(2);
+      // Load premieres for the chosen services while the person picks shows.
+      refresh(false);
+    });
+    $('#ob-back-2').addEventListener('click', () => goStep(1));
+    $('#ob-next-2').addEventListener('click', () => goStep(3));
+    $('#ob-back-3').addEventListener('click', () => goStep(2));
+    $('#ob-done').addEventListener('click', closeOnboarding);
+    $('#ob-search').addEventListener('submit', (e) => {
+      e.preventDefault();
+      doSearch($('#ob-q').value, (r) => { obResults = r; });
+    });
+    $('#ob-notify').addEventListener('click', async () => {
+      await enableNotifications();
+      renderOnboardingStep3();
+    });
+    $('#ob-install').addEventListener('click', promptInstall);
+
+    // Install and offline support.
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      installPrompt = e;
+      renderSettings();
+      if (!$('#onboarding').hidden) renderOnboardingStep3();
+    });
+    window.addEventListener('appinstalled', () => {
+      installPrompt = null;
+      renderSettings();
+    });
+    if ('serviceWorker' in navigator && window.isSecureContext) {
+      navigator.serviceWorker.register('sw.js').then((reg) => { swReg = reg; }).catch(() => {});
+    }
+
+    // Re-check while the app stays open, and when it comes back to the foreground.
     const checkStale = () => {
-      if (!document.hidden && Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
+      if (!document.hidden && state.onboarded && Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
     };
     setInterval(checkStale, 15 * MINUTE);
     document.addEventListener('visibilitychange', checkStale);
@@ -1024,6 +1365,7 @@
   wire();
   showTab(location.hash.slice(1));
   renderAll();
-  if (Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
+  if (!state.onboarded) openOnboarding();
+  else if (Date.now() - state.lastRefresh > STALE_AFTER) refresh(false);
   else maybeNotify(lastAlerts);
 })();

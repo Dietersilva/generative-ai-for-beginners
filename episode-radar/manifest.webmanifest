@@ -1,0 +1,16 @@
+{
+  "name": "Episode Radar",
+  "short_name": "Radar",
+  "description": "Alerts for new series, new seasons and new episodes on your streaming services, plus a planner that shows which services you can pause.",
+  "id": "./",
+  "start_url": "./#alerts",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f3f4f7",
+  "theme_color": "#2d4fc4",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
