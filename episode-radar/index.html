@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://static.tvmaze.com https://www.thesportsdb.com https://r2.thesportsdb.com data:; connect-src 'self' https://api.tvmaze.com; manifest-src 'self'; worker-src 'self'; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Episode Radar</title>
+<meta name="description" content="Episode Radar builds one monthly streaming plan for your household from everyone's shows, your teams' games and the streaming you already get free, so you only pay for what you watch.">
+<!-- Personal tool: your data lives only on this device, so the page asks search engines not to index it.
+     For a public page, change "noindex, nofollow" to "index, follow", remove the X-Robots-Tag header in vercel.json and delete robots.txt. -->
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="Episode Radar">
+<meta property="og:description" content="One monthly streaming plan for your household: shows, sports and the perks you already have.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#181b21" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Radar">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="stylesheet" href="styles.css">
+<script src="data.js" defer></script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <img class="brand-mark" src="icons/icon.svg" alt="" width="28" height="28">
+      <div class="brand-text">
+        <h1>Episode Radar</h1>
+        <p class="status" id="status" aria-live="polite">Loading…</p>
+      </div>
+    </div>
+    <button class="btn btn-icon" id="refresh" type="button" aria-label="Check for new episodes and games">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      <span class="btn-label">Refresh</span>
+    </button>
+  </div>
+</header>
+
+<nav class="tabs" role="tablist" aria-label="Sections" id="tabs">
+  <button role="tab" id="tab-alerts" aria-controls="panel-alerts" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+    <span>Alerts</span><span class="count" id="count-alerts"></span>
+  </button>
+  <button role="tab" id="tab-plan" aria-controls="panel-plan" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/><path d="M9 15l2 2 4-4"/></svg>
+    <span>Plan</span><span class="count count-warn" id="count-plan"></span>
+  </button>
+  <button role="tab" id="tab-shows" aria-controls="panel-shows" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 3l4 3 4-3"/></svg>
+    <span>Shows</span><span class="count" id="count-shows"></span>
+  </button>
+  <button role="tab" id="tab-sports" aria-controls="panel-sports" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17M3.5 12h17"/><path d="M6 6c3 2.5 3 9.5 0 12M18 6c-3 2.5-3 9.5 0 12"/></svg>
+    <span>Sports</span><span class="count" id="count-sports"></span>
+  </button>
+  <button role="tab" id="tab-downloads" aria-controls="panel-downloads" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11"/><path d="M7 10l5 5 5-5"/><path d="M5 20h14"/></svg>
+    <span>Downloads</span><span class="count" id="count-downloads"></span>
+  </button>
+  <button role="tab" id="tab-settings" aria-controls="panel-settings" type="button">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<main class="wrap" id="main">
+  <div class="banner" id="banner" role="alert" hidden></div>
+
+  <section class="panel" id="panel-alerts" role="tabpanel" aria-labelledby="tab-alerts">
+    <div class="panel-head">
+      <h2>What's new</h2>
+      <div class="chips" role="group" aria-label="Filter alerts">
+        <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-filter="game" aria-pressed="false">Games</button>
+        <button class="chip" type="button" data-filter="series" aria-pressed="false">New series</button>
+        <button class="chip" type="button" data-filter="season" aria-pressed="false">New seasons</button>
+        <button class="chip" type="button" data-filter="episode" aria-pressed="false">New episodes</button>
+      </div>
+    </div>
+    <div id="alerts"></div>
+  </section>
+
+  <section class="panel" id="panel-plan" role="tabpanel" aria-labelledby="tab-plan" hidden>
+    <div class="panel-head">
+      <h2>Household plan</h2>
+      <div class="chips" role="group" aria-label="Choose a 30-day period" id="month-chips"></div>
+    </div>
+    <div id="plan"></div>
+    <p class="note">Built from the shows and teams your household follows, the episode dates TVmaze has announced, the game listings TheSportsDB has so far, and the perks you ticked in Settings. Movies and shows nobody follows aren't counted. Check each service's own rules before cancelling.</p>
+  </section>
+
+  <section class="panel" id="panel-shows" role="tabpanel" aria-labelledby="tab-shows" hidden>
+    <div class="panel-head">
+      <h2>Shows</h2>
+      <button class="btn" id="export-ics" type="button">Add to calendar</button>
+    </div>
+    <form class="search" id="search-form" role="search">
+      <label for="search-q" class="sr-only">Find a show to follow</label>
+      <input id="search-q" type="search" placeholder="Find a show, for example The Pitt" autocomplete="off" maxlength="100" required>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <div id="search-results"></div>
+    <div id="shows"></div>
+  </section>
+
+  <section class="panel" id="panel-sports" role="tabpanel" aria-labelledby="tab-sports" hidden>
+    <div class="panel-head">
+      <h2>Sports</h2>
+      <button class="btn" id="export-ics-2" type="button">Add to calendar</button>
+    </div>
+    <form class="search" id="team-form" role="search">
+      <label for="team-q" class="sr-only">Find a team to follow</label>
+      <input id="team-q" type="search" placeholder="Find a team, for example Eagles" autocomplete="off" maxlength="40" required>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <div id="team-results"></div>
+    <div id="teams"></div>
+  </section>
+
+  <section class="panel" id="panel-downloads" role="tabpanel" aria-labelledby="tab-downloads" hidden>
+    <div class="panel-head"><h2>To download</h2></div>
+    <p class="note">Episode Radar never downloads video. This is your checklist: open the service's own app, find the episode and tap its Download button. Downloads stay inside that app and follow its plan limits and expiry rules.</p>
+    <div id="downloads"></div>
+  </section>
+
+  <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="panel-head"><h2>Settings</h2></div>
+
+    <fieldset class="group">
+      <legend>Household</legend>
+      <p class="hint">Add everyone who watches. Each show and team can belong to one or more people, and the plan shows who needs each service.</p>
+      <div class="members" id="members"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Services you pay for</legend>
+      <p class="hint">Tick what you pay for and add the monthly price. Prices stay on this device.</p>
+      <div class="svc-list" id="services"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Streaming you already get</legend>
+      <p class="hint" id="perks-hint">Memberships, phone plans and cards that include streaming. They count as free in your plan.</p>
+      <div class="perk-list" id="perks"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Alert window</legend>
+      <div class="row">
+        <label for="look-back">Look back</label>
+        <select id="look-back">
+          <option value="3">3 days</option>
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="look-ahead">Look ahead</label>
+        <select id="look-ahead">
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+          <option value="21">21 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Notifications and app</legend>
+      <div class="row">
+        <label for="notify">Notify me about new alerts</label>
+        <input id="notify" type="checkbox">
+      </div>
+      <p class="hint" id="notify-hint">Notifications arrive when Episode Radar checks for news, which happens while the app is open. For reminders at any time, use "Add to calendar".</p>
+      <div class="install" id="install-box" hidden>
+        <button class="btn btn-primary" id="install" type="button" hidden>Install app</button>
+        <p class="hint" id="install-hint"></p>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Backup</legend>
+      <p class="hint">Your data is stored only on this device. Save a backup to move it to another device.</p>
+      <div class="actions">
+        <button class="btn" id="export-json" type="button">Save backup</button>
+        <label class="btn" for="import-json">Restore backup</label>
+        <input id="import-json" class="sr-only" type="file" accept="application/json,.json">
+        <button class="btn" id="rerun-setup" type="button">Run setup again</button>
+        <button class="btn btn-danger" id="reset" type="button">Erase all data</button>
+      </div>
+      <div class="confirm" id="reset-confirm" hidden>
+        <p>Erase your household, shows, teams, downloads, prices and settings from this device?</p>
+        <div class="actions">
+          <button class="btn btn-danger" id="reset-yes" type="button">Erase</button>
+          <button class="btn" id="reset-no" type="button">Cancel</button>
+        </div>
+      </div>
+    </fieldset>
+  </section>
+
+  <footer class="foot">
+    <p>TV data from <a href="https://www.tvmaze.com/" rel="noopener noreferrer" target="_blank">TVmaze</a> (<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener noreferrer" target="_blank">CC BY-SA 4.0</a>). Sports data from <a href="https://www.thesportsdb.com/" rel="noopener noreferrer" target="_blank">TheSportsDB</a>. Perk details were checked on the date shown in Settings; confirm your own plan's terms. Episode Radar is not affiliated with any streaming service and does not record or download video.</p>
+  </footer>
+</main>
+
+<section class="onboard" id="onboarding" role="dialog" aria-modal="true" aria-labelledby="ob-title-1" hidden>
+  <div class="ob-card">
+    <div class="ob-progress" aria-hidden="true"><span class="ob-dot" data-dot="1"></span><span class="ob-dot" data-dot="2"></span><span class="ob-dot" data-dot="3"></span><span class="ob-dot" data-dot="4"></span></div>
+    <p class="ob-step" id="ob-step">Step 1 of 4</p>
+
+    <div class="ob-pane" data-step="1">
+      <h2 id="ob-title-1">Who's watching, and what do you pay for?</h2>
+      <p class="ob-lead">Add the people in your household, then tick the services you pay for. Prices are optional and stay on this device.</p>
+      <div class="members" id="ob-members"></div>
+      <div class="svc-list" id="ob-services"></div>
+      <div class="ob-actions">
+        <button class="btn btn-quiet" id="ob-skip" type="button">Skip setup</button>
+        <button class="btn btn-primary" id="ob-next-1" type="button">Continue</button>
+      </div>
+    </div>
+
+    <div class="ob-pane" data-step="2" hidden>
+      <h2 id="ob-title-2">Streaming you may already get</h2>
+      <p class="ob-lead">Many memberships, phone plans and cards include a streaming service. Tick what you have and your plan counts it as free.</p>
+      <div class="perk-list" id="ob-perks"></div>
+      <div class="ob-actions">
+        <button class="btn" id="ob-back-2" type="button">Back</button>
+        <button class="btn btn-primary" id="ob-next-2" type="button">Continue</button>
+      </div>
+    </div>
+
+    <div class="ob-pane" data-step="3" hidden>
+      <h2 id="ob-title-3">Follow shows and teams</h2>
+      <p class="ob-lead">You get an alert for every new episode and game, and the plan makes sure you have the service each one needs.</p>
+      <div class="chips" role="group" aria-label="Search for">
+        <button class="chip" type="button" data-obkind="shows" aria-pressed="true">Shows</button>
+        <button class="chip" type="button" data-obkind="teams" aria-pressed="false">Teams</button>
+      </div>
+      <form class="search" id="ob-search" role="search">
+        <label for="ob-q" class="sr-only">Find a show or team</label>
+        <input id="ob-q" type="search" placeholder="For example The Pitt" autocomplete="off" maxlength="100" required>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <div id="ob-results"></div>
+      <h3 class="section-title">Premiering soon on your services</h3>
+      <div id="ob-premieres"></div>
+      <div class="ob-actions">
+        <button class="btn" id="ob-back-3" type="button">Back</button>
+        <button class="btn btn-primary" id="ob-next-3" type="button">Continue</button>
+      </div>
+    </div>
+
+    <div class="ob-pane" data-step="4" hidden>
+      <h2 id="ob-title-4">Stay in the loop</h2>
+      <p class="ob-lead">Choose how Episode Radar reaches you. You can change these later in Settings.</p>
+      <div class="ob-option">
+        <div>
+          <h3>Notifications</h3>
+          <p class="hint" id="ob-notify-hint">Get a notification when something new shows up.</p>
+        </div>
+        <button class="btn" id="ob-notify" type="button">Turn on</button>
+      </div>
+      <div class="ob-option" id="ob-install-row" hidden>
+        <div>
+          <h3>Install the app</h3>
+          <p class="hint" id="ob-install-hint">Opens full screen from your home screen and works offline.</p>
+        </div>
+        <button class="btn" id="ob-install" type="button" hidden>Install</button>
+      </div>
+      <div class="ob-option">
+        <div>
+          <h3>Calendar reminders</h3>
+          <p class="hint">"Add to calendar" puts episodes, games and resubscribe reminders in your calendar, so they reach you even when the app is closed.</p>
+        </div>
+      </div>
+      <div class="ob-actions">
+        <button class="btn" id="ob-back-4" type="button">Back</button>
+        <button class="btn btn-primary" id="ob-done" type="button">See my plan</button>
+      </div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
