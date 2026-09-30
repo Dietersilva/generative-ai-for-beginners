@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' https://static.tvmaze.com data:; connect-src https://api.tvmaze.com; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
+<title>Episode Radar</title>
+<meta name="description" content="Episode Radar tracks new series, new seasons and new episodes on the streaming services you subscribe to, with alerts, a watch list, a download reminder list and calendar export.">
+<!-- Personal tool: your lists live only in this browser, so the page asks search engines not to index it.
+     If you want a public page, change "noindex, nofollow" to "index, follow" and remove robots.txt. -->
+<meta name="robots" content="noindex, nofollow">
+<meta property="og:title" content="Episode Radar">
+<meta property="og:description" content="Alerts for new series, new seasons and new episodes on your streaming services.">
+<meta property="og:type" content="website">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%232D4FC4'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="top-inner">
+    <div class="brand">
+      <span class="brand-dot" aria-hidden="true"></span>
+      <div>
+        <h1>Episode Radar</h1>
+        <p class="status" id="status" aria-live="polite">Loading…</p>
+      </div>
+    </div>
+    <button class="btn btn-primary" id="refresh" type="button">Refresh</button>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button role="tab" id="tab-alerts" aria-controls="panel-alerts" data-tab="alerts" type="button">Alerts <span class="count" id="count-alerts"></span></button>
+    <button role="tab" id="tab-tracking" aria-controls="panel-tracking" data-tab="tracking" type="button">Tracking <span class="count" id="count-tracking"></span></button>
+    <button role="tab" id="tab-downloads" aria-controls="panel-downloads" data-tab="downloads" type="button">Downloads <span class="count" id="count-downloads"></span></button>
+    <button role="tab" id="tab-settings" aria-controls="panel-settings" data-tab="settings" type="button">Settings</button>
+  </nav>
+</header>
+
+<main class="wrap">
+  <div class="banner" id="banner" role="alert" hidden></div>
+
+  <section class="panel" id="panel-alerts" role="tabpanel" aria-labelledby="tab-alerts">
+    <div class="panel-head">
+      <h2>New on your services</h2>
+      <div class="chips" role="group" aria-label="Filter alerts">
+        <button class="chip" type="button" data-filter="all" aria-pressed="true">All</button>
+        <button class="chip" type="button" data-filter="series" aria-pressed="false">New series</button>
+        <button class="chip" type="button" data-filter="season" aria-pressed="false">New seasons</button>
+        <button class="chip" type="button" data-filter="episode" aria-pressed="false">New episodes</button>
+      </div>
+    </div>
+    <div id="alerts"></div>
+  </section>
+
+  <section class="panel" id="panel-tracking" role="tabpanel" aria-labelledby="tab-tracking" hidden>
+    <div class="panel-head">
+      <h2>Tracked shows</h2>
+      <button class="btn" id="export-ics" type="button">Add upcoming to calendar</button>
+    </div>
+    <form class="search" id="search-form" role="search">
+      <label for="search-q" class="sr-only">Find a show to track</label>
+      <input id="search-q" type="search" placeholder="Find a show, for example The Pitt" autocomplete="off" maxlength="100" required>
+      <button class="btn btn-primary" type="submit">Search</button>
+    </form>
+    <div id="search-results"></div>
+    <div id="tracking"></div>
+  </section>
+
+  <section class="panel" id="panel-downloads" role="tabpanel" aria-labelledby="tab-downloads" hidden>
+    <div class="panel-head">
+      <h2>To download</h2>
+    </div>
+    <p class="note">Episode Radar can't download video. This is your to-do list: open the service's own app on your phone, tablet or computer and tap its Download button. Downloads stay inside that app and follow its plan limits and expiry rules.</p>
+    <div id="downloads"></div>
+  </section>
+
+  <section class="panel" id="panel-settings" role="tabpanel" aria-labelledby="tab-settings" hidden>
+    <div class="panel-head"><h2>Settings</h2></div>
+
+    <fieldset class="group">
+      <legend>My services</legend>
+      <p class="hint">Alerts for new series and new seasons only cover shows made for these services.</p>
+      <div class="svc-grid" id="services"></div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Alert window</legend>
+      <div class="row">
+        <label for="look-back">Look back</label>
+        <select id="look-back">
+          <option value="3">3 days</option>
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+        </select>
+      </div>
+      <div class="row">
+        <label for="look-ahead">Look ahead</label>
+        <select id="look-ahead">
+          <option value="7">7 days</option>
+          <option value="14">14 days</option>
+          <option value="21">21 days</option>
+          <option value="30">30 days</option>
+        </select>
+      </div>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Notifications</legend>
+      <div class="row">
+        <label for="notify">Browser notifications while this page is open</label>
+        <input id="notify" type="checkbox">
+      </div>
+      <p class="hint" id="notify-hint">For reminders when the page is closed, use "Add upcoming to calendar" on the Tracking tab.</p>
+    </fieldset>
+
+    <fieldset class="group">
+      <legend>Backup</legend>
+      <p class="hint">Your lists are stored only in this browser. Save a backup to move them to another device.</p>
+      <div class="actions">
+        <button class="btn" id="export-json" type="button">Save backup</button>
+        <label class="btn" for="import-json">Restore backup</label>
+        <input id="import-json" class="sr-only" type="file" accept="application/json,.json">
+        <button class="btn btn-danger" id="reset" type="button">Erase all data</button>
+      </div>
+      <div class="confirm" id="reset-confirm" hidden>
+        <p>Erase tracked shows, downloads and settings from this browser?</p>
+        <div class="actions">
+          <button class="btn btn-danger" id="reset-yes" type="button">Erase</button>
+          <button class="btn" id="reset-no" type="button">Cancel</button>
+        </div>
+      </div>
+    </fieldset>
+  </section>
+</main>
+
+<footer class="foot wrap">
+  <p>TV data from <a href="https://www.tvmaze.com/" rel="noopener noreferrer" target="_blank">TVmaze</a>, used under <a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener noreferrer" target="_blank">CC BY-SA 4.0</a>. Episode Radar is not affiliated with any streaming service and does not record or download video.</p>
+</footer>
+</body>
+</html>
