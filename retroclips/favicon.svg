@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="31" fill="#0b0a09"/>
+  <circle cx="32" cy="32" r="26" fill="none" stroke="#8a6d3c" stroke-width="3"/>
+  <text x="32" y="40" font-family="'Courier New', Courier, monospace" font-size="20" font-weight="700" letter-spacing="0.5" fill="#d1a35c" text-anchor="middle">RC</text>
+</svg>
