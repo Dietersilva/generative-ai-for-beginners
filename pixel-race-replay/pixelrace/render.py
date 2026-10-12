@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw
 
 from .font import GLYPH_H, draw_text, draw_text_right, fill
 from .model import CarState, RaceSource, Status
+from .timelapse import draw_start_lights
 
 BG = (16, 20, 28)
 TRACK_EDGE = (92, 100, 118)
@@ -42,7 +43,7 @@ LAYOUTS = {
     "landscape": Layout((320, 180), track=(6, 14, 206, 168), board=(214, 16, 314, 168),
                         row_h=8, show_names=False, footer_y=172),
     # 180x320 scales to 1080x1920 at 6x: Shorts, Reels, TikTok.
-    "portrait": Layout((180, 320), track=(8, 18, 172, 178), board=(8, 186, 172, 304),
+    "portrait": Layout((180, 320), track=(8, 18, 172, 144), board=(8, 150, 172, 304),
                        row_h=10, show_names=True, footer_y=310),
 }
 
@@ -62,6 +63,10 @@ def gap_label(state: CarState, position: int) -> str:
 
 
 class Renderer:
+    """The track-map view: cars moving round the circuit, leaderboard beside it."""
+
+    default_scale = 6
+
     def __init__(self, source: RaceSource, layout: str = "landscape", follow: str | None = None):
         if layout not in LAYOUTS:
             raise ValueError(f"unknown layout {layout!r}; choose from {', '.join(LAYOUTS)}")
@@ -111,7 +116,7 @@ class Renderer:
                 img.putpixel((px, py), WHITE if (k + j) % 2 else BLACK)
         return img
 
-    def frame(self, t: float, index: int = 0) -> Image.Image:
+    def frame(self, t: float, index: int = 0, lights: int | None = None) -> Image.Image:
         states = self.source.state_at(t)
         img = self._background.copy()
         self._draw_cars(img, states, index)
@@ -119,6 +124,9 @@ class Renderer:
         self._draw_board(img, states)
         if self.source.notice:
             draw_text(img, (self.layout.track[0], self.layout.footer_y), self.source.notice, MUTED)
+        if lights is not None:
+            left, top, right, bottom = self.layout.track
+            draw_start_lights(img, (left + right) // 2, (top + bottom) // 2, lights)
         return img
 
     def _draw_cars(self, img: Image.Image, states: list[CarState], index: int) -> None:
@@ -145,8 +153,8 @@ class Renderer:
         draw_text_right(img, right, y, label, TEXT)
 
     def _draw_board(self, img: Image.Image, states: list[CarState]) -> None:
-        left, top, right, _ = self.layout.board
-        row_h = self.layout.row_h
+        left, top, right, bottom = self.layout.board
+        row_h = min(self.layout.row_h, (bottom - top + 1) // max(1, len(states)))
         pad = (row_h - GLYPH_H) // 2
         for i, s in enumerate(states):
             y = top + i * row_h
@@ -164,9 +172,15 @@ class Renderer:
 
         if self.follow is not None:
             pos = next(i for i, s in enumerate(states) if s.code == self.follow) + 1
-            y = top + len(states) * row_h + 6
-            draw_text(img, (left, y), f"FOLLOWING {self.follow}", MUTED)
-            draw_text_right(img, right - 1, y, f"P{pos}", TEXT)
+            draw_text_right(img, right - 1, self.layout.footer_y, f"FOLLOWING {self.follow} P{pos}", TEXT)
+
+
+def start_lights(fps: int, seconds: float) -> list[int]:
+    """Lights for each intro frame: the five lights come on one by one, then
+    all go out (0) for the start."""
+    n = round(seconds * fps)
+    steps = (6 * i // n for i in range(n))  # 0-4: lights coming on, 5: lights out
+    return [step + 1 if step < 5 else 0 for step in steps]
 
 
 def race_times(source: RaceSource, duration: float, fps: int, hold: float) -> list[float]:
@@ -174,5 +188,5 @@ def race_times(source: RaceSource, duration: float, fps: int, hold: float) -> li
     ``duration`` seconds, then ``hold`` seconds frozen on the result."""
     n = max(2, round(duration * fps))
     span = source.end_time - source.start_time
-    times = [source.start_time + span * i / (n - 1) for i in range(n)]
+    times = [source.start_time + span * i / (n - 1) for i in range(n - 1)] + [source.end_time]
     return times + [source.end_time] * round(hold * fps)

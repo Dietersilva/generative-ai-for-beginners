@@ -26,7 +26,9 @@ class Status(str, Enum):
 class Driver:
     code: str  # three-letter code shown on the leaderboard
     name: str
-    color: RGB
+    color: RGB  # main livery colour
+    secondary: RGB = (240, 240, 240)  # wings and helmet on the pixel car
+    team: str = ""
 
 
 @dataclass(frozen=True)
@@ -38,6 +40,10 @@ class CarState:
     status: Status
     gap: float | None  # seconds behind the leader; None for the leader
     laps_behind: int = 0  # > 0 when lapped; the gap is then shown in laps
+    compound: str | None = None  # tyre: S, M, H, I (intermediate) or W (wet)
+    tyre_age: int | None = None  # laps on the current set
+    fastest_lap: bool = False  # holds the fastest lap so far
+    finish_time: float | None = None  # race time when this car took the flag
 
 
 class RaceSource(Protocol):

@@ -69,22 +69,25 @@ def _mask(rows: tuple[str, ...]) -> Image.Image:
 _MASKS = {ch: _mask(rows) for ch, rows in _GLYPHS.items()}
 
 
-def text_width(text: str) -> int:
-    return max(len(text) * ADVANCE - 1, 0)
+def text_width(text: str, size: int = 1) -> int:
+    return max(len(text) * ADVANCE - 1, 0) * size
 
 
-def draw_text(img: Image.Image, xy: tuple[int, int], text: str, color: RGB) -> None:
-    """Draw upper-cased ``text`` with its top-left corner at ``xy``.
-    Characters the font lacks are drawn as '?'."""
+def draw_text(img: Image.Image, xy: tuple[int, int], text: str, color: RGB, size: int = 1) -> None:
+    """Draw upper-cased ``text`` with its top-left corner at ``xy``, each font
+    pixel ``size`` image pixels wide. Characters the font lacks are drawn as '?'."""
     x, y = xy
+    w, h = GLYPH_W * size, GLYPH_H * size
     for ch in text.upper():
         mask = _MASKS.get(ch, _MASKS["?"])
-        img.paste(color, (x, y, x + GLYPH_W, y + GLYPH_H), mask)
-        x += ADVANCE
+        if size != 1:
+            mask = mask.resize((w, h), Image.Resampling.NEAREST)
+        img.paste(color, (x, y, x + w, y + h), mask)
+        x += ADVANCE * size
 
 
-def draw_text_right(img: Image.Image, right: int, y: int, text: str, color: RGB) -> None:
-    draw_text(img, (right - text_width(text), y), text, color)
+def draw_text_right(img: Image.Image, right: int, y: int, text: str, color: RGB, size: int = 1) -> None:
+    draw_text(img, (right - text_width(text, size), y), text, color, size)
 
 
 def fill(img: Image.Image, box: tuple[int, int, int, int], color: RGB) -> None:

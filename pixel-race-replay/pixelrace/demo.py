@@ -14,19 +14,33 @@ from dataclasses import dataclass, field
 
 from .model import CarState, Driver, Point, Status
 
-DEMO_DRIVERS = (
-    Driver("AXL", "Axel Varn", (230, 57, 70)),
-    Driver("BRN", "Bruna Lio", (255, 159, 28)),
-    Driver("CRU", "Cruz Odell", (255, 221, 51)),
-    Driver("DAV", "Dava Kemp", (46, 196, 182)),
-    Driver("ELM", "Elmo Strand", (58, 134, 255)),
-    Driver("FOX", "Foxa Rhee", (131, 56, 236)),
-    Driver("GRY", "Gray Tolle", (255, 0, 110)),
-    Driver("HAL", "Hal Merin", (139, 201, 38)),
-    Driver("IVO", "Ivo Saari", (240, 240, 240)),
-    Driver("JET", "Jet Amaro", (120, 144, 156)),
+_TEAMS = (  # (name, livery, secondary)
+    ("Comet", (230, 57, 70), (255, 255, 255)),
+    ("Orbit", (255, 140, 0), (30, 30, 40)),
+    ("Volt", (255, 221, 51), (25, 25, 25)),
+    ("Lagoon", (46, 196, 182), (12, 70, 70)),
+    ("Nova", (58, 134, 255), (255, 220, 0)),
+    ("Prism", (131, 56, 236), (255, 255, 255)),
+    ("Rose", (255, 0, 110), (40, 40, 40)),
+    ("Fern", (139, 201, 38), (20, 70, 20)),
+    ("Frost", (230, 235, 240), (200, 30, 30)),
+    ("Slate", (110, 130, 150), (240, 240, 240)),
+)
+_PEOPLE = (
+    ("AXL", "Axel Varn"), ("BRN", "Bruna Lio"), ("CRU", "Cruz Odell"), ("DAV", "Dava Kemp"),
+    ("ELM", "Elmo Strand"), ("FOX", "Foxa Rhee"), ("GRY", "Gray Tolle"), ("HAL", "Hal Merin"),
+    ("IVO", "Ivo Saari"), ("JET", "Jet Amaro"), ("KAI", "Kai Brenn"), ("LUX", "Lux Pardo"),
+    ("MOR", "Mora Quill"), ("NIX", "Nix Calder"), ("ORR", "Orr Vasko"), ("PAX", "Pax Lindqvist"),
+    ("QUI", "Quin Ardell"), ("ROX", "Roxa Penn"), ("SKY", "Sky Tamura"), ("TEO", "Teo Marlow"),
+)
+# Team mates sit next to each other: drivers 0-1 drive for team 0, and so on.
+DEMO_DRIVERS = tuple(
+    Driver(code, name, _TEAMS[i // 2][1], _TEAMS[i // 2][2], _TEAMS[i // 2][0])
+    for i, (code, name) in enumerate(_PEOPLE)
 )
 
+# Tyre model: (pace offset in s/lap, wear in s/lap per lap of age)
+TYRES = {"S": (-0.6, 0.18), "M": (0.0, 0.11), "H": (0.45, 0.06)}
 GRID_GAP = 0.006  # laps between grid slots
 PIT_LOSS = 21.0  # seconds stationary in the pit lane
 
@@ -77,6 +91,15 @@ class _Timeline:
     segments: list[_Segment] = field(default_factory=list)
     finish_time: float | None = None
     retire_time: float | None = None
+    stints: list[tuple[float, str, int]] = field(default_factory=list)  # (from time, compound, laps done)
+    laps: list[tuple[float, float]] = field(default_factory=list)  # (completed at, lap time), lap 1 excluded
+
+    def tyres_at(self, t: float, d: float) -> tuple[str, int]:
+        stint = self.stints[0]
+        for s in self.stints:
+            if s[0] <= t:
+                stint = s
+        return stint[1], max(0, math.floor(max(d, 0.0)) - stint[2])
 
     def distance_at(self, t: float) -> tuple[float, Status]:
         segs = self.segments
@@ -129,20 +152,32 @@ class DemoRace:
         ]
         self._finish(timelines, laps)
         self._timelines = {tl.driver.code: tl for tl in timelines}
+
+        # Who held the fastest lap after each completed lap.
+        best = math.inf
+        self._fl_times: list[float] = []
+        self._fl_holder: list[str] = []
+        for done, lap_time, code in sorted((done, lt, tl.driver.code) for tl in timelines for done, lt in tl.laps):
+            if lap_time < best:
+                best = lap_time
+                self._fl_times.append(done)
+                self._fl_holder.append(code)
         self.start_time = 0.0
         self.end_time = max(tl.finish_time for tl in timelines if tl.finish_time is not None)
 
     @staticmethod
     def _simulate(rng: random.Random, drv: Driver, grid: int, laps: int, retire: bool) -> _Timeline:
-        base = 88.0 + grid * 0.12 + rng.uniform(0.0, 0.6)
-        degradation = rng.uniform(0.08, 0.16)  # seconds lost per lap on old tyres
+        base = 88.0 + grid * 0.1 + rng.uniform(0.0, 0.8)
         pit_lap = rng.randint(laps // 3, 2 * laps // 3)
         retire_lap = rng.randint(laps // 4 + 1, 3 * laps // 4) if retire else None
+        compound = rng.choice("SM")
 
         tl = _Timeline(drv)
+        tl.stints.append((0.0, compound, 0))
         t, d, tyre_age = 0.0, -GRID_GAP * grid, 0
         for lap in range(1, laps + 1):
-            lap_time = base + degradation * tyre_age + rng.gauss(0.0, 0.35) + (2.5 if lap == 1 else 0.0)
+            pace, wear = TYRES[compound]
+            lap_time = base + pace + wear * tyre_age + rng.gauss(0.0, 0.35) + (2.5 if lap == 1 else 0.0)
             if lap == retire_lap:
                 stop = lap - 1 + rng.uniform(0.2, 0.8)
                 t_stop = t + lap_time * (stop - d)
@@ -151,10 +186,14 @@ class DemoRace:
                 return tl
             t_end = t + lap_time * (lap - d)
             tl.segments.append(_Segment(t, t_end, d, float(lap), Status.RUNNING))
+            if lap > 1:
+                tl.laps.append((t_end, t_end - t))
             t, d, tyre_age = t_end, float(lap), tyre_age + 1
             if lap == pit_lap:
                 tl.segments.append(_Segment(t, t + PIT_LOSS, d, d, Status.PIT))
+                compound = "H" if compound == "M" else rng.choice("MH")
                 t, tyre_age = t + PIT_LOSS, 0
+                tl.stints.append((t, compound, lap))
         return tl
 
     @staticmethod
@@ -177,6 +216,7 @@ class DemoRace:
             tl.segments = kept
             tl.finish_time = kept[-1].t1
             tl.retire_time = None
+            tl.laps = [lap for lap in tl.laps if lap[0] <= tl.finish_time]
 
     def state_at(self, t: float) -> list[CarState]:
         rows = []
@@ -192,6 +232,8 @@ class DemoRace:
         rows.sort(key=lambda r: (r[2] is Status.RETIRED, -r[1], r[3]))
 
         leader_tl, leader_d = rows[0][0], rows[0][1]
+        i_fl = bisect_right(self._fl_times, t) - 1
+        fastest = self._fl_holder[i_fl] if i_fl >= 0 else None
         states = []
         for i, (tl, d, status, reached) in enumerate(rows):
             x, y = self._pit_point if status is Status.PIT else self._line.at(d)
@@ -200,5 +242,10 @@ class DemoRace:
                 laps_behind = max(0, math.floor(leader_d - d + 1e-9))
                 leader_t = leader_tl.time_at(d)
                 gap = max(0.0, reached - leader_t) if leader_t is not None else None
-            states.append(CarState(tl.driver.code, x, y, d, status, gap, laps_behind))
+            compound, age = tl.tyres_at(t, d)
+            states.append(CarState(
+                tl.driver.code, x, y, d, status, gap, laps_behind,
+                compound=compound, tyre_age=age, fastest_lap=(tl.driver.code == fastest),
+                finish_time=tl.finish_time if status is Status.FINISHED else None,
+            ))
         return states
