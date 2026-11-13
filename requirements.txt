@@ -1,8 +1,30 @@
-ipywidgets==7.7.1
-matplotlib==3.7.0
-numpy==1.24.2
-pandas==1.5.3
-tqdm==4.64.0
-python-dotenv==1.0.0
-openai>=0.28.0
-tiktoken
+# Course dependencies
+# Tested with Python 3.15.2 (works on Python 3.12 or newer).
+# Every package below has a pre-built wheel for Python 3.15 on Windows,
+# macOS and Linux, except PyYAML (pulled in by `notebook`), which pip builds
+# from source and falls back to pure Python if no C compiler is present.
+#
+# Install inside a virtual environment:
+#   python -m venv .venv
+#   .venv\Scripts\activate        (Windows)
+#   source .venv/bin/activate     (macOS / Linux)
+#   python -m pip install -r requirements.txt
+
+# Data and visualisation
+numpy==2.5.4
+pandas==3.1.1
+matplotlib==3.11.2
+tqdm==4.70.1
+
+# Jupyter (ipykernel 7+ is required on Python 3.15; older jupyter_client crashes on import)
+ipykernel==7.4.0
+ipywidgets==8.1.9
+notebook==7.6.5
+
+# OpenAI / API keys
+# Pinned to 0.28.1 because lessons 06, 07, 08, 09 and 11 use the legacy
+# `openai.ChatCompletion` / `openai.Completion` API, which was removed in openai 1.0.
+# Lesson 04 uses the newer `from openai import OpenAI` client and needs openai>=1.0.
+openai==0.28.1
+tiktoken==0.14.0
+python-dotenv==1.2.4
