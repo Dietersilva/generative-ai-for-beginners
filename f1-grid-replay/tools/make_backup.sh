@@ -7,8 +7,8 @@ cp Grid-Replay-All-Seasons.html "$B/OPEN ME - Grid-Replay-All-Seasons.html"
 cp -r pub/* $B/online/
 cp tools/*.py tools/*.sh tools/quali_view.js $B/tools/ 2>/dev/null || true
 cat > $B/README.txt <<'TXT'
-GRID REPLAY - full backup (2024, 2025, 2026)
-============================================
+GRID REPLAY - full backup (2023, 2024, 2025, 2026)
+==================================================
 
 TO WATCH: double-click  "OPEN ME - Grid-Replay-All-Seasons.html"
   Every season is built into that one file: every race, sprint and qualifying
@@ -16,11 +16,12 @@ TO WATCH: double-click  "OPEN ME - Grid-Replay-All-Seasons.html"
   Works offline in Chrome, Edge, Firefox or Safari. Allow a few seconds to load.
 
 online/   The multi-file version, exactly as published on claude.ai (2026 at the top
-          level, past seasons in online/2025/ and online/2024/). Browsers block a page from reading its data
+          level, past seasons in online/2025/, online/2024/ and online/2023/). Browsers block a page from reading its data
           files from disk, so to run it start a small web server in that folder:
               python3 -m http.server 8000
           then open http://localhost:8000 in your browser.
-          online/**/data/*.txt are the race replays (base64 of the packed .bin files).
+          online/**/data/*.mp3 are the race replays: gzip packs served under an audio
+          extension because the host only serves media types. They are not audio.
 
 tools/    The Python scripts that download data from OpenF1 and build everything:
           build_race.py, build_quali.py, fill_holes.py, build_radio.py, transcribe.py,
@@ -33,10 +34,13 @@ DATA NOTES
   that do have official timing, the median error is 0.05 s. Car positions are real GPS.
   The replay shows "LAP TIMING FROM GPS" while it applies.
 - 2025 Azerbaijan qualifying is missing: OpenF1 has no lap data for it.
-- 2026 Monaco and a few other stretches use estimated positions where GPS is missing;
+- 2026 Monaco and a few other short stretches use estimated positions where GPS is missing;
   the replay shows "ESTIMATED POSITIONS" while it applies.
-- Team radio for past seasons (2024, 2025) is stored at 24 kbps mono to keep the online
-  version under its size limit; transcripts were made from the original audio.
+- Team radio is stored at 24 kbps mono to keep the online version under its size limit;
+  transcripts were made from the original audio.
+- 2023: OpenF1's points were wrong for two races (Saudi Arabia, United States); points were
+  recomputed from the finishing positions, and the final standings match the official ones.
+- 2023 Sao Paulo GP: about 13 minutes of estimated positions around the lap-1 red flag.
 - Radio transcripts are made automatically by speech recognition and contain errors.
 
 The code is also on GitHub: dietersilva/generative-ai-for-beginners,

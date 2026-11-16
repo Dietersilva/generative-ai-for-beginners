@@ -43,3 +43,5 @@ json.dump(season, open(f"{DST}/season.json", "w"), separators=(",", ":"))
 json.dump(idx, open(f"{DST}/index.json", "w"), separators=(",", ":"), ensure_ascii=False)
 print("races", len(idx["races"]), "sprints", len(idx["sprints"]), "quali", len(idx["quali"]))
 print("standings:", [(d["code"], d["pts"][-1]) for d in season["drivers"][:5]])
+
+import subprocess; subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "binpack.py"), "pub"])   # data as binary

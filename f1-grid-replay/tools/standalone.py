@@ -9,7 +9,8 @@ sbase = base
 if pre: base = base[: -len(pre.rstrip("/"))].rstrip("/") or "."
 emb = {pre + "index.json": json.dumps(idx, separators=(',', ':'))}
 for r in idx["races"] + idx.get("sprints", []):
-    emb[r["file"]] = open(f"{base}/{r['file']}").read()
+    fb = open(f"{base}/{r['file']}", "rb").read()
+    emb[r["file"]] = fb.decode() if r["file"].endswith(".txt") else __import__("base64").b64encode(fb).decode()
     if r.get("radio_file"):
         import base64
         emb[r["radio_file"]] = base64.b64encode(open(f"{base}/{r['radio_file']}", "rb").read()).decode()
