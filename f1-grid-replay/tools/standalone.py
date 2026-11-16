@@ -14,11 +14,22 @@ for r in idx["races"] + idx.get("sprints", []):
     if r.get("radio_file"):
         import base64
         emb[r["radio_file"]] = base64.b64encode(open(f"{base}/{r['radio_file']}", "rb").read()).decode()
-import base64 as _b64
+import base64 as _b64, os as _os2
+# optional: COMM_DIR=comm/<year> embeds pre-rendered commentary packs (<sk>.mp3) for every race that has one
+cd = _os2.environ.get("COMM_DIR")
+if cd:
+    for r in idx["races"] + idx.get("sprints", []):
+        f = f"{cd}/{r['session_key']}.mp3"
+        if _os2.path.exists(f):
+            r["comm_file"] = f"{pre}comm/{r['session_key']}.mp3"; emb[r["comm_file"]] = _b64.b64encode(open(f, "rb").read()).decode()
+    emb[pre + "index.json"] = json.dumps(idx, separators=(',', ':'))
 for q in idx.get("quali", []) + idx.get("previews", []):
     emb[q["file"]] = _b64.b64encode(open(f"{base}/{q['file']}", "rb").read()).decode()
 import os as _os
 if _os.path.exists(f"{sbase}/season.json"): emb[pre + "season.json"] = _b64.b64encode(open(f"{sbase}/season.json", "rb").read()).decode()
+if _os.environ.get("SPLIT_JS"):   # split offline mode: write only this season's data, as a script the launcher page loads
+    open(out, "w").write("window.__EMBED = Object.assign(window.__EMBED || {}, " + json.dumps(emb) + ");\n")
+    print(out, _os.path.getsize(out) // 1024, "KB"); sys.exit(0)
 embed = "<script>window.__EMBED = " + json.dumps(emb) + ";</script>\n"
 i = page.index("<script>\n(() => {")
 page = page[:i] + embed + page[i:]

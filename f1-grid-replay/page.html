@@ -1873,78 +1873,222 @@ function crossEvents(t0, t1){
 
 
 
-/* ---------------- commentary (speech synthesis, British voice) ---------------- */
-const COMM = {voice: null, q: [], lastLead: null, leadSince: 0, said: new Set()};
-const pick = a => a[Math.floor(Math.random() * a.length)];
-function commVoice(){
-  if (!("speechSynthesis" in window)) return null;
-  const vs = speechSynthesis.getVoices(); if (!vs.length) return null;
-  const gb = vs.filter(v => /en[-_]GB/i.test(v.lang));
-  const male = /ryan|thomas|daniel|arthur|oliver|george|alfie|elliot|male|uk english male/i;
-  const fem = /female|libby|sonia|maisie|hazel|susan|kate|serena|stephanie|martha|fiona|moira|tessa|karen/i;
-  return gb.find(v => male.test(v.name) && !fem.test(v.name)) || gb.find(v => !fem.test(v.name)) || gb[0] || vs.find(v => /^en/i.test(v.lang)) || null;
-}
-if ("speechSynthesis" in window) { const upd = () => { COMM.voice = commVoice(); const b = $("#tgComm"); if (b) b.title = "Spoken race commentary (start, overtakes, incidents, safety cars, pit stops, the finish). Voice: " + (COMM.voice ? COMM.voice.name : "your device's default") + (COMM.voice && /en[-_]GB/i.test(COMM.voice.lang) ? "" : " (no British voice found on this device)"); }; upd(); speechSynthesis.onvoiceschanged = upd; }
-else { const b = $("#tgComm"); b.disabled = true; b.title = "Spoken commentary needs speech support, which this browser doesn't have"; }
-function commStop(){ COMM.q.length = 0; try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (e) {} }
-function commHello(){ if (!st.playing) commSay("Commentary on. Press play and enjoy the race.", 3, true); }
+/* ---------------- commentary: a two-voice booth ----------------
+   buildCommScript(R) writes the whole race's commentary up front from the data (deterministic, seeded by session),
+   so the same script can be pre-rendered with a neural voice (comm pack) or read live by the device's own voice. */
+const COMM = {q: [], vLead: null, vAn: null, pack: null, busy: false, src: null, gen: 0};
+function commRng(seed){ let s = (seed >>> 0) || 1; return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296; }
 const surname = D => D ? D.last.toLowerCase().replace(/(^|[\s'-])\S/g, m => m.toUpperCase()) : "";
-function commSay(text, pri, force){
-  if (!("speechSynthesis" in window) || (!st.commOn && !force)) return;
-  const sp = st.dir ? st.dir.prevSpeed : st.speed;
-  const need = sp <= 4 ? 1 : sp <= 16 ? 2 : 3;          // faster playback: only the big moments
-  if (pri < need && !force) return;
-  const now = performance.now();
-  COMM.q = COMM.q.filter(x => now - x.at < 5000);
-  if (COMM.q.length >= 2) { const lo = COMM.q.reduce((m, x) => x.pri < m.pri ? x : m, COMM.q[0]); if (lo.pri >= pri) return; COMM.q.splice(COMM.q.indexOf(lo), 1); }
-  COMM.q.push({text, pri, at: now}); COMM.q.sort((a, b) => b.pri - a.pri); commNext();
+const fullName = D => D ? `${D.first} ${surname(D)}` : "";
+const TYRE = {SOFT: "softs", MEDIUM: "mediums", HARD: "hards", INTERMEDIATE: "inters", WET: "full wets"};
+const NUMW = ["zero","one","two","three","four","five","six","seven","eight","nine","ten","eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
+const ORD = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"];
+const nw = n => n >= 0 && n <= 20 ? NUMW[n] : String(n);
+const secs = g => g < 1 ? (Math.round(g * 10) <= 1 ? "a tenth" : `${NUMW[Math.round(g * 10)]} tenths`) : g < 10 ? `${g.toFixed(1)} seconds` : `${Math.round(g)} seconds`;
+function tyreAt(D, lap){ let s = null; for (const x of D.stints) if (x[1] <= Math.max(lap, 1)) s = x; if (!s) return null; return {c: s[3], age: Math.max(0, lap - s[1]) + (s[4] || 0)}; }
+function lapTimeWords(v){ const m = Math.floor(v / 60), s = v - m * 60, ss = Math.floor(s), d = Math.floor((s - ss) * 10); return `${m} ${ss < 10 ? "oh " + ss : ss} point ${d}`; }
+
+async function buildCommScript(R, meta){
+  const rnd = commRng((R.h.session_key || 7) * 2654435761), L = [], used = {}, pick = (cat, arr) => {
+    const u = used[cat] || (used[cat] = new Set()); let free = arr.map((_, i) => i).filter(i => !u.has(i)); if (!free.length) { u.clear(); free = arr.map((_, i) => i); }
+    const i = free[Math.floor(rnd() * free.length)]; u.add(i); return arr[i]; };
+  const add = (t, pri, who, e, text, extra) => { if (text) L.push({t: Math.round(t * 10) / 10, pri, who, e, text, ...extra}); };
+  const lo = R.lightsOut, chq = R.chq, lapAt = t => leaderLap(R, t), live = t => R.drivers.filter(D => !isOut(D, t));
+  const orderAt = t => live(t).map(D => ({D, pos: posAt(D, t), g: gapOf(D, t)})).filter(o => o.pos < 99).sort((a, b) => a.pos - b.pos);
+  const inSeg = t => R.segs.find(s => t >= s.a && t <= s.b);
+  const name = meta && meta.name || (R.h.meeting && R.h.meeting.name) || "the Grand Prix", sprint = meta && meta.kind === "sprint";
+  const race = sprint ? `the ${name} sprint` : `the ${name}`;
+  const wx = R.h.weather || []; const wxAt = t => { let w = null; for (const x of wx) { if (x[0] <= t) w = x; else break; } return w || wx[0]; };
+
+  // ---- before the start
+  const grid = R.drivers.filter(D => D.grid < 99).sort((a, b) => a.grid - b.grid);
+  const t0 = Math.max(.5, lo - 23);
+  if (grid.length >= 2) {
+    add(t0, 1, "L", 1, pick("hello", [`Welcome to ${race}! ${fullName(grid[0])} on pole, ${surname(grid[1])} alongside.`, `Hello and welcome to ${race}. ${surname(grid[0])} starts from pole, ${surname(grid[1])} next to him.`]));
+    const w = wxAt(lo); const front = grid.slice(0, 3).map(D => ({D, ty: tyreAt(D, 1)})).filter(x => x.ty);
+    let tyreLine = "";
+    if (front.length === 3) { const cs = new Set(front.map(x => x.ty.c)); tyreLine = cs.size === 1 ? `The top three all start on the ${TYRE[front[0].ty.c] || front[0].ty.c.toLowerCase()}.` : `Interesting on tyres: ${front.map(x => `${surname(x.D)} on the ${TYRE[x.ty.c] || x.ty.c.toLowerCase()}`).join(", ")}.`; }
+    const wl = w ? (w[3] > 0 ? `It's wet out there, track temperature just ${Math.round(w[2])} degrees.` : `Air temperature ${Math.round(w[1])} degrees, the track at ${Math.round(w[2])}.`) : "";
+    add(t0 + .2, 1, "A", 0, [wl, tyreLine].filter(Boolean).join(" "));
+  }
+  add(lo, 3, "L", 2, pick("go", ["Five red lights... and away! We're racing!", "Lights out, and off they go!", "And they're away, into turn one!"]));
+
+  // ---- lap 1 report
+  if (R.lapStarts.length > 2) {
+    const t = R.lapStarts[1] + 4, o = orderAt(t);
+    if (o.length > 3) {
+      add(t, 2, "L", 1, `${surname(o[0].D)} leads at the end of lap one${o[1] ? `, ${surname(o[1].D)} second` : ""}.`);
+      const mv = o.map(x => ({D: x.D, d: x.D.grid - x.pos})).sort((a, b) => b.d - a.d);
+      if (mv[0] && mv[0].d >= 3) add(t + .1, 1, "A", 0, pick("l1gain", [`What a start from ${surname(mv[0].D)}, up ${nw(mv[0].d)} places already.`, `${surname(mv[0].D)} has made up ${nw(mv[0].d)} places on the opening lap. Superb.`]));
+      const worst = mv[mv.length - 1]; if (worst && worst.d <= -4) add(t + .2, 1, "A", 0, `Not a good first lap for ${surname(worst.D)}, down ${nw(-worst.d)} places.`);
+    }
+  }
+
+  // ---- overtakes, with memory
+  COMM._lastTy = -1e9; let flN = 0, flLast = -1e9; let leadChanges = 0; const pairs = {}, passesBy = {};
+  for (const o of R.overtakes || []) {
+    const a = surname(o.a), b = surname(o.b), k = o.a.num + ">" + o.b.num, nth = pairs[k] = (pairs[k] || 0) + 1; passesBy[o.a.num] = (passesBy[o.a.num] || 0) + 1;
+    if (o.pos === 1) { leadChanges++;
+      add(o.t, 3, "L", 2, pick("lead", [`${a} takes the lead! Past ${b}, and ${a} leads ${race}!`, `There it is! ${a} goes by ${b} for the lead!`, `And ${a} is through! ${a} leads!`, `${a} has done it! Into the lead, past ${b}!`]));
+      if (leadChanges >= 3) add(o.t + .1, 1, "A", 1, `That's lead change number ${nw(leadChanges)}. What a race this is.`);
+      else if (nth >= 2) add(o.t + .1, 1, "A", 1, `He had a look a moment ago, and this time he made it stick.`);
+    } else if (o.pos <= 10) {
+      const lap = lapAt(o.t), ta = tyreAt(o.a, lap), tb = tyreAt(o.b, lap);
+      add(o.t, o.pos <= 3 ? 2 : 1, "L", o.pos <= 3 ? 2 : 1, pick(o.pos <= 3 ? "ovTop" : "ov", o.pos <= 3
+        ? [`${a} gets by ${b}, up to P${o.pos}!`, `Great move! ${a} past ${b} for P${o.pos}.`, `${a} makes it stick on ${b}. P${o.pos}.`]
+        : [`${a} passes ${b} for P${o.pos}.`, `${a} through on ${b}, that's P${o.pos}.`, `${a} picks off ${b}. Up to P${o.pos}.`, `And ${b} loses a place to ${a}.`]));
+      if (ta && tb && tb.age - ta.age >= 8 && o.t - (COMM._lastTy || -1e9) > 240 && rnd() < .6 && (COMM._lastTy = o.t)) add(o.t + .1, 1, "A", 0, pick("tyreDelta", [`${a}'s tyres are ${nw(tb.age - ta.age)} laps fresher. That's the difference.`, `You can see the tyre advantage there, ${nw(tb.age - ta.age)} laps younger.`]));
+      else if (passesBy[o.a.num] === 4) add(o.t + .1, 1, "A", 0, `That's ${a}'s fourth overtake of the day. He's on a charge.`);
+    }
+  }
+
+  // ---- battles, with the gap trend
+  for (const b of R.battles || []) { if (b.pos > 6) continue;
+    const t3 = R.lapStarts[Math.min(R.lapStarts.length - 1, b.fromLap + 1)] + 5, g0 = gapOf(b.a, b.t0)[1], g1 = gapOf(b.a, t3)[1];
+    const a = surname(b.a), bb = surname(b.b);
+    add(t3, b.pos <= 3 ? 2 : 1, "L", 1, pick("bt", [`${a} is all over the back of ${bb} in the fight for P${b.pos}.`, `What a battle for P${b.pos}, ${a} hunting down ${bb}.`, `${a} and ${bb}, nose to tail for P${b.pos}.`]));
+    const lap = lapAt(t3), ta = tyreAt(b.a, lap), tb = tyreAt(b.b, lap);
+    if (typeof g0 === "number" && typeof g1 === "number" && (g0 - g1) / 2 >= .2) add(t3 + .1, 1, "A", 0, `He's taking ${secs((g0 - g1) / 2)} a lap out of him.`);
+    else if (ta && tb && Math.abs(ta.age - tb.age) >= 6) add(t3 + .1, 1, "A", 0, ta.age < tb.age ? `${a} has the fresher tyres, ${nw(tb.age - ta.age)} laps younger.` : `${bb} is defending on tyres ${nw(tb.age < ta.age ? ta.age - tb.age : 0)} laps fresher.`);
+  }
+
+  // ---- pit stops: tyres, stop time, undercuts
+  for (const D of R.drivers) for (const p of D.pits) { if (p[0] < lo + 30) continue;
+    const tIn = p[0] - (p[4] || 22) * .5, pos = posAt(D, tIn - 10); if (pos > 8) continue;
+    const nt = tyreAt(D, p[2] + 1), stop = p[3], n = surname(D), sc = inSeg(tIn);
+    const tn = nt ? (TYRE[nt.c] || nt.c.toLowerCase()) : "";
+    add(tIn, pos <= 3 ? 2 : 1, "L", 1, pick("pit", tn ? [`${n} dives into the pit lane from P${pos}. On with the ${tn}.`, `In comes ${n}, from P${pos}, and it's the ${tn}.`, `Pit stop for ${n}. ${tn.charAt(0).toUpperCase() + tn.slice(1)} going on.`, `${n} is in this time. The ${tn} for him.`] : [`${n} dives into the pit lane from P${pos}.`, `In comes ${n}, from P${pos}.`]));
+    const bits = [];
+    if (typeof stop === "number" && stop > 1.5) bits.push(stop <= 2.5 ? `Lovely stop, ${stop.toFixed(1)} seconds.` : stop >= 5 ? `Oh, that's a slow one, ${stop.toFixed(1)} seconds. That will hurt.` : "");
+    if (sc) bits.push(sc.k === "VSC" ? "A cheaper stop under the virtual safety car." : "Taking advantage of the safety car.");
+    add(tIn + .1, 1, "A", 0, bits.filter(Boolean).join(" "));
+    // undercut: the car just ahead pits within the next five laps
+    const ahead = orderAt(tIn - 15).find(o => o.pos === pos - 1);
+    if (ahead && !sc) { const gi = gapOf(D, tIn - 15)[1], B = ahead.D, bp = B.pits.find(q => q[2] > p[2] && q[2] <= p[2] + 5);
+      if (bp && typeof gi === "number" && gi > 0 && gi < 4) { const tc = bp[0] + 25;
+        add(tc, 1, "A", 1, posAt(D, tc) < posAt(B, tc) ? pick("ucYes", [`The undercut has worked! ${n} comes out ahead of ${surname(B)}.`, `${n} jumps ${surname(B)} in the stops. Perfect strategy.`]) : pick("ucNo", [`${surname(B)} covers it off. ${n} stays behind.`, `No undercut for ${n} this time, ${surname(B)} keeps the place.`])); } }
+  }
+
+  // ---- incidents, flags, penalties, fastest laps
+  for (const e0 of R.events) { const D = e0.d, n = surname(D);
+    const e = /^(CRASH|STOP|CONTACT)$/.test(e0.k) && e0.t < lo + 4 ? {...e0, t: lo + 8} : e0;   // start-line incidents: call them once the race is on
+    switch (e.k) {
+      case "SC": add(e.t, 3, "L", 2, pick("sc", ["Safety car! The safety car has been deployed.", "And that brings out the safety car.", "Safety car, safety car. The field will bunch right up."])); add(e.t + .1, 1, "A", 0, pick("scA", ["That's a big chance for a cheap pit stop.", "Every gap they've built is gone now.", "The strategists will be busy on the pit wall."])); break;
+      case "VSC": add(e.t, 3, "L", 2, pick("vsc", ["Virtual safety car. Everyone has to slow down.", "We have a virtual safety car."])); break;
+      case "RED": add(e.t, 3, "L", 2, "Red flag! The session is stopped."); add(e.t + .1, 1, "A", 0, "Everyone back to the pit lane while they sort this out."); break;
+      case "GREEN": add(e.t, 2, "L", 2, pick("green", ["And we're back to green flag racing.", "Green flag! Racing resumes.", "We're racing again!"])); break;
+      case "CRASH": add(e.t, 3, "L", 2, pick("crash", [`Oh, big moment! ${n} is in the wall and out of the race!`, `Crash! That's the end of ${n}'s race.`, `Oh no, ${n} has gone off, and that is heavy.`])); add(e.t + .1, 1, "A", 0, pick("crashA", ["Hope he's okay. That was a big hit.", "Nothing he could do once it got away from him.", "That's a lot of damage. Race over."])); break;
+      case "STOP": add(e.t, 3, "L", 1, pick("stop", [`${n} has stopped on track.`, `Trouble for ${n}, the car has come to a halt.`])); break;
+      case "CONTACT": if (e.x && ((e.x.d && isOut(e.x.d, e.t - 1)) || (e.x.d2 && isOut(e.x.d2, e.t - 1)))) break; add(e.t, 2, "L", 2, pick("contact", [`Contact! ${n} and ${surname(e.x && e.x.d2)} have touched.`, `Oh, they've banged wheels! ${n} and ${surname(e.x && e.x.d2)}.`])); break;
+      case "RET": add(e.t, 2, "L", 1, `${n} has retired in the pits.`); break;
+      case "FL": { const lap = lapAt(e.t); if (lap < 20 || flN >= 3 || e.t - flLast < 360) break; flN++; flLast = e.t; const m = /(\d+):(\d\d)\.(\d)/.exec(e.text.split(" · ")[1] || "");
+        add(e.t, 1, "A", 0, m ? `Fastest lap of the race for ${n}, a ${m[1]} ${+m[2] < 10 ? "oh " + (+m[2]) : m[2]} point ${m[3]}.` : `Fastest lap of the race for ${n}.`); break; }
+      case "STEW": { const s = e.stew; if (!s) break; const who = s[1].map(x => surname(R.byNum[x])).filter(Boolean).join(" and "), why = s[4] ? s[4].toLowerCase() : "";
+        if (s[2] === "PEN") add(e.t, 2, "L", 1, `Penalty for ${who}. ${s[3].toLowerCase()}${why ? `, for ${why}` : ""}.`);
+        else if (s[2] === "INV") add(e.t, 1, "A", 0, `The stewards are looking at ${who}${why ? ` for ${why}` : ""}.`); break; }
+    }
+  }
+
+  // ---- weather
+  for (let i = 1; i < wx.length; i++) { const t = wx[i][0]; if (t < lo || t > chq) continue;
+    if (wx[i][3] > 0 && !(wx[i-1][3] > 0)) add(t, 2, "L", 2, pick("rain", ["Rain! It's starting to rain!", "And here comes the rain.", "Spots of rain on the cameras. Now this gets interesting."]));
+    if (!(wx[i][3] > 0) && wx[i-1][3] > 0) add(t, 1, "A", 0, "The rain seems to have stopped."); }
+
+  // ---- every ten laps: the gap and its trend
+  for (let k = 9; k < R.lapStarts.length - 1; k += 10) { const lap = k + 1, t = R.lapStarts[k] + 3; if (lap >= R.total - 1 || inSeg(t)) continue;
+    const o = orderAt(t); if (o.length < 2) continue; const g = o[1].g[0], gp = gapOf(o[1].D, R.lapStarts[Math.max(1, k - 5)] + 3)[0];
+    add(t, 1, "L", 1, `We're on lap ${lap} of ${R.total}. ${surname(o[0].D)} leads` + (typeof g === "number" && g > 0 ? `, ${secs(g)} ahead of ${surname(o[1].D)}.` : "."));
+    if (typeof g === "number" && typeof gp === "number" && g > 0 && gp > 0 && k >= 6) {
+      if (g - gp > 1.5) add(t + .1, 1, "A", 0, pick("gapUp", [`He's pulled out ${secs(g - gp)} in five laps. Very comfortable.`, `That gap keeps growing. ${surname(o[1].D)} has no answer.`]));
+      else if (gp - g > 1.5) add(t + .1, 1, "A", 0, pick("gapDn", [`But ${surname(o[1].D)} is ${secs(gp - g)} closer than five laps ago.`, `${surname(o[1].D)} is chipping away. Game on.`]));
+    } }
+  const half = R.lapStarts[Math.round(R.total / 2) - 1]; if (half) add(half + 8, 1, "A", 0, pick("half", ["We're at half distance.", "Halfway through the race."]));
+  if (R.lapStarts[R.total - 1]) add(R.lapStarts[R.total - 1] + 1, 2, "L", 2, pick("last", ["Final lap! One more lap to go.", "Here comes the last lap!", "Last lap! Can anyone do anything about the leader?"]));
+
+  // ---- team radio hooks (played only when RADIO is on)
+  if (st.radio) { let last = -1e9, n = 0;
+    for (const c of st.radio.items) { if (n >= 5 || c.t < lo + 60 || c.t > chq || c.t - last < 360) continue; const D = R.byNum[c.num]; if (!D || posAt(D, c.t) > 5) continue;
+      add(c.t - 3, 1, "A", 0, pick("radio", [`Let's listen in to ${surname(D)}.`, `Here's ${surname(D)} on the radio.`, `And a message from ${surname(D)}'s car.`]), {radio: 1}); last = c.t; n++; } }
+
+  // ---- finish and wrap-up
+  const winner = R.drivers.find(D => D.res && D.res.position === 1);
+  add(chq, 3, "L", 2, winner ? pick("chq", [`Chequered flag! ${fullName(winner)} wins ${race}!`, `And ${fullName(winner)} takes the chequered flag! Victory in ${race}!`]) : "Chequered flag! The race is over.");
+  const pod = R.drivers.filter(D => D.res && D.res.position >= 2 && D.res.position <= 3).sort((a, b) => a.res.position - b.res.position);
+  if (pod.length === 2) add(chq + 6, 2, "L", 1, `${surname(pod[0])} finishes second, ${surname(pod[1])} completes the podium.`);
+  const fin = R.drivers.filter(D => D.res && D.res.position && D.grid < 99).map(D => ({D, d: D.grid - D.res.position})).sort((a, b) => b.d - a.d);
+  if (fin[0] && fin[0].d >= 4) add(chq + 12, 1, "A", 0, pick("mover", [`Biggest mover today: ${surname(fin[0].D)}, from P${fin[0].D.grid} to P${fin[0].D.res.position}.`, `Special mention for ${surname(fin[0].D)}, ${nw(fin[0].d)} places gained from the start.`]));
+  try { // championship picture after this round
+    if (!st.season) st.season = JSON.parse(new TextDecoder().decode(await fetchBytes(st.prefix + "season.json")));
+    const S = st.season, lab = meta && ("R" + String(meta.round).padStart(2, "0") + " " + (meta.code || "")), kind = sprint ? "sprint" : "gp";
+    const k = S.rounds.findIndex(x => x.label === lab && x.kind === kind);
+    if (k >= 0 && k < S.rounds.length) { const tab = S.drivers.map(d => ({d, p: d.pts[k]})).sort((a, b) => b.p - a.p);
+      if (tab[1]) { const gap = tab[0].p - tab[1].p, A = tab[0].d.name.split(" ").slice(-1)[0], B = tab[1].d.name.split(" ").slice(-1)[0];
+        add(chq + 18, 1, "A", 0, k === S.rounds.length - 1 && (st.year || 0) < new Date().getFullYear() ? `And that makes ${tab[0].d.name} the champion, ${nw(gap)} points clear of ${B}.` : gap === 0 ? `In the championship, ${A} and ${B} are now level on points!` : `In the championship, ${A} leads ${B} by ${gap > 20 ? gap : nw(gap)} point${gap === 1 ? "" : "s"}.`); } } } catch (e) {}
+
+  // ---- fill long quiet spells
+  L.sort((a, b) => a.t - b.t);
+  const quiet = [], jokes = ["Not a lot happening at the front. Perfect time to put the kettle on.", "If you've just joined us, you haven't missed much. Mind you, give it a lap.", "Lovely and calm out there. Too calm, if you ask me."];
+  let jokesLeft = 2;
+  for (let i = 1; i < L.length; i++) { const a = Math.max(L[i-1].t, lo + 120), b = Math.min(L[i].t, chq - 60); if (b - a < 300) continue;
+    const t = a + (b - a) / 2, o = orderAt(t); if (o.length < 3) continue; const lap = lapAt(t), lt = tyreAt(o[0].D, lap);
+    const mv = o.map(x => ({D: x.D, d: x.D.grid - x.pos})).sort((p, q) => q.d - p.d)[0];
+    const opts = [];
+    if (lt && lt.age >= 12) opts.push(`${surname(o[0].D)}'s ${TYRE[lt.c] || "tyres"} are ${nw(lt.age)} laps old now. How long can he make them last?`);
+    if (mv && mv.d >= 4) opts.push(`Worth keeping an eye on ${surname(mv.D)}, up ${nw(mv.d)} places since the start.`);
+    if (typeof o[1].g[0] === "number" && o[1].g[0] > 0) opts.push(`${surname(o[0].D)} is managing the gap to ${surname(o[1].D)}, ${secs(o[1].g[0])}.`);
+    if (jokesLeft > 0 && rnd() < .35) { opts.length = 0; opts.push(jokes[2 - jokesLeft]); jokesLeft--; }
+    if (opts.length) quiet.push({t, pri: 1, who: "A", e: 0, text: opts[Math.floor(rnd() * opts.length)]}); }
+  L.push(...quiet); L.sort((a, b) => a.t - b.t);
+  return L;
+}
+
+/* ---- playback ---- */
+function commPickVoices(){
+  if (!("speechSynthesis" in window)) return; const vs = speechSynthesis.getVoices(); if (!vs.length) return;
+  const gb = vs.filter(v => /en[-_]GB/i.test(v.lang)), male = /ryan|thomas|daniel|arthur|oliver|george|alfie|elliot|male/i, fem = /female|libby|sonia|maisie|hazel|susan|kate|serena|stephanie|martha|fiona|moira|tessa|karen|mia|amy|emma/i;
+  COMM.vLead = gb.find(v => male.test(v.name) && !fem.test(v.name)) || gb.find(v => !fem.test(v.name)) || gb[0] || vs.find(v => /^en/i.test(v.lang)) || null;
+  COMM.vAn = gb.find(v => v !== COMM.vLead && fem.test(v.name)) || gb.find(v => v !== COMM.vLead) || COMM.vLead;
+}
+function commTitle(){ const b = $("#tgComm"); if (!b) return;
+  b.title = "Race commentary from a two-person booth: the start, overtakes, battles, pit strategy, incidents, weather, the championship and the finish." +
+    (COMM.pack ? " Natural voices (Piper, pre-recorded)." : " Read by your device's voice: " + (COMM.vLead ? COMM.vLead.name : "default") + "."); }
+if ("speechSynthesis" in window) { const upd = () => { commPickVoices(); commTitle(); }; upd(); speechSynthesis.onvoiceschanged = upd; }
+function commStop(){ COMM.q.length = 0; COMM.gen++; try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (e) {} if (COMM.src) { try { COMM.src.onended = null; COMM.src.stop(); } catch (e) {} COMM.src = null; } COMM.busy = false; }
+function commHello(){ if (!st.playing) commSpeak({text: "Commentary on. Press play and enjoy the race.", who: "L", e: 1, pri: 3}, true); }
+function commQueue(x){
+  const sp = st.dir ? st.dir.prevSpeed : st.speed, need = sp <= 4 ? 1 : sp <= 16 ? 2 : 3;
+  if (x.pri < need || (x.radio && !(st.radioOn && st.radio))) return;
+  const now = performance.now(); COMM.q = COMM.q.filter(y => now - y.at < (y.pri >= 3 ? 9000 : 6000));
+  if (COMM.q.length >= 3) { const lo = COMM.q.reduce((m, y) => y.pri < m.pri ? y : m, COMM.q[0]); if (lo.pri >= x.pri) return; COMM.q.splice(COMM.q.indexOf(lo), 1); }
+  COMM.q.push({...x, at: now});
+  if (x.pri >= 3 && x.e >= 2 && COMM.busy && COMM.cur && COMM.cur.pri < 3) { const q = COMM.q.slice(); commStop(); COMM.q = q.filter(y => y.pri >= 2); }
+  commNext();
 }
 function commNext(){
-  if (speechSynthesis.speaking || speechSynthesis.pending || !COMM.q.length) return;
-  if (typeof curSrc !== "undefined" && curSrc) { setTimeout(commNext, 400); return; }   // let team radio finish first
-  const x = COMM.q.shift(); const u = new SpeechSynthesisUtterance(x.text);
-  COMM.voice = COMM.voice || commVoice(); if (COMM.voice) { u.voice = COMM.voice; u.lang = COMM.voice.lang; } else u.lang = "en-GB";
-  u.rate = 1.08; u.pitch = 0.92; u.volume = 1; u.onend = u.onerror = () => setTimeout(commNext, 120);
-  speechSynthesis.speak(u);
+  if (COMM.busy || !COMM.q.length || !st.commOn) return;
+  if (curSrc) { setTimeout(commNext, 400); return; }          // team radio first
+  COMM.cur = COMM.q.shift(); commSpeak(COMM.cur);
 }
-function commEvent(e, R){
-  const D = e.d, n = surname(D);
-  switch (e.k) {
-    case "SC": return commSay(pick(["Safety car! The safety car has been deployed.", "And that brings out the safety car.", "Safety car, safety car. The field will bunch up behind it."]), 3);
-    case "VSC": return commSay(pick(["Virtual safety car. Everyone has to slow down.", "We have a virtual safety car."]), 3);
-    case "RED": return commSay(pick(["Red flag! The session is stopped.", "That's a red flag. Everyone back to the pit lane."]), 3);
-    case "GREEN": return commSay(pick(["And we're back to green flag racing.", "Green flag. Racing resumes."]), 2);
-    case "CRASH": return commSay(pick([`Oh, big moment! ${n} is in the wall and out of the race!`, `Crash! That's the end of ${n}'s race.`, `Oh no, ${n} has gone off, and that is heavy.`]), 3);
-    case "STOP": return commSay(pick([`${n} has stopped on track.`, `Trouble for ${n}, the car has come to a halt.`]), 3);
-    case "CONTACT": return commSay(pick([`Contact! ${n} and ${surname(e.x && e.x.d2)} have touched.`, `Oh, they've banged wheels, ${n} and ${surname(e.x && e.x.d2)}!`]), 2);
-    case "RET": return commSay(`${n} has retired in the pits.`, 2);
-    case "PIT": { const p = posAt(D, e.t); if (p > 8) return; return commSay(pick([`${n} dives into the pit lane from P${p}.`, `In comes ${n}, from P${p}.`, `Pit stop for ${n}.`]), p <= 3 ? 2 : 1); }
-    case "FL": { if (leaderLap(R, e.t) < 5) return; const m = /(\d+):(\d\d)\.(\d)/.exec(e.text.split(" · ")[1] || ""); const lt = m ? `${m[1]} ${+m[2] < 10 ? "oh " + (+m[2]) : m[2]} point ${m[3]}` : "";
-      return commSay(pick([lt ? `Fastest lap for ${n}, a ${lt}.` : `Fastest lap for ${n}.`, `${n} sets the fastest lap of the race.`]), 1); }
-    case "STEW": { const k = e.stew && e.stew[2]; if (k === "PEN") return commSay(`Penalty! ${e.text.split(" · ")[0].split(" / ").map(c => surname(R.drivers.find(x => x.code === c))).filter(Boolean).join(" and ")} gets ${e.stew[3].toLowerCase()}.`, 2);
-      if (k === "INV") return commSay("The stewards are taking a look at that one.", 1); return; }
-    case "OV": { const o = e.ov, a = surname(o.a), b = surname(o.b);
-      if (o.pos === 1) return commSay(pick([`${a} takes the lead! Past ${b}, and ${a} leads the race!`, `There it is! ${a} goes by ${b} for the lead!`, `And ${a} is through! ${a} leads!`]), 3);
-      if (o.pos <= 3) return commSay(pick([`${a} gets by ${b}, up to P${o.pos}!`, `Great move, ${a} past ${b} for P${o.pos}.`]), 2);
-      if (o.pos <= 10) return commSay(pick([`${a} passes ${b} for P${o.pos}.`, `${a} through on ${b}, that's P${o.pos}.`]), 1);
-      return; }
-    case "BT": { const o = e.ov; const m = /^(\w+) chasing (\w+) for P(\d+)/.exec(e.text); if (!m || +m[3] > 6) return;
-      const a = surname(R.drivers.find(x => x.code === m[1])), b = surname(R.drivers.find(x => x.code === m[2]));
-      return commSay(pick([`${a} is all over the back of ${b} in the fight for P${m[3]}.`, `What a battle for P${m[3]}, ${a} hunting down ${b}.`]), +m[3] <= 3 ? 2 : 1); }
-    case "CHQ": { const w = R.drivers.find(x => x.res && x.res.position === 1); const nm = (R.h.meeting && R.h.meeting.name) || (st.meta && st.meta.name) || "the Grand Prix";
-      return commSay(w ? pick([`Chequered flag! ${w.first} ${surname(w)} wins the ${nm}!`, `And ${w.first} ${surname(w)} takes the chequered flag! Victory in the ${nm}!`]) : "Chequered flag! The race is over.", 3); }
-  }
+async function commSpeak(x, force){
+  const gen = COMM.gen; COMM.busy = true; const done = () => { if (gen !== COMM.gen) return; COMM.busy = false; COMM.src = null; setTimeout(commNext, 150); };
+  if (COMM.pack && x.len) { const ac = ensureAudio();
+    if (ac) try { const b = COMM.pack.body; const buf = await ac.decodeAudioData(b.buffer.slice(b.byteOffset + x.off, b.byteOffset + x.off + x.len));
+      if (gen !== COMM.gen) return; const src = ac.createBufferSource(), g = ac.createGain(); g.gain.value = 1.1; src.buffer = buf; src.connect(g); g.connect(ac.destination);
+      src.onended = done; src.start(); COMM.src = src; return; } catch (e) { console.warn("comm audio", e); } }
+  if (!("speechSynthesis" in window)) { done(); return; }
+  if (!COMM.vLead) commPickVoices();
+  const u = new SpeechSynthesisUtterance(x.text), v = x.who === "A" ? COMM.vAn : COMM.vLead;
+  if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-GB";
+  u.rate = x.e >= 2 ? 1.16 : x.e === 1 ? 1.06 : 0.98; u.pitch = x.who === "A" ? (v === COMM.vLead ? 0.8 : 1.0) : x.e >= 2 ? 1.08 : 0.94;
+  u.onend = u.onerror = done; speechSynthesis.speak(u);
 }
-function commCross(t0, t1){
-  const R = st.R; if (!R || st.rec) return;
-  if (t0 < R.lightsOut && R.lightsOut <= t1) { COMM.lastLead = null; commSay(pick(["And they're away! The race is on!", "Five red lights... and go! We are racing!", "Off they go, into turn one!"]), 3); }
-  for (let k = 1; k < R.lapStarts.length; k++) { const ls = R.lapStarts[k]; if (!(t0 < ls && ls <= t1)) continue; const lap = k + 1;
-    if (lap === R.total) commSay(pick(["Final lap! One more lap to go.", "Here comes the last lap!"]), 2);
-    else if (lap % 10 === 0 && order && order.length > 1) { const L = order[0], S = order[1], g = typeof S.gl === "number" && S.gl > 0 ? S.gl : S.gi;
-      commSay(`Lap ${lap} of ${R.total}. ${surname(L.D)} leads` + (typeof g === "number" && g > 0 ? `, ${g < 1 ? "less than a second" : g.toFixed(1) + " seconds"} ahead of ${surname(S.D)}.` : "."), 1); }
-    else if (lap === Math.round(R.total / 2)) commSay("We're at half distance.", 1); }
-  for (const e of R.events) if (t0 < e.t && e.t <= t1) commEvent(e, R);
+function commCross(t0, t1){ const R = st.R; if (!R || st.rec || !R.comm) return; for (const x of R.comm) if (t0 < x.t && x.t <= t1) commQueue(x); }
+async function commInit(r, id){
+  const R = st.R; COMM.pack = null; commTitle();
+  if (r.comm_file) try { const u8 = await fetchBytes(r.comm_file); if (id !== st.loadingId) return; const {header, body} = splitPack(u8); COMM.pack = {body}; R.comm = header; commTitle(); return; } catch (e) { console.warn("comm pack", e); }
+  try { await (st.radioLoading || Promise.resolve()); if (id !== st.loadingId) return; R.comm = await buildCommScript(R, r); } catch (e) { console.warn("comm script", e); R.comm = []; }
 }
+
 /* ---------------- stewards ---------------- */
 const STEW = {
   NOTED: {ticker: "INCIDENT NOTED", c: "#8590a8"}, INV: {ticker: "UNDER INVESTIGATION", c: "#ffb61c"},
@@ -2282,9 +2426,9 @@ async function loadRace(r){
     document.querySelectorAll("[data-cam]").forEach(b => { if (b.dataset.cam !== "linear") { b.disabled = R.noTrack; b.title = R.noTrack ? "No car position data was published for this race, so only the linear view is available" : b.title; } });
     $("#stage").classList.toggle("notrack", R.noTrack);
     st.R = R; st.radio = null; st.sel = null; setCam(st.prefTrack && !R.noTrack ? "overview" : "linear"); cam.init = false; computeFit();
-    st.t = Math.max(0, R.lightsOut - 9); computeOrder(); buildTower(); buildTimeline(); renderRadioList();
+    st.t = Math.max(0, R.lightsOut - (st.commOn ? 24 : 9)); computeOrder(); buildTower(); buildTimeline(); renderRadioList();
     $("#loading").hidden = true;
-    loadRadio(r, id);
+    st.radioLoading = loadRadio(r, id); commInit(r, id);
   } catch (e) {
     console.error(e); $("#loadMsg").textContent = "COULDN'T LOAD THIS RACE. " + (e.message || "") + " PICK ANOTHER RACE OR RELOAD THE PAGE.";
     $("#loading").querySelector(".spin").style.display = "none";
@@ -2302,7 +2446,9 @@ function showPodium(){
 }
 
 /* ---------------- seasons ---------------- */
-const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}, {y: 2023, p: "2023/"}].filter(s => !window.__EMBED || window.__EMBED[s.p + "index.json"]);
+const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}, {y: 2023, p: "2023/"}].filter(s => window.__SPLIT || !window.__EMBED || window.__EMBED[s.p + "index.json"]);
+// split offline mode: Grid-Replay.html plus one grid-replay-YYYY.js per season in the same folder, loaded when picked
+function loadSeasonScript(y){ return new Promise((ok, bad) => { const el = document.createElement("script"); el.src = `grid-replay-${y}.js`; el.onload = ok; el.onerror = () => { el.remove(); const e = new Error("missing season file"); e.missingSeason = y; bad(e); }; document.head.appendChild(el); }); }
 st.year = null; st.prefix = "";
 $("#seasonSel").innerHTML = SEASONS.map(s => `<option value="${s.y}">${s.y}</option>`).join("");
 if (SEASONS.length < 2) $("#seasonSel").hidden = true;
@@ -2313,13 +2459,19 @@ async function loadSeason(y){
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING THE " + S.y + " SEASON";
   st.seasonLoading = (async () => {
     const key = S.p + "index.json";
+    if (window.__SPLIT && !(window.__EMBED && window.__EMBED[key])) { $("#loadMsg").textContent = "LOADING THE " + S.y + " SEASON FILE"; await loadSeasonScript(S.y); }
     const res = window.__EMBED && window.__EMBED[key] ? new Response(window.__EMBED[key]) : await fetch(key); if (!res.ok) throw new Error("HTTP " + res.status);
     st.idx = await res.json(); if (!st.idx.races.length) throw new Error("No races in the index"); fillRaceSelect(); routeFromHash();
   })();
-  try { await st.seasonLoading; } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+  try { await st.seasonLoading; } catch (e) {
+    if (e.missingSeason) { (window.__miss = window.__miss || new Set()).add(S.y);
+      const nxt = !/^#\d{4}/.test(location.hash) && SEASONS.find(s => !window.__miss.has(s.y));
+      if (nxt) { st.year = null; return loadSeason(nxt.y); }
+      $("#loadMsg").textContent = `THE ${S.y} SEASON FILE IS NOT IN THIS FOLDER. UNZIP GRID-REPLAY-${S.y}.ZIP NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
+    $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 }
 function routeFromHash(){
-  const ym = /^#(\d{4})(?:-|$)/.exec(location.hash), y = ym ? +ym[1] : SEASONS[0].y;
+  const ym = /^#(\d{4})(?:-|$)/.exec(location.hash), y = ym ? +ym[1] : (window.__miss && window.__miss.has(SEASONS[0].y) && st.year ? st.year : SEASONS[0].y);
   if (SEASONS.some(s => s.y === y) && y !== st.year) { loadSeason(y); return; }
   if (!st.idx) return; const h = location.hash.replace(/^#\d{4}-?/, "#"); const m = /^#round-(\d+)$/.exec(h);
   const m2 = /^#s-(\d+)$/.exec(h);
