@@ -351,7 +351,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 }
 
 .app.qmode{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "stage" "transport"}
-.app.qmode #anaBtn,.app.qmode .tower,.app.qmode .toggles,.app.qmode #camBtns,#stage.qmode .ticker,#stage.qmode .pip,#stage.qmode .onair{display:none!important}
+.app.qmode .tower,.app.qmode .toggles,.app.qmode #camBtns,#stage.qmode .ticker,#stage.qmode .pip,#stage.qmode .onair{display:none!important}
 #stage.qmode{--ft:0px}
 #stage.qmode::before{display:none}
 
@@ -1328,6 +1328,7 @@ function prepQuali(q){
 function qXY(d, e, o){ o[0] = interp(d.T, d.X, e); o[1] = interp(d.T, d.Y, e); return o; }
 function qShown(){ const Q = st.Q; if (st.qAll) return Q.drivers; const top = Q.drivers.filter(d => d.pos && d.pos <= 10); return top.length ? top : Q.drivers.slice(0, 10); }
 async function loadQuali(r){
+  closeAnalysis();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
   document.title = `${r.name} ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · Grid Replay 2026`;
@@ -1343,6 +1344,7 @@ async function loadQuali(r){
     const P = Q.pole, pct = t => (t / Q.T * 100) + "%";
     $("#tlLabels").innerHTML = `<span style="left:0%;transform:none">GO</span>` + (P.sectors[0] ? `<span style="left:${pct(P.sectors[0])}">S1</span>` : "") + (P.sectors[0] && P.sectors[1] ? `<span style="left:${pct(P.sectors[0] + P.sectors[1])}">S2</span>` : "") + `<span style="left:${pct(P.time)}">POLE LAP</span>`;
     $("#prevCard").hidden = r.kind !== "preview"; st.preview = r.kind === "preview" ? r : null;
+    $("#anaBtn").hidden = !Q.q.all;
     $("#loading").hidden = true;
   } catch (e) { console.error(e); $("#loadMsg").textContent = "COULDN'T LOAD THIS SESSION. " + (e.message || ""); }
 }
@@ -1477,10 +1479,10 @@ function endRecreate(){
 /* ---------------- analysis panel ---------------- */
 const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["season", "SEASON"]];
 st.anaTab = "h2h";
-function openAnalysis(){ if (!st.R) return; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
+function openAnalysis(){ if (!st.R && !(st.Q && st.Q.q.all)) return; if (st.Q && !["pos", "laps"].includes(st.anaTab)) st.anaTab = "pos"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
 function buildAnaTabs(){
-  $("#anaTabs").innerHTML = ANA_TABS.map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
+  $("#anaTabs").innerHTML = ANA_TABS.filter(([k]) => !st.Q || k === "pos" || k === "laps").map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
 }
 $("#anaBtn").addEventListener("click", () => $("#ana").hidden ? openAnalysis() : closeAnalysis());
 $("#anaClose").addEventListener("click", closeAnalysis);
@@ -1504,6 +1506,7 @@ function niceTicks(a, b, n){ const span = b - a || 1, step0 = span / n, p = Math
 function nowLine(x, X, T, h, B, v){ x.strokeStyle = "rgba(255,255,255,.5)"; x.setLineDash([3, 4]); x.beginPath(); x.moveTo(X(v), T); x.lineTo(X(v), h - B); x.stroke(); x.setLineDash([]); }
 
 function renderAna(){
+  if (!$("#ana").hidden && st.Q) return renderQualiAna();
   if ($("#ana").hidden || !st.R) return; const R = st.R, ctl = $("#anaCtl"), info = $("#anaInfo"); info.innerHTML = ""; ctl.innerHTML = "";
   $("#anaCv").hidden = false;
   if (st.anaTab === "h2h") {
@@ -1612,6 +1615,50 @@ function toggleRec(){
 }
 function alertRec(m){ $("#recBtn").textContent = m; }
 if (location.protocol === "file:") { $("#recBtn").hidden = false; $("#recBtn").onclick = toggleRec; }
+/* ---------------- qualifying analysis: live order through Q1/Q2/Q3, and every lap time ---------------- */
+function qOrderSeries(Q){
+  const q = Q.q, all = q.all || [], ph = (q.phases || []).map(p => p[1]), byNum = {}; for (const d of q.drivers) byNum[d.num] = d;
+  const nums = q.drivers.map(d => d.num), tEnd = (all.length ? all[all.length - 1][2] : 3600) + 60, series = {}; nums.forEach(n => series[n] = []);
+  let prev = nums.slice().sort((a, b) => (byNum[a].pos || 99) - (byNum[b].pos || 99));
+  for (let t = (ph[0] || 0); t <= tEnd; t += 15) {
+    let p = 1; ph.forEach((s, i) => { if (t >= s) p = i + 1; });
+    const pStart = ph[p - 1] ?? 0, out = nums.filter(n => byNum[n].phase && byNum[n].phase < p).sort((a, b) => (byNum[a].pos || 99) - (byNum[b].pos || 99));
+    const act = nums.filter(n => !out.includes(n)), best = {};
+    for (const l of all) { if (l[2] > t) break; if (l[2] >= pStart && !l[5] && (best[l[0]] == null || l[3] < best[l[0]])) best[l[0]] = l[3]; }
+    act.sort((a, b) => (best[a] == null) - (best[b] == null) || (best[a] ?? 0) - (best[b] ?? 0) || prev.indexOf(a) - prev.indexOf(b));
+    const order = act.concat(out); order.forEach((n, i) => series[n].push([t / 60, i + 1])); prev = order;
+  }
+  return series;
+}
+function renderQualiAna(){
+  const Q = st.Q, q = Q.q, ctl = $("#anaCtl"), info = $("#anaInfo"); ctl.innerHTML = ""; info.innerHTML = ""; $("#anaCv").hidden = false;
+  const ph = q.phases || [], all = q.all || [], tMax = (all.length ? all[all.length - 1][2] : 3600) / 60 + 1, t0 = Math.max(0, (all.length ? all[0][2] - all[0][3] : 0) / 60 - 2);   // start at the first timed lap
+  const shade = (x, X, T, h, B) => ph.forEach((p, i) => { const a = X(Math.max(t0, p[1] / 60)), b = X(ph[i + 1] ? ph[i + 1][1] / 60 : tMax); x.fillStyle = i % 2 ? "rgba(140,160,210,.05)" : "rgba(140,160,210,.09)"; x.fillRect(a, T, b - a, h - T - B);
+    x.fillStyle = "#8590a8"; x.font = '700 12px "Saira Condensed", sans-serif'; x.fillText((q.session === "Sprint Qualifying" ? "SQ" : "Q") + p[0], a + 6, T + 14); });
+  if (st.anaTab === "pos") {
+    const series = qOrderSeries(Q), n = q.drivers.length, {x, w, h} = anaCanvas(Math.max(300, n * 16 + 50));
+    const {X, Y} = axes(x, 34, 22, 52, 22, w, h, t0, tMax, 1, n, "SESSION MIN", "POS", true, v => "P" + v); shade(x, X, 22, h, 22);
+    const cut1 = n - 5, cut2 = Math.max(10, n - 10); x.setLineDash([4, 4]); x.strokeStyle = "rgba(255,47,69,.35)"; for (const c of [cut1, cut2]) { x.beginPath(); x.moveTo(34, Y(c + 0.5)); x.lineTo(w - 52, Y(c + 0.5)); x.stroke(); } x.setLineDash([]);
+    const hi = st.qSel;
+    for (const d of q.drivers.slice().sort((a, b) => (a.num === hi) - (b.num === hi))) { const s = series[d.num]; if (!s.length) continue; const col = vivid(d.colour);
+      x.strokeStyle = rgba(col, hi && hi !== d.num ? 0.22 : 0.9); x.lineWidth = d.num === hi ? 3 : 1.6; x.beginPath(); s.forEach((p, i) => i ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(p[0]), Y(p[1]))); x.stroke();
+      const last = s[s.length - 1]; x.fillStyle = `rgb(${col.join(",")})`; x.font = '700 11px "Saira Condensed", sans-serif'; x.fillText(d.code, X(last[0]) + 4, Y(last[1]) + 4); }
+    info.innerHTML = `<p class="anote">The live order through the session as lap times came in. Red dashed lines are the knockout cut-offs; drivers below them at the end of a part are eliminated and drop to their final places. Click a driver on the board to highlight them.</p>`;
+  } else {
+    const ds = q.drivers.slice().sort((a, b) => (a.pos || 99) - (b.pos || 99)); st.qLapDrv = st.qLapDrv && ds.some(d => d.num === st.qLapDrv) ? st.qLapDrv : (st.qSel || ds[0].num);
+    ctl.innerHTML = `<label>Driver <select id="qLapDrv">${ds.map(d => `<option value="${d.num}" ${d.num === st.qLapDrv ? "selected" : ""}>${esc(d.code)} · ${esc(d.first + " " + d.last)}</option>`).join("")}</select></label>`;
+    $("#qLapDrv").onchange = e => { st.qLapDrv = +e.target.value; renderAna(); };
+    const timed = all.filter(l => !l[5]), best = Math.min(...timed.map(l => l[3])), lim = best * 1.07, push = timed.filter(l => l[3] <= lim);
+    const {x, w, h} = anaCanvas(320), {X, Y} = axes(x, 60, 22, 12, 22, w, h, t0, tMax, best - 0.3, lim, "SESSION MIN", "LAP TIME", false, v => fmtLap(v).replace(/(\.\d)\d+$/, "$1")); shade(x, X, 22, h, 22);
+    for (const l of push) if (l[0] !== st.qLapDrv) { x.fillStyle = "rgba(133,144,168,.35)"; x.beginPath(); x.arc(X(l[2] / 60), Y(l[3]), 2, 0, 7); x.fill(); }
+    const mine = push.filter(l => l[0] === st.qLapDrv), d = ds.find(d => d.num === st.qLapDrv);
+    for (const l of mine) { const c = COMP[l[4]]; x.fillStyle = c ? c[1] : "#ccc"; x.beginPath(); x.arc(X(l[2] / 60), Y(l[3]), l[3] === d.time ? 6 : 4.2, 0, 7); x.fill();
+      if (l[3] === d.time) { x.strokeStyle = "#b65cff"; x.lineWidth = 2; x.stroke(); x.fillStyle = "#e8ecf6"; x.font = '600 11px "JetBrains Mono", monospace'; x.fillText(fmtLap(l[3]), X(l[2] / 60) + 9, Y(l[3]) + 4); } }
+    x.strokeStyle = "rgba(182,92,255,.45)"; x.setLineDash([3, 4]); x.beginPath(); x.moveTo(60, Y(best)); x.lineTo(w - 12, Y(best)); x.stroke(); x.setLineDash([]);
+    const slow = all.filter(l => l[0] === st.qLapDrv && !l[5] && l[3] > lim).length;
+    info.innerHTML = `<p class="anote"><b>${esc(d.first + " " + d.last)}</b> · best ${fmtLap(d.time)} (ringed) · ${mine.length} push lap${mine.length === 1 ? "" : "s"} shown, coloured by tyre. Grey dots are everyone else; the purple dashed line is pole. Out-laps, cool-down laps and anything more than 7% off pole are left out${slow ? ` (${slow} of ${esc(d.code)}'s)` : ""}.</p>`;
+  }
+}
 /* ---------------- HUD & tower ---------------- */
 const rowsIn = $("#rowsIn"); let rowEls = {};
 function buildTower(){
@@ -2052,7 +2099,7 @@ $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[d
 
 /* ---------------- race loading ---------------- */
 async function loadRace(r){
-  if (st.rec) endRecreate(); closeAnalysis();
+  if (st.rec) endRecreate(); closeAnalysis(); $("#anaBtn").hidden = false;
   if (r.kind === "quali" || r.kind === "squali" || r.kind === "preview") return loadQuali(r);
   leaveQuali();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;

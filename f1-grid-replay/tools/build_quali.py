@@ -50,3 +50,23 @@ if __name__ == "__main__":
     json.dump(index, open("out_quali/index.json", "w"), indent=1)
     print("QUALI DONE", flush=True)
 
+
+
+def session_laps(sk, get_fn=None):
+    """Every timed lap of a qualifying session + when Q1/Q2/Q3 started (seconds from session start)."""
+    import datetime as _dt
+    g = get_fn or get
+    tsx = lambda s: _dt.datetime.fromisoformat(s).timestamp()
+    sess = g("sessions", session_key=sk)[0]; t0 = tsx(sess["date_start"])
+    stints = g("stints", session_key=sk); laps = g("laps", session_key=sk)
+    allv = []
+    for l in laps:
+        if not (l["lap_duration"] and l["date_start"]): continue
+        tyre = tyre_for(stints, l["driver_number"], l["lap_number"])
+        allv.append([l["driver_number"], l["lap_number"], round(tsx(l["date_start"]) + l["lap_duration"] - t0, 1), l["lap_duration"],
+                     tyre.get("compound"), 1 if l["is_pit_out_lap"] else 0])
+    phases = {}
+    for r in g("race_control", session_key=sk):
+        k = r.get("qualifying_phase")
+        if k and k not in phases: phases[k] = round(tsx(r["date"]) - t0, 1)
+    return {"all": sorted(allv, key=lambda v: v[2]), "phases": sorted([[k, v] for k, v in phases.items()])}

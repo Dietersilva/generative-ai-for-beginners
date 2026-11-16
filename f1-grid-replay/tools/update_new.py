@@ -6,7 +6,7 @@ writes <work>/publish/ (new data files + merged index.json) and prints the files
 import base64, datetime, gzip, json, os, shutil, struct, subprocess, sys
 TOOLS = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, TOOLS)
 from build_race import build, get
-from build_quali import tyre_for
+from build_quali import tyre_for, session_laps
 idx_path, work = sys.argv[1], sys.argv[2]
 idx = json.load(open(idx_path)); pubd = f"{work}/publish"
 for d in ("data", "radio", "quali"): os.makedirs(f"{pubd}/{d}", exist_ok=True)
@@ -54,7 +54,7 @@ for s in sorted(todo, key=lambda s: s["date_start"]):
         if len(out) < 5: skipped.append(f"{m['meeting_name']} {s['session_name']} (no lap data yet)"); continue
         out.sort(key=lambda d: (d["pos"] if isinstance(d["pos"], int) else 99, d["time"]))
         kind = "squali" if s["session_name"] == "Sprint Qualifying" else "quali"
-        json.dump({"session_key": sk, "kind": kind, "name": m["meeting_name"], "session": s["session_name"], "drivers": out}, open(f"{pubd}/quali/{sk}.json", "w"), separators=(",", ":"))
+        json.dump({"session_key": sk, "kind": kind, "name": m["meeting_name"], "session": s["session_name"], "drivers": out, **session_laps(sk)}, open(f"{pubd}/quali/{sk}.json", "w"), separators=(",", ":"))
         idx.setdefault("quali", []).append({"session_key": sk, "kind": kind, "round": rnd, "name": m["meeting_name"], "circuit": m["circuit_short_name"],
                                             "code": m["country_code"], "date": s["date_start"][:10], "file": f"quali/{sk}.json", "pole": out[0]["code"]})
         new_files.append(f"quali/{sk}.json"); added.append(f"{m['meeting_name']} {s['session_name']}")
