@@ -778,6 +778,7 @@ function buildEvents(R){
   for (const b of R.battles) { const t3 = R.lapStarts[Math.min(R.lapStarts.length - 1, b.fromLap + 1)] + 5;
     E.push({t: t3, k: "BT", label: "BATTLE", text: `${b.a.code} chasing ${b.b.code} for P${b.pos} · within 1 s for 3 laps`, c: "#ffb61c", ov: {t: b.t0 + 3}}); }
   E.push({t: R.chq, k: "CHQ", label: "CHEQUERED FLAG", text: winnerText(R), c: "#ffffff"});
+  if (h.lap_note) E.push({t: R.lightsOut + 1, k: "NOTE", label: "DATA NOTE", text: h.lap_note, c: "#8590a8"});
   E.sort((a,b)=>a.t-b.t);
   R.events = E; R.evT = E.map(e => e.t);
   R.crashCamEvents = R.incidents.slice();
@@ -1795,7 +1796,10 @@ function updateHUD(){
   const pct = (t / R.T * 100).toFixed(3) + "%"; $("#tlHead").style.left = pct; $("#tlDone").style.width = pct;
   $("#tl").setAttribute("aria-valuenow", Math.round(t / R.T * 100));
   $("#director").hidden = !st.dir;
-  $("#estPill").hidden = !((R.h.est || []).some(([a, b]) => t >= a && t <= b) && (st.cam !== "linear" || !$("#pip").hidden));
+  { const est = (R.h.est || []).some(([a, b]) => t >= a && t <= b) && (st.cam !== "linear" || !$("#pip").hidden), gl = !est && R.h.lap_note && t < (R.h.lap_note_until || 0);
+    const ep = $("#estPill"), txt = est ? "ESTIMATED POSITIONS" : "LAP TIMING FROM GPS";
+    if (ep.textContent !== txt) { ep.textContent = txt; ep.title = est ? "Car positions for this part of the race were not published. They are estimated from each car's lap and sector times." : "The official feed has no lap timing for this part of the race. Lap counts and gaps come from each car crossing the timing line in its GPS track; car positions are real GPS."; }
+    ep.hidden = !(est || gl); }
   updateStewCard(); updatePipInfo();
   updateCard();
   updateRadioList();

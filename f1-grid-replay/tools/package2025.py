@@ -18,10 +18,6 @@ for r in idx["races"] + idx["sprints"] + idx["quali"]:
 
 def season_from(idx):
     events = sorted(idx["races"] + idx["sprints"], key=lambda r: (r["date"], r.get("kind") != "sprint"))
-    # Miami GP (10033): OpenF1 lacks laps 2-25, so no replay, but its points still count.
-    miami = {"session_key": 10033, "round": 6, "name": "Miami Grand Prix", "code": "MIA", "date": "2025-05-04", "kind": "gp", "winner": "PIA", "_res": True}
-    events = sorted(events + [miami], key=lambda r: (r["date"], r.get("kind") != "sprint"))
-    res = json.load(open("raw2025/res10033.json")); drv = {d["driver_number"]: d for d in json.load(open("raw2025/drv10033.json"))}
     drivers, rounds = {}, []
     for k, r in enumerate(events):
         if r.get("_res"):
