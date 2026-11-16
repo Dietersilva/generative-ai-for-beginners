@@ -72,6 +72,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tk{display:flex;align-items:center;gap:8px;padding:5px 10px 5px 0;background:color-mix(in srgb,var(--panel) 86%,transparent);border-radius:6px;font-size:12.5px;overflow:hidden;backdrop-filter:blur(4px);animation:tkIn .35s ease-out}
 .tk i{width:4px;align-self:stretch;flex:0 0 4px}
 .tk b{font-family:var(--f-display);font-weight:700;letter-spacing:.08em;font-size:12px;white-space:nowrap}
+.tk.clk{cursor:pointer}.tk.clk:hover{background:var(--panel-2)!important}
 .tk span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c9d0e0}
 .tk em{font-style:normal;font-family:var(--f-mono);font-size:10.5px;color:var(--dim);margin-left:auto;padding-left:6px}
 @keyframes tkIn{from{transform:translateX(-12px);opacity:0}}
@@ -350,7 +351,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 }
 
 .app.qmode{grid-template-columns:minmax(0,1fr);grid-template-areas:"top" "stage" "transport"}
-.app.qmode .tower,.app.qmode .toggles,.app.qmode #camBtns,#stage.qmode .ticker,#stage.qmode .pip,#stage.qmode .onair{display:none!important}
+.app.qmode #anaBtn,.app.qmode .tower,.app.qmode .toggles,.app.qmode #camBtns,#stage.qmode .ticker,#stage.qmode .pip,#stage.qmode .onair{display:none!important}
 #stage.qmode{--ft:0px}
 #stage.qmode::before{display:none}
 
@@ -360,6 +361,54 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .prevcard dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:6px 0}
 .prevcard dt{color:var(--muted)} .prevcard dd{margin:0;font-family:var(--f-mono);font-size:12px}
 .prevcard p{margin:6px 0 0;color:var(--muted);font-size:11.5px}
+
+.tip{position:fixed;z-index:50;max-width:280px;padding:9px 11px;background:#0b101b;border:1px solid var(--line-2);border-radius:9px;box-shadow:0 12px 40px #000c;font-size:12px;line-height:1.45;color:#c9d0e0;pointer-events:none}
+.tip b{color:var(--text);font-family:var(--f-display);font-size:15px;letter-spacing:.03em}
+.tip .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:2px solid}
+.tip .mut{color:var(--muted);font-size:11px}
+#stage .ticker .tk.rad span{white-space:normal;overflow:visible}
+#stage.lin .zbtn{display:none}
+.zbtn{width:30px;padding:5px 0;font-family:var(--f-mono)!important;font-size:15px!important}
+.onair .tx{max-width:280px;font-size:11.5px;color:#c9d0e0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pip-radio button .tx{display:block;font-size:11px;color:var(--muted);white-space:normal;line-height:1.35;margin-top:2px}
+
+.ana{inset:var(--hd) 0 0 0;z-index:8;background:var(--ink);display:flex;flex-direction:column;pointer-events:auto}
+.ana-hd{display:flex;align-items:center;border-bottom:1px solid var(--line);padding-right:8px}
+.ana-hd .tabs{flex:1;border:0;overflow-x:auto}
+.ana-hd .tab{flex:0 0 auto;padding:6px 12px}
+.ana-body{flex:1;overflow-y:auto;padding:12px 16px 18px;display:flex;flex-direction:column;gap:10px}
+.ana-ctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.ana-ctl select{margin-left:6px;background:var(--panel-2);color:var(--text);border:1px solid var(--line-2);border-radius:7px;padding:5px 8px;font:inherit}
+.ana-ctl input[type=range]{flex:1;min-width:160px;accent-color:#e8ecf6}
+#anaCv{width:100%;display:block}
+.anote{margin:0;color:var(--muted);font-size:12px;line-height:1.5;max-width:80ch}
+table.h2h{border-collapse:collapse;font-size:13px;min-width:min(520px,100%)}
+table.h2h td,table.h2h th{padding:4px 12px;border-bottom:1px solid var(--line)} table.h2h th{color:var(--muted);font-weight:500;font-size:11.5px;text-align:center}
+table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h td:last-child{font-family:var(--f-mono)}
+.inclist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.inclist li{display:flex;align-items:center;gap:10px;padding:6px 8px;background:var(--panel);border-radius:8px;font-size:13px}
+.inclist li.none{color:var(--muted)}
+.inclist .k{font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.1em;padding:2px 7px;border-radius:4px;background:#ff8a3d;color:#160800}
+.inclist .k-crash{background:var(--red);color:#fff} .inclist .k-contact{background:var(--sc)} .inclist .k-ov{background:var(--gain);color:#022}
+.inclist .when{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--dim)}
+.inclist .btn{padding:4px 10px;font-size:11.5px}
+.ana-body h4{margin:8px 0 0;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.16em;color:var(--dim);font-weight:500}
+.ana .when{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.recbanner{top:calc(var(--hd) + 10px);left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:12px;padding:6px 8px 6px 14px;background:#140508ee;border:1px solid var(--red);border-radius:10px;pointer-events:auto;white-space:nowrap}
+.recbanner b{font-family:var(--f-display);font-weight:800;letter-spacing:.16em;color:var(--red);font-size:13px}
+.recbanner span{font-size:12.5px} .recbanner .btn{padding:4px 10px;font-size:11.5px}
+.tl .mk.ov{background:var(--gain);height:7px;bottom:0;top:auto;width:2px;opacity:.7}
+.tl .band.rain{background:repeating-linear-gradient(90deg,#3fd8ff33 0 3px,transparent 3px 6px);top:auto;height:9px;bottom:0}
+#recBtn[aria-pressed="true"]{color:var(--red);border-color:var(--red)}
+
+#towerFold{border:0;padding:2px 6px;font-size:12px}
+.app.tfold{grid-template-columns:minmax(0,1fr) 168px}
+.app.tfold .tabs,.app.tfold .tlab,.app.tfold .row .tyre,.app.tfold .row .dl,.app.tfold .row .cd .chip,.app.tfold .row .cd .bt,.app.tfold .row .cd .fl,.app.tfold .row .cd .mic{display:none}
+.app.tfold .row{grid-template-columns:24px 4px 1fr 64px;gap:5px;padding-right:6px}
+.app.tfold .thead{padding-inline:6px}
+.app.tfold #gapMode{font-size:9.5px;padding:2px 4px}
+.app.tfold #paneRadio{display:none}
+.app.tfold #paneTiming{display:flex!important}
 </style>
 
 <div class="app" id="app">
@@ -369,6 +418,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     </div>
     <select class="race-sel" id="raceSel" aria-label="Choose a race"><option>Loading season…</option></select>
     <div class="wx" id="wx"></div>
+    <button class="fs-btn" id="anaBtn" title="Head to head, incidents, positions, lap times and season standings">ANALYSIS</button>
     <button class="fs-btn" id="fsBtn" title="Full screen">⛶ FULL SCREEN</button>
   </header>
 
@@ -384,12 +434,16 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <button class="seg" data-q="top" aria-pressed="true" title="The ten fastest laps">TOP 10</button>
       <button class="seg" data-q="all" aria-pressed="false" title="Every driver's fastest lap">ALL</button>
       <button class="seg" id="qZoom" aria-pressed="true" title="Follow the cars zoomed in (click a driver on the board to follow just them)">ZOOM</button>
+      <button class="seg zbtn" data-zoom="-1" aria-label="Zoom out">−</button>
+      <button class="seg zbtn" data-zoom="1" aria-label="Zoom in close">+</button>
     </div>
     <div class="hud hud-tr" id="camBtns" role="group" aria-label="Camera">
       <button class="seg" data-cam="linear" aria-pressed="false" title="Running order by gap to leader (L)">LINEAR</button>
       <button class="seg" data-cam="overview" aria-pressed="true" title="Whole circuit (O)">TRACK</button>
       <button class="seg" data-cam="follow" aria-pressed="false" title="Follow selected car (F)">FOLLOW</button>
       <button class="seg" data-cam="chase" aria-pressed="false" title="Rotating chase cam (C)">CHASE</button>
+      <button class="seg zbtn" data-zoom="-1" title="Zoom out (mouse wheel)" aria-label="Zoom out">−</button>
+      <button class="seg zbtn" data-zoom="1" title="Zoom in close to see the cars (mouse wheel)" aria-label="Zoom in">+</button>
     </div>
     <div class="hud director" id="director" hidden>CRASH CAM · SLOW-MO</div>
     <div class="hud lights" id="lights" hidden></div>
@@ -406,11 +460,17 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     <div class="hud dcard" id="dcard" hidden></div>
     <div class="hud onair" id="onair" hidden>
       <div><div class="live">TEAM RADIO</div><div class="who" id="oaWho">–</div><div class="meta" id="oaMeta"></div></div>
+      <div class="tx" id="oaTx"></div>
       <canvas id="oaViz" width="220" height="68"></canvas>
       <button class="stop" id="oaStop" aria-label="Stop radio">■</button>
     </div>
     <div class="hud podium" id="podium" hidden></div>
     <div class="hud prevcard" id="prevCard" hidden></div>
+    <div class="hud recbanner" id="recBanner" hidden></div>
+    <div class="hud ana" id="ana" hidden role="dialog" aria-label="Race analysis">
+      <div class="ana-hd"><div class="tabs" id="anaTabs" role="tablist"></div><button class="pip-x" id="anaClose" aria-label="Close analysis">✕</button></div>
+      <div class="ana-body"><div class="ana-ctl" id="anaCtl"></div><canvas id="anaCv"></canvas><div class="ana-info" id="anaInfo"></div></div>
+    </div>
     <div class="hud loading" id="loading"><div class="in"><div class="spin"></div><div id="loadMsg">LOADING SEASON</div></div></div>
   </section>
 
@@ -420,7 +480,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <button class="tab" role="tab" id="tabRadio" aria-selected="false">RADIO<span class="n" id="radioN"></span></button>
     </div>
     <div id="paneTiming" style="display:flex;flex-direction:column;min-height:0;flex:1">
-      <div class="thead"><span>Pos · Driver</span><button id="gapMode" title="Switch between gap to car ahead and gap to leader">Interval</button></div>
+      <div class="thead"><button id="towerFold" title="Collapse to position, driver and gap" aria-label="Collapse timing tower">◂</button><span class="tlab">Pos · Driver</span><button id="gapMode" title="Switch between gap to car ahead and gap to leader">Interval</button></div>
       <div class="rows" id="rows"><div class="rows-in" id="rowsIn"></div></div>
     </div>
     <div id="paneRadio" class="radio-list" hidden></div>
@@ -439,11 +499,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <button class="tg" id="tgCrash" aria-pressed="true" title="Automatic slow motion and a pop-up when a car crashes or stops">CRASH CAM</button>
       <button class="tg rad" id="tgSound" aria-pressed="true" title="Engine sound, start lights and impacts">SOUND</button>
       <button class="tg rad" id="tgRadio" aria-pressed="true" title="Play team radio as it happens">RADIO</button>
+      <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the race view to a video file">● REC</button>
     </div>
     <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
   </footer>
 </div>
 
+<div class="tip" id="tip" hidden role="tooltip"></div>
 <div class="cal" id="cal" hidden role="dialog" aria-modal="true" aria-labelledby="calTitle">
   <div class="cal-in">
     <div class="cal-hd">
@@ -465,7 +527,7 @@ const SPEEDS = [1,4,16,32,64];
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const st = {idx:null, meta:null, R:null, t:0, playing:false, speed:16, cam:"overview", sel:null,
-  gapMode:"int", crashCam:true, radioOn:true, soundOn:true, dir:null, loadingId:0};
+  gapMode:"int", zl:0, crashCam:true, radioOn:true, soundOn:true, dir:null, loadingId:0};
 try { const s = JSON.parse(localStorage.getItem("gridreplay") || "{}");
   if (SPEEDS.includes(s.speed)) st.speed = s.speed;
   if (typeof s.crashCam3 === "boolean") st.crashCam = s.crashCam3;
@@ -473,9 +535,10 @@ try { const s = JSON.parse(localStorage.getItem("gridreplay") || "{}");
   if (typeof s.soundOn === "boolean") st.soundOn = s.soundOn;
   if (s.gapMode === "lead" || s.gapMode === "int") st.gapMode = s.gapMode;
   if (s.view === "track") st.prefTrack = true;
+  if (s.tfold) st.tfold = true;
   if (s.pipPos && typeof s.pipPos.x === "number") st.pipPos = s.pipPos;
 } catch (e) {}
-function save(){ try { localStorage.setItem("gridreplay", JSON.stringify({speed:st.speed,crashCam3:st.crashCam,pipPos:st.pipPos,radioOn:st.radioOn,soundOn:st.soundOn,gapMode:st.gapMode,view:st.cam === "linear" ? "linear" : "track"})); } catch (e) {} }
+function save(){ try { localStorage.setItem("gridreplay", JSON.stringify({tfold:!!st.tfold,speed:st.speed,crashCam3:st.crashCam,pipPos:st.pipPos,radioOn:st.radioOn,soundOn:st.soundOn,gapMode:st.gapMode,view:st.cam === "linear" ? "linear" : "track"})); } catch (e) {} }
 
 /* ---------------- helpers ---------------- */
 const ub = (arr, v) => { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] <= v) lo = m + 1; else hi = m; } return lo; };
@@ -705,6 +768,8 @@ function buildEvents(R){
   for (const e of R.stew) { const m = STEW[e[2]]; if (!m) continue;
     const who = e[1].map(n => R.byNum[n] ? R.byNum[n].code : "#" + n).join(" / ");
     E.push({t: e[0], k: "STEW", label: m.ticker, text: who + (e[2] === "PEN" || e[2] === "TL" ? " · " + e[3] : "") + (e[4] ? " · " + e[4].toLowerCase() : ""), c: m.c, stew: e}); }
+  R.overtakes = detectOvertakes(R);
+  for (const o of R.overtakes) E.push({t: o.t, k: "OV", label: "OVERTAKE", text: `${o.a.code} passes ${o.b.code} for P${o.pos}`, c: "#38e383", ov: o});
   E.push({t: R.chq, k: "CHQ", label: "CHEQUERED FLAG", text: winnerText(R), c: "#ffffff"});
   E.sort((a,b)=>a.t-b.t);
   R.events = E; R.evT = E.map(e => e.t);
@@ -766,12 +831,18 @@ function computeFit(){
   W = Wf; Object.assign(fit, best);
   if (!cam.init) { Object.assign(cam, fit); cam.init = true; }
 }
+const ZM = [1, 2.6, 6];   // zoom levels: normal, close, very close (car detail)
+function setZoom(dz){ st.zl = clamp((st.zl || 0) + dz, 0, ZM.length - 1);
+
+  document.querySelectorAll("[data-zoom]").forEach(b => b.disabled = (+b.dataset.zoom < 0 && st.zl === 0) || (+b.dataset.zoom > 0 && st.zl === ZM.length - 1)); }
+document.querySelectorAll("[data-zoom]").forEach(b => b.addEventListener("click", () => setZoom(+b.dataset.zoom)));
 function camTarget(){
-  const R = st.R, D = st.sel != null ? R.byNum[st.sel] : null;
-  if (st.dir && st.cam !== "linear") return {x: st.dir.x.x, y: st.dir.x.y, s: fit.s * 5.2, r: fit.r};
-  if (D && st.cam !== "overview" && carXY(R, D, st.t, D.tmp)) {
-    if (st.cam === "chase") return {x: D.tmp[0], y: D.tmp[1], s: fit.s * 6.5, r: -D.ang - Math.PI/2};
-    return {x: D.tmp[0], y: D.tmp[1], s: fit.s * 5, r: fit.r};
+  const R = st.R; let D = st.sel != null ? R.byNum[st.sel] : null;
+  if (!D && (st.cam === "follow" || st.cam === "chase" || st.zl > 0) && order.length) D = (order.find(o => !isOut(o.D, st.t)) || order[0]).D;   // no car picked: follow the leader
+  if (st.dir && st.cam !== "linear") return {x: st.dir.x.x, y: st.dir.x.y, s: fit.s * 5.2 * (st.rec ? ZM[1] : 1), r: fit.r};
+  if (D && (st.cam !== "overview" || st.zl > 0) && carXY(R, D, st.t, D.tmp)) {
+    if (st.cam === "chase") return {x: D.tmp[0], y: D.tmp[1], s: fit.s * 6.5 * ZM[st.zl], r: -D.ang - Math.PI/2};
+    return {x: D.tmp[0], y: D.tmp[1], s: st.cam === "overview" ? fit.s * 2.2 * ZM[st.zl] : fit.s * 5 * ZM[st.zl], r: fit.r};
   }
   return fit;
 }
@@ -1085,6 +1156,7 @@ function renderLinear(now, wdt){
       ctx.strokeStyle = cmp[1]; ctx.lineWidth = Math.max(1.8, r*0.32); ctx.beginPath(); ctx.arc(bx, y, r - ctx.lineWidth/2, 0, 7); ctx.stroke();
       ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.round(r*1.05)}px "Saira Condensed", sans-serif`; ctx.textAlign = "center"; ctx.fillText(cmp[0], bx, y + r*0.38); ctx.textAlign = "left";
       const age = stint[4] + Math.max(0, lapOf(D, t) - stint[1]);   // laps on this set (incl. laps used before the race)
+      { const si = stintInfo(D, t); hov.push({x: bx, y, r, html: () => `<span class="mut">${esc(D.first + " " + D.last)}</span><br>` + tyreTip(si.compound, si.age, si.fitted, si.used, si.no)}); }
       ctx.font = `700 ${Math.round(clamp(rowH*0.55, 9, 11))}px "JetBrains Mono", monospace`; ctx.fillStyle = "#cfd5e4"; ctx.fillText(String(age), bx + r + 3, y + r*0.4);
     }
     if (pn) pitCars.push({D, pn});
@@ -1113,6 +1185,7 @@ function renderLinear(now, wdt){
         if (it.fill) { ctx.fillStyle = it.fill; ctx.fillRect(ix, y - hp/2, it.w, hp); }
         else { ctx.fillStyle = "rgba(5,7,13,0.75)"; ctx.fillRect(ix, y - hp/2, it.w, hp); ctx.strokeStyle = it.stroke; ctx.lineWidth = 1; ctx.strokeRect(ix + 0.5, y - hp/2 + 0.5, it.w - 1, hp - 1); }
         ctx.fillStyle = it.txtCol; ctx.fillText(it.txt, ix + 4, y + mf*0.38); ctx.globalAlpha = 1;
+        { const tip = chipTip(it.txt); if (tip) hov.push({x: ix + it.w/2, y, r: it.w/2, html: tip}); }
       } else {
         const hgt = it.kind === "name" ? Math.min(nf + 4, rowH) : hp;
         ctx.fillStyle = "rgba(5,7,13,0.62)"; ctx.fillRect(ix - 2, y - hgt/2, it.w + 4, hgt);
@@ -1223,13 +1296,13 @@ function renderPipRadio(){
   if (!st.radio) { el.innerHTML = `<div class="none">${st.meta && st.meta.radio_file ? "Loading team radio…" : "No team radio was published for this race."}</div>`; return; }
   const clips = st.radio.items.filter(c => c.num === D.num);
   if (!clips.length) { el.innerHTML = `<div class="none">No team radio from ${esc(D.last)} in this race.</div>`; return; }
-  el.innerHTML = `<div class="lbl">TEAM RADIO · ${clips.length}</div>` + clips.map(c => `<button data-off="${c.off}"><span>▶</span>${c.t < st.R.lightsOut ? "Pre-race" : "Lap " + Math.max(1, lapOf(D, c.t))}<em>${fmtClock(Math.max(0, c.t - st.R.lightsOut))}</em></button>`).join("");
+  el.innerHTML = `<div class="lbl">TEAM RADIO · ${clips.length}</div>` + clips.map(c => `<button data-off="${c.off}"><span>▶</span><span style="flex:1;min-width:0">${c.t < st.R.lightsOut ? "Pre-race" : "Lap " + Math.max(1, lapOf(D, c.t))}${c.text ? `<span class="tx">“${esc(c.text)}”</span>` : ""}</span><em>${fmtClock(Math.max(0, c.t - st.R.lightsOut))}</em></button>`).join("");
 }
 $("#pipRadio").addEventListener("click", e => { const b = e.target.closest("button[data-off]"); if (!b || !st.radio) return;
   const c = st.radio.items.find(x => x.off === +b.dataset.off); if (!c) return; ensureAudio();
   if (curSrc && curSrc.clip === c) { stopRadio(); return; }   // click the playing clip again to stop it
   radioQ.length = 0; playClip(c); });
-$("#pipClose").addEventListener("click", () => { if (st.sel != null) { st.sel = null; if (st.cam === "follow" || st.cam === "chase") setCam("overview"); } else { st.crashCam = false; $("#tgCrash").setAttribute("aria-pressed", "false"); endDirector(); save(); } $("#pip").hidden = true; });
+$("#pipClose").addEventListener("click", () => { if (st.sel != null) { st.sel = null; } else { st.crashCam = false; $("#tgCrash").setAttribute("aria-pressed", "false"); endDirector(); save(); } $("#pip").hidden = true; });
 
 
 /* ---------------- qualifying: fastest laps as ghost cars ---------------- */
@@ -1304,7 +1377,7 @@ function renderQuali(now, wdt){
   // camera: follow the pack zoomed in (or the selected car), whole circuit once everyone has finished
   { const sh = qShown(), live = sh.filter(d => e < d.time), tgt = st.qSel ? sh.filter(d => d.num === st.qSel && e < d.time) : live, c = [0,0];
     let T = {x: fit.x, y: fit.y, s: fit.s};
-    if (st.qZoom !== false && tgt.length && e > 0.3) { let sx = 0, sy = 0; for (const d of tgt) { qXY(d, e, c); sx += c[0]; sy += c[1]; } T = {x: sx/tgt.length, y: sy/tgt.length, s: fit.s * 3.6}; }
+    if (st.qZoom !== false && tgt.length && e > 0.3) { let sx = 0, sy = 0; for (const d of tgt) { qXY(d, e, c); sx += c[0]; sy += c[1]; } T = {x: sx/tgt.length, y: sy/tgt.length, s: fit.s * 3.6 * ZM[st.zl]}; }
     if (!cam.qinit) { cam.x = T.x; cam.y = T.y; cam.s = T.s; cam.qinit = true; }
     const k = 1 - Math.exp(-wdt * (3 + st.speed*3)); cam.x += (T.x - cam.x)*k; cam.y += (T.y - cam.y)*k; cam.s *= Math.pow(T.s / cam.s, 1 - Math.exp(-wdt*2.5)); cam.r = fit.r; }
   const Wfull = W; W = Wfull - pw;
@@ -1345,7 +1418,8 @@ function renderQuali(now, wdt){
     const cmp = COMP[d.compound];
     if (cmp) { const r0 = Math.min(7, rh*0.26), bx = x0 + 74; ctx.fillStyle = "#0a0c10"; ctx.beginPath(); ctx.arc(bx, y, r0, 0, 7); ctx.fill();
       ctx.strokeStyle = cmp[1]; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(bx, y, r0 - 1, 0, 7); ctx.stroke();
-      ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.round(r0*1.1)}px "Saira Condensed", sans-serif`; ctx.textAlign = "center"; ctx.fillText(cmp[0], bx, y + r0*0.4); ctx.textAlign = "left"; }
+      ctx.fillStyle = "#fff"; ctx.font = `800 ${Math.round(r0*1.1)}px "Saira Condensed", sans-serif`; ctx.textAlign = "center"; ctx.fillText(cmp[0], bx, y + r0*0.4); ctx.textAlign = "left";
+      hov.push({x: bx, y, r: r0 + 2, html: `<span class="mut">${esc(d.first + " " + d.last)} · lap ${d.lap}</span><br>` + tyreTip(d.compound, d.tyre_age, null, null, null)}); }
     const cum = [d.sectors[0], (d.sectors[0] || 0) + (d.sectors[1] || 0), d.time];
     for (let k = 0; k < 3; k++) { const sx2 = x0 + 90 + k*28, passed = d.sectors[k] && Math.min(e, d.time) >= cum[k];
       ctx.fillStyle = !passed ? "#1b2438" : d.sectors[k] <= bestS[k] + 1e-6 ? "#b65cff" : "#e8ecf6"; ctx.fillRect(sx2, y - 3, 24, 6); }
@@ -1359,6 +1433,185 @@ function renderQuali(now, wdt){
   });
 }
 document.getElementById("qZoom").addEventListener("click", e => { st.qZoom = st.qZoom === false; e.currentTarget.setAttribute("aria-pressed", String(st.qZoom !== false)); });
+/* ---------------- overtakes ---------------- */
+function detectOvertakes(R){
+  const ev = [], byT = {};
+  for (const D of R.drivers) for (let i = 1; i < D.pT.length; i++) {
+    const t = D.pT[i], a = D.pV[i-1], b = D.pV[i];
+    if (b === a - 1) (byT[Math.round(t)] = byT[Math.round(t)] || []).push({D, from: a, to: b, t, gain: true});
+    if (b === a + 1) (byT[Math.round(t)] = byT[Math.round(t)] || []).push({D, from: a, to: b, t, gain: false});
+  }
+  const pitNear = (D, t) => D.pits.some(p => t > p[0] - (p[4] || 22) - 25 && t < p[0] + 25);
+  const flagged = t => R.segs.some(s => t >= s.a - 5 && t <= s.b + 30);
+  for (const k in byT) {
+    const near = []; for (let d = -2; d <= 2; d++) if (byT[+k + d]) near.push(...byT[+k + d]);
+    for (const g of near.filter(x => x.gain)) {
+      const l = near.find(x => !x.gain && x.from === g.to && x.to === g.from); if (!l) continue;
+      const t = g.t; if (t < R.lightsOut + 40 || t > R.chq) continue;
+      if (pitNear(g.D, t) || pitNear(l.D, t) || isOut(l.D, t + 1) || flagged(t)) continue;
+      if (!(posAt(g.D, t + 10) < posAt(l.D, t + 10))) continue;   // the pass must stick for 10 s (filters timing-feed flicker)
+      if (ev.some(e => e.a === g.D && e.b === l.D && Math.abs(e.t - t) < 20)) continue;
+      ev.push({t, a: g.D, b: l.D, pos: g.to});
+    }
+  }
+  return ev.sort((x, y) => x.t - y.t);
+}
+
+/* ---------------- incident recreation ---------------- */
+function recreate(x){
+  if (!st.R || st.R.noTrack) return;
+  closeAnalysis();
+  st.rec = {prevCam: st.cam, prevSpeed: st.dir ? st.dir.prevSpeed : st.speed, prevZl: st.zl || 0, prevSel: st.sel, x};
+  endDirector(); st.sel = null; setCam("overview"); setTime(x.t - 8);
+  st.dir = {x, prevSpeed: st.rec.prevSpeed, manual: true}; st.speed = 0.5; syncSpeeds(); st.zl = 1; fx.length = 0;
+  setPlaying(true);
+  const who = x.kind === "contact" ? `${x.d.last.toUpperCase()} & ${x.d2.last.toUpperCase()}` : x.d.last.toUpperCase();
+  $("#recBanner").innerHTML = `<b>INCIDENT REPLAY</b><span>${esc(who)} · ${x.kind === "crash" ? "crash" : x.kind === "contact" ? "contact" : "stopped on track"} · lap ${Math.max(1, leaderLap(st.R, x.t))}</span><button class="btn" id="recExit">BACK TO RACE</button>`;
+  $("#recBanner").hidden = false; $("#recExit").onclick = endRecreate;
+}
+function endRecreate(){
+  const r = st.rec; if (!r) return; st.rec = null; $("#recBanner").hidden = true;
+  st.dir = null; st.speed = r.prevSpeed; syncSpeeds(); st.zl = r.prevZl; st.sel = r.prevSel; setCam(r.prevCam); setPlaying(false);
+}
+
+/* ---------------- analysis panel ---------------- */
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["season", "SEASON"]];
+st.anaTab = "h2h";
+function openAnalysis(){ if (!st.R) return; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
+function closeAnalysis(){ $("#ana").hidden = true; }
+function buildAnaTabs(){
+  $("#anaTabs").innerHTML = ANA_TABS.map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
+}
+$("#anaBtn").addEventListener("click", () => $("#ana").hidden ? openAnalysis() : closeAnalysis());
+$("#anaClose").addEventListener("click", closeAnalysis);
+$("#anaTabs").addEventListener("click", e => { const b = e.target.closest("[data-ana]"); if (!b) return; st.anaTab = b.dataset.ana; buildAnaTabs(); renderAna(); });
+function drvOptions(sel){ return st.R.drivers.slice().sort((a, b) => (a.res && a.res.position || 99) - (b.res && b.res.position || 99))
+  .map(D => `<option value="${D.num}" ${D.num === sel ? "selected" : ""}>${esc(D.code)} · ${esc(D.first + " " + D.last)}</option>`).join(""); }
+function lapTimesOf(D){ const out = []; for (let i = 0; i + 1 < D.lapT.length; i++) out.push({lap: D.lapN[i], t: D.lapT[i], dur: D.lapT[i+1] - D.lapT[i]}); return out; }
+function anaCanvas(h){ const c = $("#anaCv"); const w = c.parentElement.clientWidth; const dpr = Math.min(2, devicePixelRatio || 1);
+  c.style.height = h + "px"; c.width = Math.round(w*dpr); c.height = Math.round(h*dpr); const x = c.getContext("2d"); x.setTransform(dpr, 0, 0, dpr, 0, 0);
+  x.clearRect(0, 0, w, h); return {x, w, h}; }
+function axes(x, L, T, Rr, B, w, h, xmin, xmax, ymin, ymax, xlab, ylab, invY, yfmt){
+  const X = v => L + (v - xmin)/(xmax - xmin)*(w - L - Rr), Y = v => invY ? T + (v - ymin)/(ymax - ymin)*(h - T - B) : h - B - (v - ymin)/(ymax - ymin)*(h - T - B);
+  x.strokeStyle = "rgba(140,160,210,0.14)"; x.fillStyle = "#56607a"; x.font = '500 10px "JetBrains Mono", monospace'; x.lineWidth = 1;
+  const ys = niceTicks(ymin, ymax, 6); for (const v of ys) { x.beginPath(); x.moveTo(L, Y(v)); x.lineTo(w - Rr, Y(v)); x.stroke(); x.textAlign = "right"; x.fillText(yfmt ? yfmt(v) : v, L - 6, Y(v) + 3); }
+  const xs = niceTicks(xmin, xmax, 10); for (const v of xs) { x.textAlign = "center"; x.fillText(v, X(v), h - B + 14); }
+  x.textAlign = "left"; x.fillText(ylab, 4, T - 8); x.textAlign = "right"; x.fillText(xlab, w - Rr, h - 4); x.textAlign = "left";
+  return {X, Y};
+}
+function niceTicks(a, b, n){ const span = b - a || 1, step0 = span / n, p = Math.pow(10, Math.floor(Math.log10(step0))); const step = [1, 2, 5, 10].map(m => m*p).find(v => v >= step0);
+  const out = []; for (let v = Math.ceil(a/step)*step; v <= b + 1e-9; v += step) out.push(+v.toFixed(6)); return out; }
+function nowLine(x, X, T, h, B, v){ x.strokeStyle = "rgba(255,255,255,.5)"; x.setLineDash([3, 4]); x.beginPath(); x.moveTo(X(v), T); x.lineTo(X(v), h - B); x.stroke(); x.setLineDash([]); }
+
+function renderAna(){
+  if ($("#ana").hidden || !st.R) return; const R = st.R, ctl = $("#anaCtl"), info = $("#anaInfo"); info.innerHTML = ""; ctl.innerHTML = "";
+  $("#anaCv").hidden = false;
+  if (st.anaTab === "h2h") {
+    const ord = R.drivers.slice().sort((a, b) => (a.res && a.res.position || 99) - (b.res && b.res.position || 99));
+    st.h2hA = st.h2hA && R.byNum[st.h2hA] ? st.h2hA : ord[0].num; st.h2hB = st.h2hB && R.byNum[st.h2hB] ? st.h2hB : ord[1].num;
+    ctl.innerHTML = `<label>Driver A <select id="h2hA">${drvOptions(st.h2hA)}</select></label><label>Driver B <select id="h2hB">${drvOptions(st.h2hB)}</select></label>`;
+    $("#h2hA").onchange = e => { st.h2hA = +e.target.value; renderAna(); }; $("#h2hB").onchange = e => { st.h2hB = +e.target.value; renderAna(); };
+    const A = R.byNum[st.h2hA], B = R.byNum[st.h2hB], {x, w, h} = anaCanvas(300);
+    const pts = []; for (let t = R.lightsOut + 5; t <= R.chq; t += 4) { const ga = gapSmooth(A, t), gb = gapSmooth(B, t); if (ga == null || gb == null || ga < 0 || gb < 0 || isOut(A, t) || isOut(B, t)) { pts.push(null); continue; } pts.push([leaderLapF(R, t), gb - ga]); }
+    const vals = pts.filter(Boolean).map(p => p[1]); const m = Math.max(5, ...vals.map(Math.abs)) * 1.1;
+    const {X, Y} = axes(x, 52, 22, 12, 22, w, h, 1, R.total, -m, m, "LAP", "GAP (s)", false, v => (v > 0 ? "+" : "") + v);
+    x.fillStyle = rgba(A.col, 0.08); x.fillRect(52, 22, w - 64, Y(0) - 22); x.fillStyle = rgba(B.col, 0.08); x.fillRect(52, Y(0), w - 64, h - 22 - Y(0));
+    x.font = '700 12px "Saira Condensed", sans-serif'; x.fillStyle = A.css; x.fillText(`${A.code} AHEAD ↑`, 60, 36); x.fillStyle = B.css; x.fillText(`${B.code} AHEAD ↓`, 60, h - 30);
+    x.strokeStyle = "rgba(255,255,255,.35)"; x.beginPath(); x.moveTo(52, Y(0)); x.lineTo(w - 12, Y(0)); x.stroke();
+    x.lineWidth = 2.2; let open = false; for (const p of pts) { if (!p) { if (open) x.stroke(); open = false; continue; } x.strokeStyle = p[1] >= 0 ? A.css : B.css; if (!open) { x.beginPath(); x.moveTo(X(p[0]), Y(p[1])); open = true; } else { x.lineTo(X(p[0]), Y(p[1])); x.stroke(); x.beginPath(); x.moveTo(X(p[0]), Y(p[1])); } } if (open) x.stroke();
+    for (const [D, yy] of [[A, 26], [B, h - 26]]) for (const p of D.pits) { const lp = leaderLapF(R, p[0]); x.fillStyle = D.css; x.font = '700 10px "JetBrains Mono", monospace'; x.fillText("P", X(lp) - 3, yy + 4); x.fillRect(X(lp) - 0.5, yy + 6, 1, 6); }
+    const ov = (R.overtakes || []).filter(o => (o.a === A && o.b === B) || (o.a === B && o.b === A));
+    for (const o of ov) { const lp = leaderLapF(R, o.t); x.fillStyle = o.a.css; x.beginPath(); x.arc(X(lp), Y(0), 5, 0, 7); x.fill(); x.strokeStyle = "#05070d"; x.lineWidth = 1.5; x.stroke(); }
+    nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
+    const stat = D => { const lt = lapTimesOf(D).filter(l => l.dur > 30 && l.dur < 400); const best = lt.length ? Math.min(...lt.map(l => l.dur)) : null;
+      const led = (() => { let c = 0; for (const s of R.lapStarts) if (posAt(D, s + 1) === 1) c++; return c; })();
+      return {pos: D.res && D.res.position ? "P" + D.res.position : (D.res && D.res.dnf ? "DNF" : "–"), grid: D.grid < 99 ? "P" + D.grid : "–", stops: D.pits.filter(p => p[0] > R.lightsOut).length,
+        best: best ? fmtLap(best) : "–", led, pen: D.stew.filter(e => e[2] === "PEN").map(e => e[3]).join(", ") || "none", tl: D.stew.filter(e => e[2] === "TL").length}; };
+    const sa = stat(A), sb = stat(B);
+    const row = (k, a, b) => `<tr><td style="color:${A.css}">${esc(String(a))}</td><th>${k}</th><td style="color:${B.css}">${esc(String(b))}</td></tr>`;
+    info.innerHTML = `<table class="h2h"><tr><td style="color:${A.css}"><b>${esc(A.code)}</b></td><th></th><td style="color:${B.css}"><b>${esc(B.code)}</b></td></tr>` +
+      row("Finish", sa.pos, sb.pos) + row("Grid", sa.grid, sb.grid) + row("Pit stops", sa.stops, sb.stops) + row("Fastest lap", sa.best, sb.best) + row("Laps led", sa.led, sb.led) +
+      row("Penalties", sa.pen, sb.pen) + row("Track limits", sa.tl, sb.tl) + row("Passes on each other", ov.filter(o => o.a === A).length, ov.filter(o => o.a === B).length) + `</table>
+      <p class="anote">Line above the middle = ${esc(A.code)} ahead, by that many seconds. <b>P</b> marks pit stops; dots on the centre line are on-track passes between them.</p>`;
+  } else if (st.anaTab === "inc") {
+    $("#anaCv").hidden = true;
+    const list = R.incidents.map((x, i) => ({x, i})).concat((R.overtakes || []).map(o => ({o})));
+    const items = R.incidents.map((x, i) => { const who = x.kind === "contact" ? `${x.d.code} & ${x.d2.code}` : x.d.code;
+      return `<li><span class="k k-${x.kind}">${x.kind === "crash" ? "CRASH" : x.kind === "contact" ? "INCIDENT" : "STOPPED"}</span><b>${esc(who)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, x.t))}</span>${R.noTrack ? "" : `<button class="btn" data-rec="${i}">▶ WATCH</button>`}</li>`; }).join("");
+    info.innerHTML = `<ul class="inclist">${items || '<li class="none">No crashes, stops or contacts were detected in this race.</li>'}</ul>
+      <p class="anote">Crashes and stops are inferred from the car-position data; incidents are those race control noted between two cars. <b>Watch</b> replays each one on the track map in slow motion.</p>
+      <h4>OVERTAKES · ${(R.overtakes || []).length}</h4><ul class="inclist ov">${(R.overtakes || []).map((o, i) => `<li><span class="k k-ov">P${o.pos}</span><b style="color:${o.a.css}">${esc(o.a.code)}</b> passes <b style="color:${o.b.css}">${esc(o.b.code)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, o.t))}</span><button class="btn" data-jump="${o.t}">JUMP</button></li>`).join("") || '<li class="none">No on-track passes found (position changes from pit stops are left out).</li>'}</ul>`;
+    info.querySelectorAll("[data-rec]").forEach(b => b.onclick = () => recreate(R.incidents[+b.dataset.rec]));
+    info.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { closeAnalysis(); setTime(+b.dataset.jump - 6); setPlaying(true); });
+  } else if (st.anaTab === "pos") {
+    const {x, w, h} = anaCanvas(Math.max(300, R.drivers.length * 16 + 50)); const n = R.drivers.length;
+    const {X, Y} = axes(x, 34, 22, 52, 22, w, h, 0, R.total, 1, n, "LAP", "POS", true, v => "P" + v);
+    const hi = new Set([st.sel, st.h2hA, st.h2hB].filter(v => v != null));
+    for (const D of R.drivers.slice().sort((a, b) => hi.has(a.num) - hi.has(b.num))) {
+      const pts = [[0, D.grid < 99 ? D.grid : posAt(D, R.lightsOut)]]; for (let i = 0; i < D.lapT.length; i++) pts.push([D.lapN[i], posAt(D, D.lapT[i] + 1)]);
+      x.strokeStyle = rgba(D.col, hi.size && !hi.has(D.num) ? 0.25 : 0.9); x.lineWidth = hi.has(D.num) ? 3 : 1.6; x.beginPath();
+      pts.forEach((p, i) => i ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(p[0]), Y(p[1]))); x.stroke();
+      const last = pts[pts.length - 1]; x.fillStyle = D.css; x.font = '700 11px "Saira Condensed", sans-serif'; x.fillText(D.code + (D.res && D.res.dnf ? " ✕" : ""), X(last[0]) + 4, Y(last[1]) + 4);
+    }
+    nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
+    info.innerHTML = `<p class="anote">Each driver's position at the end of every lap. ✕ marks a retirement. The highlighted lines are the selected driver and the head-to-head pair.</p>`;
+  } else if (st.anaTab === "laps") {
+    st.lapDrv = st.lapDrv && R.byNum[st.lapDrv] ? st.lapDrv : (st.sel || R.drivers.find(D => D.res && D.res.position === 1).num);
+    ctl.innerHTML = `<label>Driver <select id="lapDrv">${drvOptions(st.lapDrv)}</select></label>`; $("#lapDrv").onchange = e => { st.lapDrv = +e.target.value; renderAna(); };
+    const D = R.byNum[st.lapDrv], lt = lapTimesOf(D).filter(l => l.lap > 1), {x, w, h} = anaCanvas(300);
+    const med = lt.map(l => l.dur).sort((a, b) => a - b)[lt.length >> 1] || 90, lo = Math.min(...lt.map(l => l.dur)), hiV = med * 1.12;
+    const {X, Y} = axes(x, 60, 22, 12, 22, w, h, 1, R.total, lo - 0.5, hiV, "LAP", "LAP TIME", false, v => fmtLap(v).replace(/\.\d+$/, "") );
+    for (const s of R.segs) { x.fillStyle = s.k === "RED" ? "rgba(255,47,69,.12)" : "rgba(255,182,28,.10)"; x.fillRect(X(leaderLapF(R, s.a)), 22, Math.max(2, X(leaderLapF(R, s.b)) - X(leaderLapF(R, s.a))), h - 44); }
+    for (const l of lt) { const s = stintOf(D, l.lap), c = s && COMP[s[3]] ? COMP[s[3]][1] : "#888", slow = l.dur > hiV;
+      x.fillStyle = c; x.beginPath(); x.arc(X(l.lap), Y(Math.min(l.dur, hiV)), slow ? 2.5 : 3.6, 0, 7); x.fill();
+      if (slow) { x.fillStyle = "#56607a"; x.font = '9px "JetBrains Mono", monospace'; x.fillText("▲", X(l.lap) - 3, 30); } }
+    for (const p of D.pits) { const lp = p[2]; x.fillStyle = "#3fd8ff"; x.font = '700 10px "JetBrains Mono", monospace'; x.fillText("PIT", X(lp) - 9, h - 26); }
+    nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
+    const best = Math.min(...lt.map(l => l.dur));
+    info.innerHTML = `<p class="anote"><b>${esc(D.first + " " + D.last)}</b> · fastest lap ${fmtLap(best)}. Dots are coloured by tyre (${Object.entries(COMP).map(([k, v]) => `<span style="color:${v[1]}">${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join(", ")}). Slow laps behind the safety car or through the pits are shown as ▲ at the top; shaded areas are safety-car periods.</p>`;
+  } else if (st.anaTab === "season") {
+    renderSeason(ctl, info);
+  }
+}
+function leaderLapF(R, t){ const i = ub(R.lapStarts, t) - 1; if (i < 0) return 0; const a = R.lapStarts[i], b = R.lapStarts[i+1] ?? a + 90; return clamp(i + 1 + (t - a)/(b - a) - 1, 0, R.total); }
+async function renderSeason(ctl, info){
+  if (!st.season) { try { st.season = JSON.parse(new TextDecoder().decode(await fetchBytes("season.json"))); } catch (e) { info.innerHTML = '<p class="anote">Season data could not be loaded.</p>'; return; } }
+  const S = st.season, nR = S.rounds.length; if (st.seasonK == null) st.seasonK = nR - 1;
+  ctl.innerHTML = `<button class="btn" id="seaPlay">${st.seasonPlay ? "■ STOP" : "▶ PLAY SEASON"}</button><input type="range" id="seaK" min="0" max="${nR - 1}" step="0.01" value="${st.seasonK}"><span class="when" id="seaLbl"></span>`;
+  $("#seaK").oninput = e => { st.seasonK = +e.target.value; st.seasonPlay = false; drawSeason(); };
+  $("#seaPlay").onclick = () => { st.seasonPlay = !st.seasonPlay; if (st.seasonPlay && st.seasonK >= nR - 1.01) st.seasonK = 0; renderAna(); };
+  drawSeason();
+  info.innerHTML = `<p class="anote">Championship points after each Grand Prix and sprint, from the official results. Press play to watch the season unfold.</p>`;
+}
+function drawSeason(){
+  const S = st.season; if (!S || $("#ana").hidden || st.anaTab !== "season") return; const k = st.seasonK, i0 = Math.floor(k), f = k - i0, nR = S.rounds.length;
+  const val = d => d.pts[i0] + ((d.pts[Math.min(nR - 1, i0 + 1)] - d.pts[i0]) * f);
+  const ds = S.drivers.map(d => ({d, v: val(d)})).sort((a, b) => b.v - a.v).slice(0, 15), mx = Math.max(1, ds[0].v);
+  const {x, w, h} = anaCanvas(15 * 22 + 30), r = S.rounds[Math.min(nR - 1, Math.round(k))];
+  $("#seaLbl").textContent = `After ${r.label}${r.kind === "sprint" ? " sprint" : ""} · ${r.name}`;
+  ds.forEach((e, i) => { const y = 14 + i*22, bw = (w - 170) * e.v / mx, col = vivid(e.d.colour);
+    x.fillStyle = "#e8ecf6"; x.font = '800 italic 14px "Saira Condensed", sans-serif'; x.textAlign = "right"; x.fillText(i + 1, 22, y + 12); x.textAlign = "left";
+    x.font = '700 14px "Saira Condensed", sans-serif'; x.fillText(e.d.code, 30, y + 12);
+    const g = x.createLinearGradient(70, 0, 70 + bw, 0); g.addColorStop(0, rgba(col, 0.35)); g.addColorStop(1, rgba(col, 0.95)); x.fillStyle = g; x.fillRect(70, y + 2, bw, 16);
+    x.fillStyle = "#e8ecf6"; x.font = '600 11px "JetBrains Mono", monospace'; x.fillText(Math.round(e.v), 76 + bw, y + 14); });
+}
+function stepSeason(wdt){ if (!st.seasonPlay || !st.season) return; st.seasonK = Math.min(st.season.rounds.length - 1, st.seasonK + wdt * 0.9); const s = $("#seaK"); if (s) s.value = st.seasonK; drawSeason();
+  if (st.seasonK >= st.season.rounds.length - 1) { st.seasonPlay = false; renderAna(); } }
+
+/* ---------------- recording (offline file only) ---------------- */
+let recorder = null;
+function toggleRec(){
+  if (recorder) { recorder.stop(); return; }
+  if (!cv.captureStream || typeof MediaRecorder === "undefined") { alertRec("This browser can't record the canvas."); return; }
+  const chunks = []; const type = ["video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t)) || "";
+  recorder = new MediaRecorder(cv.captureStream(30), type ? {mimeType: type, videoBitsPerSecond: 6e6} : undefined);
+  recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+  recorder.onstop = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(chunks, {type: "video/webm"}));
+    a.download = `grid-replay-${(st.meta && st.meta.name || "clip").replace(/\W+/g, "-").toLowerCase()}.webm`; document.body.appendChild(a); a.click(); a.remove(); recorder = null; $("#recBtn").setAttribute("aria-pressed", "false"); $("#recBtn").textContent = "● REC"; };
+  recorder.start(500); $("#recBtn").setAttribute("aria-pressed", "true"); $("#recBtn").textContent = "■ STOP REC";
+}
+function alertRec(m){ $("#recBtn").textContent = m; }
+if (location.protocol === "file:") { $("#recBtn").hidden = false; $("#recBtn").onclick = toggleRec; }
 /* ---------------- HUD & tower ---------------- */
 const rowsIn = $("#rowsIn"); let rowEls = {};
 function buildTower(){
@@ -1393,7 +1646,7 @@ function updateTower(){
     const battle = racing && !out && !pit && i > 0 && o.gi != null && o.gi >= 0 && o.gi <= 1.0;
     setHTML(r, "cd", r.cd, `<span class="code">${esc(D.code)}</span>` + (D.num === flHolder ? `<span class="fl" title="Fastest lap"></span>` : "") +
       (D.num === speakingNum ? `<svg class="mic" viewBox="0 0 12 12"><rect x="4" y="1" width="4" height="7" rx="2" fill="currentColor"/><path d="M2.5 6a3.5 3.5 0 0 0 7 0M6 9.5V11" stroke="currentColor" fill="none"/></svg>` : "") +
-      (battle ? `<span class="bt">&lt;1s</span>` : "") + (() => { const c = stewChips(D, t)[0]; return c ? `<span class="chip ${c.cls}" title="${esc(c.txt)}">${esc(c.short || c.txt)}</span>` : ""; })());
+      (battle ? `<span class="bt">&lt;1s</span>` : "") + (() => { const c = stewChips(D, t)[0]; return c ? `<span class="chip ${c.cls}" data-tip="${esc(chipTip(c.txt))}">${esc(c.short || c.txt)}</span>` : ""; })());
     let gp;
     if (out) gp = `<span class="pill out">OUT</span>`;
     else if (D.res && D.res.dsq && t >= R.chq + 30) gp = `<span class="pill dsq">DSQ</span>`;
@@ -1405,7 +1658,8 @@ function updateTower(){
     setHTML(r, "gp", r.gp, gp);
     const lap = lapOf(D, t), s = stintOf(D, lap);
     const cmp = s && COMP[s[3]] || ["?", "#555"]; const ck = cmp[0] + cmp[1];
-    if (r.cache.ty !== ck) { r.cache.ty = ck; r.ty.textContent = cmp[0]; r.ty.style.setProperty("--tyc", cmp[1]); r.ty.title = s ? s[3].toLowerCase() : "unknown tyre"; }
+    if (r.cache.ty !== ck) { r.cache.ty = ck; r.ty.textContent = cmp[0]; r.ty.style.setProperty("--tyc", cmp[1]); }
+    { const si = stintInfo(D, t); r.ty.dataset.tip = si ? tyreTip(si.compound, si.age, si.fitted, si.used, si.no) : "Tyre not known"; }
     const dlt = D.grid < 99 && o.pos < 99 ? D.grid - o.pos : 0;
     const dh = dlt > 0 ? `▲${dlt}` : dlt < 0 ? `▼${-dlt}` : "–";
     if (r.cache.dl !== dh) { r.cache.dl = dh; r.dl.textContent = dh; r.dl.className = "dl " + (dlt > 0 ? "up" : dlt < 0 ? "dn" : "eq"); }
@@ -1439,7 +1693,7 @@ function updateHUD(){
   const wxEl = $("#wx"); if (wxEl.dataset.h !== wh) { wxEl.dataset.h = wh; wxEl.innerHTML = wh; }
   // ticker: last 4 events
   const n = ub(R.evT, t); const evs = R.events.slice(Math.max(0, n - 60), n).reverse();
-  const th = `<div class="lg-hd"><span>RACE CONTROL · ${n} MESSAGES</span><span>NEWEST FIRST</span></div>` + (evs.length ? "" : `<div class="tk"><span style="color:var(--dim)">Waiting for lights out…</span></div>`) + evs.map(e => `<div class="tk"><i style="background:${e.c}"></i><b style="color:${e.c}">${esc(e.label)}</b><span>${esc(e.text)}</span><em>L${Math.max(1, leaderLap(R, e.t))}</em></div>`).join("");
+  const th = `<div class="lg-hd"><span>RACE CONTROL · ${n} MESSAGES${st.radio && st.radio.items.some(c => c.text) ? " · RADIO AUTO-TRANSCRIBED, MAY CONTAIN ERRORS" : ""}</span><span>NEWEST FIRST</span></div>` + (evs.length ? "" : `<div class="tk"><span style="color:var(--dim)">Waiting for lights out…</span></div>`) + evs.map(e => `<div class="tk${e.rad ? " rad" : ""}${e.x || e.ov ? " clk" : ""}" data-et="${e.t}" data-ek="${e.k}"${e.x ? ` data-tip="Click to watch a slow-motion replay of this incident"` : e.ov ? ` data-tip="Click to jump to this pass"` : ""}><i style="background:${e.c}"></i><b style="color:${e.c}">${esc(e.label)}</b><span>${esc(e.text)}</span><em>L${Math.max(1, leaderLap(R, e.t))}</em></div>`).join("");
   const tk = $("#ticker"); if (tk.dataset.h !== th) { tk.dataset.h = th; tk.innerHTML = th; }
   // timeline
   const pct = (t / R.T * 100).toFixed(3) + "%"; $("#tlHead").style.left = pct; $("#tlDone").style.width = pct;
@@ -1477,6 +1731,9 @@ function buildTimeline(){
   for (const s of R.segs) { const b = document.createElement("div"); b.className = "band " + s.k.toLowerCase(); b.style.left = pct(s.a); b.style.width = (clamp(s.b, 0, R.T) - clamp(s.a, 0, R.T)) / R.T * 100 + "%"; b.title = s.k; tl.prepend(b); }
   for (const x of R.crashCamEvents) { const m = document.createElement("div"); m.className = "mk crash"; m.style.left = pct(x.t); m.title = x.kind; tl.appendChild(m); }
   if (st.radio) for (const c of st.radio.items) { const m = document.createElement("div"); m.className = "mk radio"; m.style.left = pct(c.t); tl.appendChild(m); }
+  for (const o of R.overtakes || []) { const m = document.createElement("div"); m.className = "mk ov"; m.style.left = pct(o.t); m.title = `${o.a.code} passes ${o.b.code}`; tl.appendChild(m); }
+  { const W2 = R.h.weather || []; let a = null; for (let i = 0; i < W2.length; i++) { const wet = W2[i][3] > 0; if (wet && a == null) a = W2[i][0]; if ((!wet || i === W2.length - 1) && a != null) { const b = W2[i][0];
+      const el = document.createElement("div"); el.className = "band rain"; el.style.left = pct(Math.max(0, a)); el.style.width = (clamp(b, 0, R.T) - clamp(a, 0, R.T)) / R.T * 100 + "%"; el.title = "Rain"; tl.prepend(el); a = null; } } }
   const lb = $("#tlLabels"); lb.innerHTML = "";
   const every = R.total > 40 ? 10 : 5;
   for (let l = every; l < R.total; l += every) { const t = R.lapStarts[l-1]; if (t == null) continue; const s = document.createElement("span"); s.style.left = pct(t); s.textContent = "L" + l; lb.appendChild(s); }
@@ -1502,10 +1759,11 @@ function crossEvents(t0, t1){
     else burst(x.x, x.y, x.kind === "contact" ? x.d2.col : D.col, power, Math.round(x.t*100));
     if (x.kind !== "stopped") sfxCrash(power);
   }
-  if (st.crashCam && !st.dir) for (const x of R.crashCamEvents) {
+  if (st.crashCam && !st.dir && !st.rec) for (const x of R.crashCamEvents) {
     const lead = 3; if (t0 < x.t - lead && x.t - lead <= t1) { st.dir = {x, prevSpeed: st.speed}; st.speed = x.kind === "stopped" ? 1 : 0.6; syncSpeeds(); break; }
   }
-  if (st.dir && t1 > st.dir.x.t + (st.cam === "linear" ? 9 : 4.5)) endDirector();
+  if (st.rec && t1 > st.rec.x.t + 7) { endRecreate(); return; }
+  if (st.dir && !st.dir.manual && t1 > st.dir.x.t + (st.cam === "linear" ? 9 : 4.5)) endDirector();
   for (const e of R.stew || []) if (t0 < e[0] && e[0] <= t1 && e[2] !== "TL" && e[2] !== "NOTED") sfxChime(e[2]);
   if (st.radio && st.radioOn) for (const c of st.radio.items) if (t0 < c.t && c.t <= t1 && (st.cam !== "linear" || st.sel == null || c.num === st.sel)) queueRadio(c);
 }
@@ -1559,6 +1817,51 @@ function sfxChime(kind){ if (!st.soundOn || !st.playing) return; const ac = ensu
   notes.forEach((f, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = "triangle"; o.frequency.value = f;
     const t0 = ac.currentTime + i*0.16; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.14, t0 + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.28);
     o.connect(g); g.connect(ac.destination); o.start(t0); o.stop(t0 + 0.3); }); }
+
+/* ---------------- hover explanations ---------------- */
+const TYRE_INFO = {
+  SOFT: ["Soft", "red sidewall", "Fastest compound, wears out quickest"], MEDIUM: ["Medium", "yellow sidewall", "Balance of pace and tyre life"],
+  HARD: ["Hard", "white sidewall", "Slowest but lasts longest"], INTERMEDIATE: ["Intermediate", "green sidewall", "For a damp or drying track"],
+  WET: ["Full wet", "blue sidewall", "For heavy rain, clears the most water"] };
+function tyreTip(compound, age, fittedLap, usedBefore, stintNo){
+  const t = TYRE_INFO[compound]; if (!t) return "";
+  return `<b><span class="sw" style="border-color:${COMP[compound][1]}"></span>${t[0]}</b> <span class="mut">(${t[1]})</span><br>${t[2]}.<br>` +
+    (age != null ? `<b style="font-size:13px">${age}</b> lap${age === 1 ? "" : "s"} on this set` : "") +
+    (fittedLap ? ` · fitted on lap ${fittedLap}` : "") + (usedBefore != null ? `<br><span class="mut">${usedBefore > 0 ? `Used set: ${usedBefore} lap${usedBefore === 1 ? "" : "s"} done before` : "New set when fitted"}${stintNo ? ` · stint ${stintNo}` : ""}</span>` : "");
+}
+const CHIP_TIPS = {
+  INV: "<b>Under investigation</b><br>The stewards are looking at an incident involving this driver.",
+  INVESTIGATION: "<b>Under investigation</b><br>The stewards are looking at an incident involving this driver.",
+  POST: "<b>Investigated after the race</b><br>The stewards will decide after the flag; any penalty is applied to the results later.",
+  "POST-RACE INV.": "<b>Investigated after the race</b><br>The stewards will decide after the flag; any penalty is applied to the results later.",
+  NOTED: "<b>Incident noted</b><br>Race control has logged an incident. It may or may not be investigated.",
+  "NFA ✓": "<b>No further action</b><br>The stewards looked at it and decided no penalty.",
+  "SERVED ✓": "<b>Penalty served</b><br>The driver has taken the stop-and-go or drive-through.",
+  "STOP & GO": "<b>Stop-and-go penalty</b><br>Must enter the pits and stop for 10 seconds with no work on the car.",
+  "DRIVE-THROUGH": "<b>Drive-through penalty</b><br>Must drive through the pit lane at the speed limit without stopping.",
+  "BLACK/WHITE": "<b>Black-and-white flag</b><br>A final warning for unsporting behaviour or repeated track-limits breaches.",
+  REPRIMAND: "<b>Reprimand</b><br>An official warning. Several in a season lead to a grid penalty.",
+};
+function chipTip(txt){
+  if (CHIP_TIPS[txt]) return CHIP_TIPS[txt];
+  let m;
+  if ((m = /^TL×(\d+)$/.exec(txt))) return `<b>Track limits: ${m[1]} strike${m[1] > 1 ? "s" : ""}</b><br>Lap times deleted for leaving the track. Three strikes bring the black-and-white warning flag; the next one is usually a 5-second penalty.`;
+  if ((m = /^\+(\d+)S$/i.exec(txt))) return `<b>${m[1]}-second time penalty</b><br>Added to the driver's race time, or served at their next pit stop.`;
+  if (/STOP-GO/.test(txt)) return CHIP_TIPS["STOP & GO"];
+  return "";
+}
+const tipEl = $("#tip");
+function showTip(html, x, y){ if (!html) { tipEl.hidden = true; return; } if (tipEl.dataset.h !== html) { tipEl.dataset.h = html; tipEl.innerHTML = html; } tipEl.hidden = false;
+  const w = tipEl.offsetWidth, h = tipEl.offsetHeight; tipEl.style.left = Math.min(window.innerWidth - w - 8, x + 14) + "px"; tipEl.style.top = (y + 16 + h > window.innerHeight ? y - h - 10 : y + 16) + "px"; }
+let hov = [];   // canvas hover targets recorded while drawing: {x, y, r, html}
+cv.addEventListener("mousemove", e => { const r = cv.getBoundingClientRect(), x = e.clientX - r.left, y = e.clientY - r.top;
+  let best = null, bd = 1e9; for (const h of hov) { const d = Math.hypot(h.x - x, h.y - y); if (d < h.r + 4 && d < bd) { bd = d; best = h; } }
+  showTip(best ? (typeof best.html === "function" ? best.html() : best.html) : "", e.clientX, e.clientY); });
+cv.addEventListener("mouseleave", () => showTip(""));
+document.addEventListener("mouseover", e => { const el = e.target.closest("[data-tip]"); if (!el || el === cv) return; showTip(el.dataset.tip, e.clientX, e.clientY); });
+document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip]")) showTip(""); });
+function stintInfo(D, t){ const lap = lapOf(D, t), s = stintOf(D, lap); if (!s) return null;
+  return {compound: s[3], age: s[4] + Math.max(0, lap - s[1]), fitted: s[1], used: s[4], no: D.stints.indexOf(s) + 1}; }
 /* ---------------- synthesized sound ---------------- */
 let eng = null;
 function ensureEngine(){
@@ -1592,6 +1895,9 @@ function updateEngine(dt){
   eng.lp.frequency.setTargetAtTime(500 + eng.rpm*2400, ac.currentTime, 0.05);
   eng.out.gain.setTargetAtTime(on ? 0.05 + eng.rpm*0.05 : 0, ac.currentTime, on ? 0.08 : 0.15);
 }
+$("#ticker").addEventListener("click", ev => { const el = ev.target.closest(".tk.clk"); if (!el || !st.R) return;
+  const t = +el.dataset.et, k = el.dataset.ek, e = st.R.events.find(x => Math.abs(x.t - t) < 0.01 && x.k === k); if (!e) return;
+  if (e.x && !st.R.noTrack) recreate(e.x); else { setTime(t - 6); setPlaying(true); } });
 /* ---------------- team radio ---------------- */
 let actx = null, curSrc = null, analyser = null; const radioQ = [];
 function ensureAudio(){ if (!actx) { const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return null; actx = new AC(); analyser = actx.createAnalyser(); analyser.fftSize = 256; analyser.connect(actx.destination); }
@@ -1602,6 +1908,9 @@ async function loadRadio(r, id){
   if (!r.radio_file) return;
   try { const u8 = await fetchBytes(r.radio_file); if (id !== st.loadingId) return;
     const {header, body} = splitPack(u8); st.radio = {items: header, body};
+    if (st.R && header.some(c => c.text)) { const R = st.R;
+      for (const c of header) if (c.text && c.t > R.lightsOut - 120) { const D = R.byNum[c.num]; R.events.push({t: c.t, k: "RADIO", label: "RADIO", text: `${D ? D.code : "#" + c.num}: “${c.text}”`, c: "#3fd8ff", rad: true}); }
+      R.events.sort((a, b) => a.t - b.t); R.evT = R.events.map(e => e.t); $("#ticker").dataset.h = ""; }
     $("#radioN").textContent = header.length; renderRadioList(); renderPipRadio(); if (st.R) buildTimeline();
   } catch (e) { console.warn("radio", e); }
 }
@@ -1620,6 +1929,7 @@ async function playClip(c){
   speakingNum = c.num;
   $("#onair").hidden = false; $("#onair").style.setProperty("--tc", D ? D.css : "#888");
   $("#oaWho").textContent = D ? D.code : "#" + c.num; $("#oaWho").style.color = D ? D.css : "";
+  $("#oaTx").textContent = c.text ? "“" + c.text + "”" : ""; $("#oaTx").title = c.text || "";
   $("#oaMeta").textContent = D ? `${D.first} ${D.last} · Lap ${Math.max(1, lapOf(D, c.t))}` : "";
 }
 function stopRadio(keepQueue){ if (curSrc) { try { curSrc.onended = null; curSrc.stop(); } catch (e) {} curSrc = null; } speakingNum = null; $("#onair").hidden = true; if (!keepQueue) radioQ.length = 0; }
@@ -1659,11 +1969,11 @@ function setPlaying(p){ st.playing = p && !!(st.R || st.Q); $("#play").setAttrib
 $("#play").addEventListener("click", () => setPlaying(!st.playing));
 function setCam(c){ st.cam = c; $("#stage").classList.toggle("lin", c === "linear"); $("#app").classList.toggle("lin", c === "linear"); document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cam === c)));
   save();
-  if (c !== "overview" && c !== "linear" && st.sel == null && st.R) { computeOrder(); selectDriver(order[0].D.num, false); } }
+}
 document.querySelectorAll("[data-cam]").forEach(b => b.addEventListener("click", () => { endDirector(); setCam(b.dataset.cam); }));
 function selectDriver(num, toggleCam){
-  if (toggleCam && st.sel === num) { st.sel = null; if (st.cam !== "linear") setCam("overview"); return; }
-  st.sel = num; if (toggleCam && st.cam === "overview") setCam("follow");
+  if (toggleCam && st.sel === num) { st.sel = null; return; }
+  st.sel = num;
 }
 function setToggle(id, key){ const b = $(id); b.setAttribute("aria-pressed", String(st[key])); b.addEventListener("click", () => { st[key] = !st[key]; b.setAttribute("aria-pressed", String(st[key])); if (key === "radioOn" && !st.radioOn) stopRadio(); if (key === "crashCam" && !st.crashCam) endDirector(); save(); }); }
 setToggle("#tgCrash", "crashCam"); setToggle("#tgRadio", "radioOn"); setToggle("#tgSound", "soundOn");
@@ -1671,6 +1981,8 @@ $("#fsBtn").addEventListener("click", () => { const el = $("#app");
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   else if (el.requestFullscreen) el.requestFullscreen().catch(() => { $("#fsBtn").textContent = "FULL SCREEN BLOCKED HERE"; }); });
 document.addEventListener("fullscreenchange", () => { $("#fsBtn").textContent = document.fullscreenElement ? "✕ EXIT FULL SCREEN" : "⛶ FULL SCREEN"; });
+$("#towerFold").addEventListener("click", () => { st.tfold = !st.tfold; applyFold(); save(); });
+function applyFold(){ $("#app").classList.toggle("tfold", !!st.tfold); $("#towerFold").textContent = st.tfold ? "▸" : "◂"; $("#towerFold").setAttribute("aria-label", st.tfold ? "Expand timing tower" : "Collapse timing tower"); }
 const gm = $("#gapMode"); const syncGap = () => gm.textContent = st.gapMode === "int" ? "Interval" : "To leader";
 gm.addEventListener("click", () => { st.gapMode = st.gapMode === "int" ? "lead" : "int"; syncGap(); save(); }); syncGap();
 const tabs = [["#tabTiming", "#paneTiming"], ["#tabRadio", "#paneRadio"]];
@@ -1684,7 +1996,8 @@ cv.addEventListener("click", e => {
   let best = null, bd = 28*28; for (const c of st.live) { if (c.sx === undefined) continue; const d = (c.sx - x)**2 + (c.sy - y)**2; if (d < bd) { bd = d; best = c; } }
   if (best) selectDriver(best.D.num, true); else if (st.cam === "overview") st.sel = null;
 });
-cv.addEventListener("wheel", e => { if (st.cam === "overview") return; e.preventDefault(); }, {passive: false});
+let wheelAcc = 0;
+cv.addEventListener("wheel", e => { if (st.cam === "linear" && !st.Q) return; e.preventDefault(); wheelAcc += e.deltaY; if (Math.abs(wheelAcc) > 120) { setZoom(wheelAcc < 0 ? 1 : -1); wheelAcc = 0; } }, {passive: false});
 document.addEventListener("keydown", e => {
   if (!$("#cal").hidden) { if (e.key === "Escape") closeCal(); return; }
   if (e.target.closest("input,textarea,select")) return;
@@ -1700,7 +2013,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "l" || e.key === "L") setCam("linear");
   else if (e.key === "f" || e.key === "F") setCam("follow");
   else if (e.key === "c" || e.key === "C") setCam("chase");
-  else if (e.key === "[" || e.key === "]") { computeOrder(); const i = order.findIndex(o => o.D.num === st.sel); const j = clamp((i < 0 ? 0 : i + (e.key === "]" ? 1 : -1)), 0, order.length - 1); selectDriver(order[j].D.num, false); if (st.cam === "overview") setCam("follow"); }
+  else if (e.key === "[" || e.key === "]") { computeOrder(); const i = order.findIndex(o => o.D.num === st.sel); const j = clamp((i < 0 ? 0 : i + (e.key === "]" ? 1 : -1)), 0, order.length - 1); selectDriver(order[j].D.num, false); }
   else if (e.key === "Escape") { if (curSrc) { stopRadio(); return; } st.sel = null; if (st.cam !== "linear") setCam("overview"); }
 });
 
@@ -1739,6 +2052,7 @@ $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[d
 
 /* ---------------- race loading ---------------- */
 async function loadRace(r){
+  if (st.rec) endRecreate(); closeAnalysis();
   if (r.kind === "quali" || r.kind === "squali" || r.kind === "preview") return loadQuali(r);
   leaveQuali();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
@@ -1784,7 +2098,7 @@ function routeFromHash(){
 window.addEventListener("hashchange", routeFromHash);
 
 /* ---------------- main loop ---------------- */
-let last = performance.now(), hudAcc = 0;
+let last = performance.now(), hudAcc = 0, anaAcc = 0;
 function frame(now){
   const wdt = Math.min(0.1, (now - last)/1000); last = now;
   const R = st.R;
@@ -1798,16 +2112,18 @@ function frame(now){
   if (R) { stepCam(wdt); stepFx(wdt); }
   hudAcc += wdt;
   if (R && (hudAcc > 0.066 || !st.playing)) { hudAcc = 0; computeOrder(); updateTower(); updateHUD(); }
-  render(now, wdt); drawViz(); updateEngine(wdt);
+  hov = []; render(now, wdt); drawViz(); updateEngine(wdt); stepSeason(wdt);
+  if (!$("#ana").hidden && st.anaTab !== "inc" && st.anaTab !== "season" && st.playing && (anaAcc += wdt) > 1) { anaAcc = 0; renderAna(); }
   requestAnimationFrame(frame);
 }
+applyFold();
 requestAnimationFrame(frame);
 
 (async () => {
   try { const res = window.__EMBED && window.__EMBED["index.json"] ? new Response(window.__EMBED["index.json"]) : await fetch("index.json"); if (!res.ok) throw new Error("HTTP " + res.status);
     st.idx = await res.json(); if (!st.idx.races.length) throw new Error("No races in the index"); fillRaceSelect();
     routeFromHash();
-  } catch (e) { $("#loadMsg").textContent = "COULDN'T LOAD THE 2026 SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+  } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN GRID-REPLAY-2026-SEASON.HTML (THE SINGLE-FILE VERSION) INSTEAD." : "COULDN'T LOAD THE 2026 SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 })();
 })();
 </script>

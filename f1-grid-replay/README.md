@@ -15,6 +15,8 @@ only the code; the race data, team radio and the published page are not stored i
 | `tools/stewards.py` | Turns race-control messages into investigation / penalty / track-limits events |
 | `tools/build_radio.py` | Downloads and packs team radio clips |
 | `tools/build_quali.py` | Fastest lap of every driver in a qualifying session, with tyre compound |
+| `tools/transcribe.py` | Auto-transcribes team radio with Whisper (`pip install faster-whisper`; needs Hugging Face access for the model) |
+| `tools/package.py` | Assembles the publishable folder and season standings |
 | `tools/update_new.py` | Finds finished sessions missing from the published index and builds them |
 | `tools/standalone.py` | Builds the single-file offline version |
 

@@ -12,6 +12,8 @@ for r in idx["races"] + idx.get("sprints", []):
 import base64 as _b64
 for q in idx.get("quali", []) + idx.get("previews", []):
     emb[q["file"]] = _b64.b64encode(open(f"{base}/{q['file']}", "rb").read()).decode()
+import os as _os
+if _os.path.exists(f"{base}/season.json"): emb["season.json"] = _b64.b64encode(open(f"{base}/season.json", "rb").read()).decode()
 embed = "<script>window.__EMBED = " + json.dumps(emb) + ";</script>\n"
 i = page.index("<script>\n(() => {")
 page = page[:i] + embed + page[i:]

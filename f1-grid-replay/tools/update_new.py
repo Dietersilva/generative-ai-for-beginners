@@ -62,6 +62,12 @@ if races_new:
     json.dump({"season": 2026, "races": races_new}, open(f"{work}/race/index.json", "w"))
     subprocess.run([sys.executable, "-I", f"{TOOLS}/build_radio.py", f"{work}/race"])
     races_new = json.load(open(f"{work}/race/index.json"))["races"]
+    # optional: transcribe the new radio (needs `pip install faster-whisper` and Hugging Face access for the model)
+    try:
+        import faster_whisper  # noqa: F401
+        subprocess.run([sys.executable, f"{TOOLS}/transcribe.py", f"{work}/race/radio"], env={**os.environ, "HF_HUB_DISABLE_XET": "1"})
+    except ImportError:
+        print("faster-whisper not installed: radio added without transcripts")
 for r in races_new:
     sk = r["session_key"]; raw = open(f"{work}/race/data/{sk}.bin", "rb").read()
     open(f"{pubd}/data/{sk}.txt", "w").write(base64.b64encode(raw).decode()); new_files.append(f"data/{sk}.txt")
