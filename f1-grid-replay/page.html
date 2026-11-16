@@ -502,6 +502,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
     <div class="toggles">
       <button class="tg" id="tgCrash" aria-pressed="true" title="Automatic slow motion and a pop-up when a car crashes or stops">CRASH CAM</button>
       <button class="tg rad" id="tgSound" aria-pressed="true" title="Engine sound, start lights and impacts">SOUND</button>
+      <button class="tg rad" id="tgComm" aria-pressed="false" title="Spoken race commentary: start, overtakes, incidents, safety cars, pit stops and the finish, read by a British voice built into your device">COMMENTARY</button>
       <button class="tg rad" id="tgRadio" aria-pressed="true" title="Play team radio as it happens">RADIO</button>
       <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the race view to a video file">● REC</button>
     </div>
@@ -531,18 +532,19 @@ const SPEEDS = [1,4,16,32,64];
 const RM = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 const st = {idx:null, meta:null, R:null, t:0, playing:false, speed:16, cam:"overview", sel:null,
-  gapMode:"int", zl:0, crashCam:true, radioOn:true, soundOn:true, dir:null, loadingId:0};
+  gapMode:"int", zl:0, crashCam:true, radioOn:true, soundOn:true, commOn:false, dir:null, loadingId:0};
 try { const s = JSON.parse(localStorage.getItem("gridreplay") || "{}");
   if (SPEEDS.includes(s.speed)) st.speed = s.speed;
   if (typeof s.crashCam3 === "boolean") st.crashCam = s.crashCam3;
   if (typeof s.radioOn === "boolean") st.radioOn = s.radioOn;
   if (typeof s.soundOn === "boolean") st.soundOn = s.soundOn;
+  if (typeof s.commOn === "boolean") st.commOn = s.commOn;
   if (s.gapMode === "lead" || s.gapMode === "int") st.gapMode = s.gapMode;
   if (s.view === "track") st.prefTrack = true;
   if (s.tfold) st.tfold = true;
   if (s.pipPos && typeof s.pipPos.x === "number") st.pipPos = s.pipPos;
 } catch (e) {}
-function save(){ try { localStorage.setItem("gridreplay", JSON.stringify({tfold:!!st.tfold,speed:st.speed,crashCam3:st.crashCam,pipPos:st.pipPos,radioOn:st.radioOn,soundOn:st.soundOn,gapMode:st.gapMode,view:st.cam === "linear" ? "linear" : "track"})); } catch (e) {} }
+function save(){ try { localStorage.setItem("gridreplay", JSON.stringify({tfold:!!st.tfold,speed:st.speed,crashCam3:st.crashCam,pipPos:st.pipPos,radioOn:st.radioOn,soundOn:st.soundOn,commOn:st.commOn,gapMode:st.gapMode,view:st.cam === "linear" ? "linear" : "track"})); } catch (e) {} }
 
 /* ---------------- helpers ---------------- */
 const ub = (arr, v) => { let lo = 0, hi = arr.length; while (lo < hi) { const m = (lo + hi) >> 1; if (arr[m] <= v) lo = m + 1; else hi = m; } return lo; };
@@ -1847,7 +1849,7 @@ function buildTimeline(){
   tl.addEventListener("pointerup", () => drag = false);
   tl.addEventListener("keydown", e => { if (!st.R) return; if (e.key === "ArrowRight") { setTime(st.t + 10); e.preventDefault(); } if (e.key === "ArrowLeft") { setTime(st.t - 10); e.preventDefault(); } });
 })();
-function setTime(t){ const S = st.R || st.Q; if (!S) return; endDirector(); st.t = clamp(t, 0, S.T); $("#podium").hidden = true; stopRadio(); radioQ.length = 0; if (st.R) computeOrder(); }
+function setTime(t){ const S = st.R || st.Q; if (!S) return; endDirector(); commStop(); st.t = clamp(t, 0, S.T); $("#podium").hidden = true; stopRadio(); radioQ.length = 0; if (st.R) computeOrder(); }
 
 /* ---------------- crash cam director ---------------- */
 function endDirector(){ if (st.dir) { st.speed = st.dir.prevSpeed; st.dir = null; syncSpeeds(); } }
@@ -1865,10 +1867,84 @@ function crossEvents(t0, t1){
   if (st.rec && t1 > st.rec.x.t + 7) { endRecreate(); return; }
   if (st.dir && !st.dir.manual && t1 > st.dir.x.t + (st.cam === "linear" ? 9 : 4.5)) endDirector();
   for (const e of R.stew || []) if (t0 < e[0] && e[0] <= t1 && e[2] !== "TL" && e[2] !== "NOTED") sfxChime(e[2]);
+  if (st.commOn) commCross(t0, t1);
   if (st.radio && st.radioOn) for (const c of st.radio.items) if (t0 < c.t && c.t <= t1 && (st.cam !== "linear" || st.sel == null || c.num === st.sel)) queueRadio(c);
 }
 
 
+
+/* ---------------- commentary (speech synthesis, British voice) ---------------- */
+const COMM = {voice: null, q: [], lastLead: null, leadSince: 0, said: new Set()};
+const pick = a => a[Math.floor(Math.random() * a.length)];
+function commVoice(){
+  if (!("speechSynthesis" in window)) return null;
+  const vs = speechSynthesis.getVoices(); if (!vs.length) return null;
+  const gb = vs.filter(v => /en[-_]GB/i.test(v.lang));
+  const male = /ryan|thomas|daniel|arthur|oliver|george|alfie|elliot|male|uk english male/i;
+  const fem = /female|libby|sonia|maisie|hazel|susan|kate|serena|stephanie|martha|fiona|moira|tessa|karen/i;
+  return gb.find(v => male.test(v.name) && !fem.test(v.name)) || gb.find(v => !fem.test(v.name)) || gb[0] || vs.find(v => /^en/i.test(v.lang)) || null;
+}
+if ("speechSynthesis" in window) { const upd = () => { COMM.voice = commVoice(); const b = $("#tgComm"); if (b) b.title = "Spoken race commentary (start, overtakes, incidents, safety cars, pit stops, the finish). Voice: " + (COMM.voice ? COMM.voice.name : "your device's default") + (COMM.voice && /en[-_]GB/i.test(COMM.voice.lang) ? "" : " (no British voice found on this device)"); }; upd(); speechSynthesis.onvoiceschanged = upd; }
+else { const b = $("#tgComm"); b.disabled = true; b.title = "Spoken commentary needs speech support, which this browser doesn't have"; }
+function commStop(){ COMM.q.length = 0; try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (e) {} }
+function commHello(){ if (!st.playing) commSay("Commentary on. Press play and enjoy the race.", 3, true); }
+const surname = D => D ? D.last.toLowerCase().replace(/(^|[\s'-])\S/g, m => m.toUpperCase()) : "";
+function commSay(text, pri, force){
+  if (!("speechSynthesis" in window) || (!st.commOn && !force)) return;
+  const sp = st.dir ? st.dir.prevSpeed : st.speed;
+  const need = sp <= 4 ? 1 : sp <= 16 ? 2 : 3;          // faster playback: only the big moments
+  if (pri < need && !force) return;
+  const now = performance.now();
+  COMM.q = COMM.q.filter(x => now - x.at < 5000);
+  if (COMM.q.length >= 2) { const lo = COMM.q.reduce((m, x) => x.pri < m.pri ? x : m, COMM.q[0]); if (lo.pri >= pri) return; COMM.q.splice(COMM.q.indexOf(lo), 1); }
+  COMM.q.push({text, pri, at: now}); COMM.q.sort((a, b) => b.pri - a.pri); commNext();
+}
+function commNext(){
+  if (speechSynthesis.speaking || speechSynthesis.pending || !COMM.q.length) return;
+  if (typeof curSrc !== "undefined" && curSrc) { setTimeout(commNext, 400); return; }   // let team radio finish first
+  const x = COMM.q.shift(); const u = new SpeechSynthesisUtterance(x.text);
+  COMM.voice = COMM.voice || commVoice(); if (COMM.voice) { u.voice = COMM.voice; u.lang = COMM.voice.lang; } else u.lang = "en-GB";
+  u.rate = 1.08; u.pitch = 0.92; u.volume = 1; u.onend = u.onerror = () => setTimeout(commNext, 120);
+  speechSynthesis.speak(u);
+}
+function commEvent(e, R){
+  const D = e.d, n = surname(D);
+  switch (e.k) {
+    case "SC": return commSay(pick(["Safety car! The safety car has been deployed.", "And that brings out the safety car.", "Safety car, safety car. The field will bunch up behind it."]), 3);
+    case "VSC": return commSay(pick(["Virtual safety car. Everyone has to slow down.", "We have a virtual safety car."]), 3);
+    case "RED": return commSay(pick(["Red flag! The session is stopped.", "That's a red flag. Everyone back to the pit lane."]), 3);
+    case "GREEN": return commSay(pick(["And we're back to green flag racing.", "Green flag. Racing resumes."]), 2);
+    case "CRASH": return commSay(pick([`Oh, big moment! ${n} is in the wall and out of the race!`, `Crash! That's the end of ${n}'s race.`, `Oh no, ${n} has gone off, and that is heavy.`]), 3);
+    case "STOP": return commSay(pick([`${n} has stopped on track.`, `Trouble for ${n}, the car has come to a halt.`]), 3);
+    case "CONTACT": return commSay(pick([`Contact! ${n} and ${surname(e.x && e.x.d2)} have touched.`, `Oh, they've banged wheels, ${n} and ${surname(e.x && e.x.d2)}!`]), 2);
+    case "RET": return commSay(`${n} has retired in the pits.`, 2);
+    case "PIT": { const p = posAt(D, e.t); if (p > 8) return; return commSay(pick([`${n} dives into the pit lane from P${p}.`, `In comes ${n}, from P${p}.`, `Pit stop for ${n}.`]), p <= 3 ? 2 : 1); }
+    case "FL": { if (leaderLap(R, e.t) < 5) return; const m = /(\d+):(\d\d)\.(\d)/.exec(e.text.split(" · ")[1] || ""); const lt = m ? `${m[1]} ${+m[2] < 10 ? "oh " + (+m[2]) : m[2]} point ${m[3]}` : "";
+      return commSay(pick([lt ? `Fastest lap for ${n}, a ${lt}.` : `Fastest lap for ${n}.`, `${n} sets the fastest lap of the race.`]), 1); }
+    case "STEW": { const k = e.stew && e.stew[2]; if (k === "PEN") return commSay(`Penalty! ${e.text.split(" · ")[0].split(" / ").map(c => surname(R.drivers.find(x => x.code === c))).filter(Boolean).join(" and ")} gets ${e.stew[3].toLowerCase()}.`, 2);
+      if (k === "INV") return commSay("The stewards are taking a look at that one.", 1); return; }
+    case "OV": { const o = e.ov, a = surname(o.a), b = surname(o.b);
+      if (o.pos === 1) return commSay(pick([`${a} takes the lead! Past ${b}, and ${a} leads the race!`, `There it is! ${a} goes by ${b} for the lead!`, `And ${a} is through! ${a} leads!`]), 3);
+      if (o.pos <= 3) return commSay(pick([`${a} gets by ${b}, up to P${o.pos}!`, `Great move, ${a} past ${b} for P${o.pos}.`]), 2);
+      if (o.pos <= 10) return commSay(pick([`${a} passes ${b} for P${o.pos}.`, `${a} through on ${b}, that's P${o.pos}.`]), 1);
+      return; }
+    case "BT": { const o = e.ov; const m = /^(\w+) chasing (\w+) for P(\d+)/.exec(e.text); if (!m || +m[3] > 6) return;
+      const a = surname(R.drivers.find(x => x.code === m[1])), b = surname(R.drivers.find(x => x.code === m[2]));
+      return commSay(pick([`${a} is all over the back of ${b} in the fight for P${m[3]}.`, `What a battle for P${m[3]}, ${a} hunting down ${b}.`]), +m[3] <= 3 ? 2 : 1); }
+    case "CHQ": { const w = R.drivers.find(x => x.res && x.res.position === 1); const nm = (R.h.meeting && R.h.meeting.name) || (st.meta && st.meta.name) || "the Grand Prix";
+      return commSay(w ? pick([`Chequered flag! ${w.first} ${surname(w)} wins the ${nm}!`, `And ${w.first} ${surname(w)} takes the chequered flag! Victory in the ${nm}!`]) : "Chequered flag! The race is over.", 3); }
+  }
+}
+function commCross(t0, t1){
+  const R = st.R; if (!R || st.rec) return;
+  if (t0 < R.lightsOut && R.lightsOut <= t1) { COMM.lastLead = null; commSay(pick(["And they're away! The race is on!", "Five red lights... and go! We are racing!", "Off they go, into turn one!"]), 3); }
+  for (let k = 1; k < R.lapStarts.length; k++) { const ls = R.lapStarts[k]; if (!(t0 < ls && ls <= t1)) continue; const lap = k + 1;
+    if (lap === R.total) commSay(pick(["Final lap! One more lap to go.", "Here comes the last lap!"]), 2);
+    else if (lap % 10 === 0 && order && order.length > 1) { const L = order[0], S = order[1], g = typeof S.gl === "number" && S.gl > 0 ? S.gl : S.gi;
+      commSay(`Lap ${lap} of ${R.total}. ${surname(L.D)} leads` + (typeof g === "number" && g > 0 ? `, ${g < 1 ? "less than a second" : g.toFixed(1) + " seconds"} ahead of ${surname(S.D)}.` : "."), 1); }
+    else if (lap === Math.round(R.total / 2)) commSay("We're at half distance.", 1); }
+  for (const e of R.events) if (t0 < e.t && e.t <= t1) commEvent(e, R);
+}
 /* ---------------- stewards ---------------- */
 const STEW = {
   NOTED: {ticker: "INCIDENT NOTED", c: "#8590a8"}, INV: {ticker: "UNDER INVESTIGATION", c: "#ffb61c"},
@@ -2100,7 +2176,7 @@ $("#speeds").addEventListener("click", e => { const b = e.target.closest("button
 syncSpeeds();
 function setPlaying(p){ st.playing = p && !!(st.R || st.Q); $("#play").setAttribute("aria-label", st.playing ? "Pause" : "Play");
   $("#playIco").innerHTML = st.playing ? `<rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/>` : `<path d="M3 1.5v13l11-6.5z" fill="currentColor"/>`;
-  if (st.playing) { ensureAudio(); $("#podium").hidden = true; const S = st.R || st.Q; if (S && st.t >= S.T - 0.5) setTime(0); } else { stopRadio(); } }
+  if (st.playing) { ensureAudio(); $("#podium").hidden = true; const S = st.R || st.Q; if (S && st.t >= S.T - 0.5) setTime(0); } else { stopRadio(); commStop(); } }
 $("#play").addEventListener("click", () => setPlaying(!st.playing));
 function setCam(c){ st.cam = c; $("#stage").classList.toggle("lin", c === "linear"); $("#app").classList.toggle("lin", c === "linear"); document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cam === c)));
   save();
@@ -2111,6 +2187,7 @@ function selectDriver(num, toggleCam){
   st.sel = num;
 }
 function setToggle(id, key){ const b = $(id); b.setAttribute("aria-pressed", String(st[key])); b.addEventListener("click", () => { st[key] = !st[key]; b.setAttribute("aria-pressed", String(st[key])); if (key === "radioOn" && !st.radioOn) stopRadio(); if (key === "crashCam" && !st.crashCam) endDirector(); save(); }); }
+setToggle("#tgComm", "commOn"); $("#tgComm").addEventListener("click", () => { if (st.commOn) commHello(); else commStop(); });
 setToggle("#tgCrash", "crashCam"); setToggle("#tgRadio", "radioOn"); setToggle("#tgSound", "soundOn");
 $("#fsBtn").addEventListener("click", () => { const el = $("#app");
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
@@ -2187,6 +2264,7 @@ $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[d
 
 /* ---------------- race loading ---------------- */
 async function loadRace(r){
+  commStop();
   if (st.rec) endRecreate(); closeAnalysis(); $("#anaBtn").hidden = false;
   if (r.kind === "quali" || r.kind === "squali" || r.kind === "preview") return loadQuali(r);
   leaveQuali();
