@@ -1010,8 +1010,8 @@ function render(now, wdt){
   if (st.Q) { renderQuali(now, wdt); return; }
   if (!R) return;
   shake *= Math.exp(-wdt*3.5);
-  if (st.cam === "linear") { renderLinear(now, wdt); renderPip(now, wdt); return; }
-  renderTrackScene(now, wdt, false);
+  if (st.cam === "linear") { renderLinear(now, wdt); drawRain(now); renderPip(now, wdt); return; }
+  renderTrackScene(now, wdt, false); drawRain(now);
   renderPip(now, wdt);
 }
 function renderTrackScene(now, wdt, pip){
@@ -1477,7 +1477,7 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["wx", "WEATHER"], ["season", "SEASON"]];
 st.anaTab = "h2h";
 function openAnalysis(){ if (!st.R && !(st.Q && st.Q.q.all)) return; if (st.Q && !["pos", "laps"].includes(st.anaTab)) st.anaTab = "pos"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
@@ -1572,6 +1572,8 @@ function renderAna(){
     nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
     const best = Math.min(...lt.map(l => l.dur));
     info.innerHTML = `<p class="anote"><b>${esc(D.first + " " + D.last)}</b> · fastest lap ${fmtLap(best)}. Dots are coloured by tyre (${Object.entries(COMP).map(([k, v]) => `<span style="color:${v[1]}">${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join(", ")}). Slow laps behind the safety car or through the pits are shown as ▲ at the top; shaded areas are safety-car periods.</p>`;
+  } else if (st.anaTab === "wx") {
+    renderWeather(info);
   } else if (st.anaTab === "season") {
     renderSeason(ctl, info);
   }
@@ -1609,12 +1611,18 @@ function toggleRec(){
   const chunks = []; const type = ["video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t)) || "";
   recorder = new MediaRecorder(cv.captureStream(30), type ? {mimeType: type, videoBitsPerSecond: 6e6} : undefined);
   recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
-  recorder.onstop = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(chunks, {type: "video/webm"}));
-    a.download = `grid-replay-${(st.meta && st.meta.name || "clip").replace(/\W+/g, "-").toLowerCase()}.webm`; document.body.appendChild(a); a.click(); a.remove(); recorder = null; $("#recBtn").setAttribute("aria-pressed", "false"); $("#recBtn").textContent = "● REC"; };
+  recorder.onstop = async () => {
+    const blob = new Blob(chunks, {type: "video/webm"}), name = `grid-replay-${(st.meta && st.meta.name || "clip").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\W+/g, "-").toLowerCase()}.webm`;
+    recorder = null; $("#recBtn").setAttribute("aria-pressed", "false"); $("#recBtn").textContent = "● REC";
+    if (dl) { try { await dl.save({filename: name, data: blob}); $("#recBtn").textContent = "● REC (saved)"; } catch (e) { $("#recBtn").textContent = e && e.code === "declined" ? "● REC" : "● REC (couldn't save)"; } return; }
+    const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
   recorder.start(500); $("#recBtn").setAttribute("aria-pressed", "true"); $("#recBtn").textContent = "■ STOP REC";
 }
 function alertRec(m){ $("#recBtn").textContent = m; }
-if (location.protocol === "file:") { $("#recBtn").hidden = false; $("#recBtn").onclick = toggleRec; }
+let dl = null;
+$("#recBtn").onclick = toggleRec;
+if (location.protocol === "file:") $("#recBtn").hidden = false;
+else (async () => { try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; } if (dl && cv.captureStream && typeof MediaRecorder !== "undefined") $("#recBtn").hidden = false; })();
 /* ---------------- qualifying analysis: live order through Q1/Q2/Q3, and every lap time ---------------- */
 function qOrderSeries(Q){
   const q = Q.q, all = q.all || [], ph = (q.phases || []).map(p => p[1]), byNum = {}; for (const d of q.drivers) byNum[d.num] = d;
@@ -1736,7 +1744,7 @@ function updateHUD(){
   else ban.hidden = true;
   // weather
   const wx = R.h.weather; let w = null; for (const x of wx) { if (x[0] <= Math.max(t, wx.length ? wx[0][0] : 0)) w = x; else break; }
-  const wh = w ? `<span>AIR ${Math.round(w[1])}°C</span><span>TRACK ${Math.round(w[2])}°C</span>` + (w[3] > 0 ? `<span class="rain">RAIN</span>` : "") : "";
+  const wh = w ? `<span>AIR ${Math.round(w[1])}°C</span>` + (w[2] > 5 ? `<span>TRACK ${Math.round(w[2])}°C</span>` : "") + (w[5] != null ? `<span>WIND ${w[5].toFixed(1)} m/s</span>` : "") + (w[3] > 0 ? `<span class="rain">RAIN</span>` : "") : "";
   const wxEl = $("#wx"); if (wxEl.dataset.h !== wh) { wxEl.dataset.h = wh; wxEl.innerHTML = wh; }
   // ticker: last 4 events
   const n = ub(R.evT, t); const evs = R.events.slice(Math.max(0, n - 60), n).reverse();
@@ -1909,6 +1917,41 @@ document.addEventListener("mouseover", e => { const el = e.target.closest("[data
 document.addEventListener("mouseout", e => { if (e.target.closest("[data-tip]")) showTip(""); });
 function stintInfo(D, t){ const lap = lapOf(D, t), s = stintOf(D, lap); if (!s) return null;
   return {compound: s[3], age: s[4] + Math.max(0, lap - s[1]), fitted: s[1], used: s[4], no: D.stints.indexOf(s) + 1}; }
+
+/* ---------------- weather ---------------- */
+function wxRows(R){ return (R.h.weather || []).filter(w => w[0] >= R.lightsOut - 120 && w[0] <= R.chq + 120); }
+function rainAt(R, t){ let r = 0; for (const w of R.h.weather || []) { if (w[0] > t) break; r = w[3]; } return r > 0; }
+function renderWeather(info){
+  const R = st.R, W2 = wxRows(R); if (!W2.length) { $("#anaCv").hidden = true; info.innerHTML = '<p class="anote">No weather data was published for this race.</p>'; return; }
+  const lap = t => leaderLapF(R, t), air = W2.map(w => w[1]), trk = W2.filter(w => w[2] > 5).map(w => w[2]);
+  const lo = Math.floor(Math.min(...air, ...trk) - 2), hi = Math.ceil(Math.max(...air, ...trk) + 2);
+  const {x, w, h} = anaCanvas(260), {X, Y} = axes(x, 44, 22, 12, 22, w, h, 0, R.total, lo, hi, "LAP", "°C", false, v => v + "°");
+  // rain bands
+  let a = null; W2.forEach((r, i) => { const wet = r[3] > 0; if (wet && a == null) a = r[0]; if ((!wet || i === W2.length - 1) && a != null) { x.fillStyle = "rgba(63,216,255,.16)"; x.fillRect(X(lap(a)), 22, Math.max(3, X(lap(r[0])) - X(lap(a))), h - 44); x.fillStyle = "#3fd8ff"; x.font = '700 11px "Saira Condensed", sans-serif'; x.fillText("RAIN", X(lap(a)) + 4, 36); a = null; } });
+  const line = (col, idx, skip) => { x.strokeStyle = col; x.lineWidth = 2.2; x.beginPath(); let on = false; for (const r of W2) { if (skip && r[idx] <= 5) { on = false; continue; } const px = X(lap(r[0])), py = Y(r[idx]); on ? x.lineTo(px, py) : x.moveTo(px, py); on = true; } x.stroke(); };
+  line("#ff8a3d", 2, true); line("#e8ecf6", 1, false);
+  x.font = '700 12px "Saira Condensed", sans-serif'; x.fillStyle = "#ff8a3d"; x.fillText("TRACK", w - 70, Y(trk[trk.length - 1] || hi) - 6); x.fillStyle = "#e8ecf6"; x.fillText("AIR", w - 70, Y(air[air.length - 1]) + 14);
+  nowLine(x, X, 22, h, 22, lap(st.t));
+  const hum = W2.map(r => r[4]).filter(v => v != null), wind = W2.map(r => r[5]).filter(v => v != null), rainy = W2.filter(r => r[3] > 0);
+  const avg = v => v.length ? v.reduce((p, c) => p + c, 0) / v.length : null, f1 = v => v == null ? "–" : v.toFixed(1);
+  const cur = (() => { let c = W2[0]; for (const r of W2) { if (r[0] > st.t) break; c = r; } return c; })();
+  const dirName = d => d == null ? "" : ["N","NE","E","SE","S","SW","W","NW"][Math.round(((d % 360) + 360) % 360 / 45) % 8];
+  info.innerHTML = `<table class="h2h"><tr><th></th><th>NOW (LAP ${Math.max(1, Math.round(lap(st.t)))})</th><th>RACE AVERAGE</th></tr>
+    <tr><th>Air</th><td style="text-align:center">${f1(cur[1])}°C</td><td style="text-align:center">${f1(avg(air))}°C</td></tr>
+    <tr><th>Track</th><td style="text-align:center">${cur[2] > 5 ? f1(cur[2]) + "°C" : "–"}</td><td style="text-align:center">${f1(avg(trk))}°C</td></tr>
+    <tr><th>Humidity</th><td style="text-align:center">${cur[4] != null ? Math.round(cur[4]) + "%" : "–"}</td><td style="text-align:center">${hum.length ? Math.round(avg(hum)) + "%" : "–"}</td></tr>
+    <tr><th>Wind</th><td style="text-align:center">${cur[5] != null ? f1(cur[5]) + " m/s " + dirName(cur[6]) : "–"}</td><td style="text-align:center">${wind.length ? f1(avg(wind)) + " m/s" : "–"}</td></tr>
+    <tr><th>Rain</th><td style="text-align:center">${cur[3] > 0 ? "Yes" : "No"}</td><td style="text-align:center">${rainy.length ? `From lap ${Math.max(1, Math.round(lap(rainy[0][0])))} to ${Math.max(1, Math.round(lap(rainy[rainy.length - 1][0])))}` : "Dry race"}</td></tr></table>
+    <p class="anote">Readings from the circuit's weather station, about once a minute. Gaps in the track line are sensor dropouts.</p>`;
+}
+function drawRain(now){
+  if (!st.R || !rainAt(st.R, st.t) || RM) return;
+  ctx.save(); ctx.strokeStyle = "rgba(170,210,255,0.22)"; ctx.lineWidth = 1;
+  const n = Math.round(W * H / 9000), sp = st.playing ? now * 0.9 : 0; ctx.beginPath();
+  for (let i = 0; i < n; i++) { const x0 = (i * 97.13 % 1) * (W + 60) - 30, y0 = ((i * 53.71 % 1) * (H + 40) + sp * (0.6 + (i % 7) / 10)) % (H + 40) - 20;
+    ctx.moveTo(x0, y0); ctx.lineTo(x0 - 4, y0 + 14); }
+  ctx.stroke(); ctx.restore();
+}
 /* ---------------- synthesized sound ---------------- */
 let eng = null;
 function ensureEngine(){

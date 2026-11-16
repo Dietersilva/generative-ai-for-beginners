@@ -204,7 +204,7 @@ def build(session_key, meeting, rnd, out_dir):
             rc.append([rel(r["date"]), kind, msg])
     rc.sort(key=lambda r: r[0])
 
-    weather = [[rel(w["date"]), w["air_temperature"], w["track_temperature"], w["rainfall"]]
+    weather = [[rel(w["date"]), w["air_temperature"], w["track_temperature"], w["rainfall"], w.get("humidity"), w.get("wind_speed"), w.get("wind_direction")]
                for w in get("weather", session_key=session_key)]
     weather = [w for w in weather if -1800 < w[0] < T1 - T0 + 600]
 
