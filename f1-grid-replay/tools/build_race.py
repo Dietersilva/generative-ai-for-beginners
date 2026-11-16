@@ -46,6 +46,11 @@ def build(session_key, meeting, rnd, out_dir):
 
     # --- time window -------------------------------------------------------
     lap1 = [t1(l["date_start"]) for l in laps if l["lap_number"] == 1 and l["date_start"]]
+    if not lap1:   # lap 1 start missing: estimate it from lap 2 starts and lap 1 durations
+        lap2 = [t1(l["date_start"]) for l in laps if l["lap_number"] == 2 and l["date_start"]]
+        d1 = sorted(l["lap_duration"] for l in laps if l["lap_number"] == 1 and l["lap_duration"]) or [100.0]
+        if not lap2: print("  no lap timing, skip"); return None
+        lap1 = [min(lap2) - d1[0]]
     T0 = min(lap1) - 25.0
     ends = []
     for l in laps:

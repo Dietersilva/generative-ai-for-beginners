@@ -8,6 +8,7 @@ TOOLS = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, TOOLS)
 from build_race import build, get
 from build_quali import tyre_for, session_laps
 idx_path, work = sys.argv[1], sys.argv[2]
+YEAR = int(os.environ.get("GR_YEAR", "2026"))
 idx = json.load(open(idx_path)); pubd = f"{work}/publish"
 for d in ("data", "radio", "quali"): os.makedirs(f"{pubd}/{d}", exist_ok=True)
 os.makedirs(f"{work}/race/data", exist_ok=True)
@@ -15,8 +16,8 @@ ts = lambda s: datetime.datetime.fromisoformat(s).timestamp()
 iso = lambda e: datetime.datetime.fromtimestamp(e, datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
 now = datetime.datetime.now(datetime.timezone.utc)
 have = {r["session_key"] for k in ("races", "sprints", "quali") for r in idx.get(k, [])}
-meetings = {m["meeting_key"]: m for m in get("meetings", year=2026)}
-sessions = [s for s in get("sessions", year=2026) if not s.get("is_cancelled")]
+meetings = {m["meeting_key"]: m for m in get("meetings", year=YEAR)}
+sessions = [s for s in get("sessions", year=YEAR) if not s.get("is_cancelled")]
 race_order = [s["meeting_key"] for s in sorted((s for s in sessions if s["session_name"] == "Race"), key=lambda s: s["date_start"])]
 rnd_of = lambda mk: race_order.index(mk) + 1 if mk in race_order else 0
 todo = [s for s in sessions if s["session_name"] in ("Race", "Sprint", "Qualifying", "Sprint Qualifying") and s["session_key"] not in have
@@ -28,11 +29,23 @@ for s in sorted(todo, key=lambda s: s["date_start"]):
     meta = {"name": m["meeting_name"], "circuit": m["circuit_short_name"], "location": s["location"], "country": s["country_name"],
             "code": m["country_code"], "date": s["date_start"][:10], "gmt_offset": s.get("gmt_offset")}
     if s["session_name"] in ("Race", "Sprint"):
-        info = build(sk, meta, rnd, f"{work}/race/data")
+        done_bin = f"{work}/race/data/{sk}.bin"
+        prev = {r["session_key"]: r for r in (json.load(open(f"{work}/race/partial.json")) if os.path.exists(f"{work}/race/partial.json") else [])}
+        if sk in prev and os.path.exists(done_bin):
+            races_new.append(prev[sk]); continue          # resume: built on an earlier run
+        try: info = build(sk, meta, rnd, f"{work}/race/data")
+        except Exception as e: skipped.append(f"{m['meeting_name']} {s['session_name']} (error: {e})"); continue
         if not info: skipped.append(f"{m['meeting_name']} {s['session_name']} (no lap data yet)"); continue
         subprocess.run([sys.executable, "-I", f"{TOOLS}/fill_holes.py", f"{work}/race/data/{sk}.bin", str(sk)])
         races_new.append({"session_key": sk, "round": rnd, "kind": "sprint" if s["session_name"] == "Sprint" else None, **meta, **info})
+        json.dump(races_new, open(f"{work}/race/partial.json", "w"))
     else:
+        kind0 = "squali" if s["session_name"] == "Sprint Qualifying" else "quali"
+        if os.path.exists(f"{pubd}/quali/{sk}.json"):   # resume
+            q0 = json.load(open(f"{pubd}/quali/{sk}.json"))
+            idx.setdefault("quali", []).append({"session_key": sk, "kind": kind0, "round": rnd, "name": m["meeting_name"], "circuit": m["circuit_short_name"],
+                                                "code": m["country_code"], "date": s["date_start"][:10], "file": f"quali/{sk}.json", "pole": q0["drivers"][0]["code"]})
+            new_files.append(f"quali/{sk}.json"); added.append(f"{m['meeting_name']} {s['session_name']}"); continue
         drivers = {d["driver_number"]: d for d in get("drivers", session_key=sk)}
         res = {r["driver_number"]: r for r in get("session_result", session_key=sk)}
         laps = get("laps", session_key=sk); stints = get("stints", session_key=sk); best = {}
@@ -59,7 +72,7 @@ for s in sorted(todo, key=lambda s: s["date_start"]):
                                             "code": m["country_code"], "date": s["date_start"][:10], "file": f"quali/{sk}.json", "pole": out[0]["code"]})
         new_files.append(f"quali/{sk}.json"); added.append(f"{m['meeting_name']} {s['session_name']}")
 if races_new:
-    json.dump({"season": 2026, "races": races_new}, open(f"{work}/race/index.json", "w"))
+    json.dump({"season": YEAR, "races": races_new}, open(f"{work}/race/index.json", "w"))
     subprocess.run([sys.executable, "-I", f"{TOOLS}/build_radio.py", f"{work}/race"])
     races_new = json.load(open(f"{work}/race/index.json"))["races"]
     # optional: transcribe the new radio (needs `pip install faster-whisper` and Hugging Face access for the model)

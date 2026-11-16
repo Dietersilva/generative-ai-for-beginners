@@ -3,7 +3,11 @@ import json, sys
 src, idx_path, out = sys.argv[1], sys.argv[2], sys.argv[3]
 page = open(src).read()
 idx = json.load(open(idx_path)); base = idx_path.rsplit('/', 1)[0]
-emb = {"index.json": json.dumps(idx, separators=(',', ':'))}
+# optional 4th arg: season prefix such as "2025/" (index paths already carry it; files live under the site root)
+pre = sys.argv[4] if len(sys.argv) > 4 else ""
+sbase = base
+if pre: base = base[: -len(pre.rstrip("/"))].rstrip("/") or "."
+emb = {pre + "index.json": json.dumps(idx, separators=(',', ':'))}
 for r in idx["races"] + idx.get("sprints", []):
     emb[r["file"]] = open(f"{base}/{r['file']}").read()
     if r.get("radio_file"):
@@ -13,7 +17,7 @@ import base64 as _b64
 for q in idx.get("quali", []) + idx.get("previews", []):
     emb[q["file"]] = _b64.b64encode(open(f"{base}/{q['file']}", "rb").read()).decode()
 import os as _os
-if _os.path.exists(f"{base}/season.json"): emb["season.json"] = _b64.b64encode(open(f"{base}/season.json", "rb").read()).decode()
+if _os.path.exists(f"{sbase}/season.json"): emb[pre + "season.json"] = _b64.b64encode(open(f"{sbase}/season.json", "rb").read()).decode()
 embed = "<script>window.__EMBED = " + json.dumps(emb) + ";</script>\n"
 i = page.index("<script>\n(() => {")
 page = page[:i] + embed + page[i:]

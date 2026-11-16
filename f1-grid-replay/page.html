@@ -389,6 +389,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 .inclist li{display:flex;align-items:center;gap:10px;padding:6px 8px;background:var(--panel);border-radius:8px;font-size:13px}
 .inclist li.none{color:var(--muted)}
 .inclist .k{font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.1em;padding:2px 7px;border-radius:4px;background:#ff8a3d;color:#160800}
+.inclist .k-bt{background:var(--sc);color:#1b1200}
 .inclist .k-crash{background:var(--red);color:#fff} .inclist .k-contact{background:var(--sc)} .inclist .k-ov{background:var(--gain);color:#022}
 .inclist .when{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--dim)}
 .inclist .btn{padding:4px 10px;font-size:11.5px}
@@ -409,13 +410,16 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 .app.tfold #gapMode{font-size:9.5px;padding:2px 4px}
 .app.tfold #paneRadio{display:none}
 .app.tfold #paneTiming{display:flex!important}
+
+.season-sel{max-width:110px;padding-right:30px;background-position:right 10px center}
 </style>
 
 <div class="app" id="app">
   <header class="top">
     <div class="brand" aria-hidden="true"><span class="mark"></span>
-      <div><div class="brand-name">GRID REPLAY</div><div class="brand-sub">2026 season · telemetry replay</div></div>
+      <div><div class="brand-name">GRID REPLAY</div><div class="brand-sub" id="brandSub">2026 season · telemetry replay</div></div>
     </div>
+    <select class="race-sel season-sel" id="seasonSel" aria-label="Choose a season"></select>
     <select class="race-sel" id="raceSel" aria-label="Choose a race"><option>Loading season…</option></select>
     <div class="wx" id="wx"></div>
     <button class="fs-btn" id="anaBtn" title="Head to head, incidents, positions, lap times and season standings">ANALYSIS</button>
@@ -770,6 +774,9 @@ function buildEvents(R){
     E.push({t: e[0], k: "STEW", label: m.ticker, text: who + (e[2] === "PEN" || e[2] === "TL" ? " · " + e[3] : "") + (e[4] ? " · " + e[4].toLowerCase() : ""), c: m.c, stew: e}); }
   R.overtakes = detectOvertakes(R);
   for (const o of R.overtakes) E.push({t: o.t, k: "OV", label: "OVERTAKE", text: `${o.a.code} passes ${o.b.code} for P${o.pos}`, c: "#38e383", ov: o});
+  R.battles = detectBattles(R);
+  for (const b of R.battles) { const t3 = R.lapStarts[Math.min(R.lapStarts.length - 1, b.fromLap + 1)] + 5;
+    E.push({t: t3, k: "BT", label: "BATTLE", text: `${b.a.code} chasing ${b.b.code} for P${b.pos} · within 1 s for 3 laps`, c: "#ffb61c", ov: {t: b.t0 + 3}}); }
   E.push({t: R.chq, k: "CHQ", label: "CHEQUERED FLAG", text: winnerText(R), c: "#ffffff"});
   E.sort((a,b)=>a.t-b.t);
   R.events = E; R.evT = E.map(e => e.t);
@@ -1331,7 +1338,7 @@ async function loadQuali(r){
   closeAnalysis();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
-  document.title = `${r.name} ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · Grid Replay 2026`;
+  document.title = `${r.name} ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · Grid Replay ${st.year || ""}`;
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + (r.kind === "squali" ? "SPRINT QUALIFYING" : "QUALIFYING");
   try {
     const u8 = await fetchBytes(r.file); if (id !== st.loadingId) return;
@@ -1477,7 +1484,7 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["wx", "WEATHER"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["season", "SEASON"]];
 st.anaTab = "h2h";
 function openAnalysis(){ if (!st.R && !(st.Q && st.Q.q.all)) return; if (st.Q && !["pos", "laps"].includes(st.anaTab)) st.anaTab = "pos"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
@@ -1572,6 +1579,8 @@ function renderAna(){
     nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
     const best = Math.min(...lt.map(l => l.dur));
     info.innerHTML = `<p class="anote"><b>${esc(D.first + " " + D.last)}</b> · fastest lap ${fmtLap(best)}. Dots are coloured by tyre (${Object.entries(COMP).map(([k, v]) => `<span style="color:${v[1]}">${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join(", ")}). Slow laps behind the safety car or through the pits are shown as ▲ at the top; shaded areas are safety-car periods.</p>`;
+  } else if (st.anaTab === "bt") {
+    renderBattles(info);
   } else if (st.anaTab === "wx") {
     renderWeather(info);
   } else if (st.anaTab === "season") {
@@ -1580,7 +1589,7 @@ function renderAna(){
 }
 function leaderLapF(R, t){ const i = ub(R.lapStarts, t) - 1; if (i < 0) return 0; const a = R.lapStarts[i], b = R.lapStarts[i+1] ?? a + 90; return clamp(i + 1 + (t - a)/(b - a) - 1, 0, R.total); }
 async function renderSeason(ctl, info){
-  if (!st.season) { try { st.season = JSON.parse(new TextDecoder().decode(await fetchBytes("season.json"))); } catch (e) { info.innerHTML = '<p class="anote">Season data could not be loaded.</p>'; return; } }
+  if (!st.season) { try { st.season = JSON.parse(new TextDecoder().decode(await fetchBytes(st.prefix + "season.json"))); } catch (e) { info.innerHTML = '<p class="anote">Season data could not be loaded.</p>'; return; } }
   const S = st.season, nR = S.rounds.length; if (st.seasonK == null) st.seasonK = nR - 1;
   ctl.innerHTML = `<button class="btn" id="seaPlay">${st.seasonPlay ? "■ STOP" : "▶ PLAY SEASON"}</button><input type="range" id="seaK" min="0" max="${nR - 1}" step="0.01" value="${st.seasonK}"><span class="when" id="seaLbl"></span>`;
   $("#seaK").oninput = e => { st.seasonK = +e.target.value; st.seasonPlay = false; drawSeason(); };
@@ -1666,6 +1675,38 @@ function renderQualiAna(){
     const slow = all.filter(l => l[0] === st.qLapDrv && !l[5] && l[3] > lim).length;
     info.innerHTML = `<p class="anote"><b>${esc(d.first + " " + d.last)}</b> · best ${fmtLap(d.time)} (ringed) · ${mine.length} push lap${mine.length === 1 ? "" : "s"} shown, coloured by tyre. Grey dots are everyone else; the purple dashed line is pole. Out-laps, cool-down laps and anything more than 7% off pole are left out${slow ? ` (${slow} of ${esc(d.code)}'s)` : ""}.</p>`;
   }
+}
+/* ---------------- battles: within 1 s of the car ahead for 3+ laps ---------------- */
+function detectBattles(R){
+  const runs = {}, done = [];
+  const close = (key, k, why) => { const r = runs[key]; delete runs[key]; if (r && r.laps >= 3) done.push({...r, toLap: k, end: why}); };
+  for (let k = 1; k < R.lapStarts.length; k++) {
+    const t = R.lapStarts[k] + 5; if (t > R.chq) break; if (R.segs.some(s => t >= s.a && t <= s.b + 20)) { for (const key in runs) close(key, k, "neutralised"); continue; }
+    const ord = R.drivers.map(D => ({D, pos: posAt(D, t), gi: gapOf(D, t)[1]})).filter(o => o.pos < 99 && !isOut(o.D, t)).sort((a, b) => a.pos - b.pos);
+    const seen = new Set();
+    for (let i = 1; i < ord.length; i++) {
+      const A = ord[i], B = ord[i-1]; if (A.gi == null || A.gi < 0 || A.gi > 1.0 || inPit(A.D, t) || inPit(B.D, t)) continue;
+      const key = A.D.num + "-" + B.D.num; seen.add(key);
+      const r = runs[key] || (runs[key] = {a: A.D, b: B.D, fromLap: k + 1, t0: t, laps: 0, minGap: 9, pos: B.pos});
+      r.laps++; r.minGap = Math.min(r.minGap, A.gi); r.t1 = t;
+    }
+    for (const key in runs) if (!seen.has(key)) {
+      const r = runs[key], swapped = posAt(r.a, t) < posAt(r.b, t), pitted = r.a.pits.concat(r.b.pits).some(p => p[0] > r.t1 - 30 && p[0] < t + 30);
+      close(key, k, swapped ? "pass" : pitted ? "pit" : "gap");
+    }
+  }
+  for (const key in runs) close(key, R.lapStarts.length, "flag");
+  return done.sort((x, y) => y.laps - x.laps || x.t0 - y.t0);
+}
+function battleEnd(b){ return b.end === "pass" ? `${b.a.code} got past` : b.end === "pit" ? "ended in the pits" : b.end === "gap" ? `${b.b.code} pulled away` : b.end === "neutralised" ? "safety car / flag" : "ran to the flag"; }
+function renderBattles(info){
+  const R = st.R, bs = R.battles || [];
+  $("#anaCv").hidden = true;
+  info.innerHTML = `<ul class="inclist">${bs.map((b, i) => `<li><span class="k k-bt">P${b.pos}</span><b style="color:${b.a.css}">${esc(b.a.code)}</b> chasing <b style="color:${b.b.css}">${esc(b.b.code)}</b>
+      <span class="when">Laps ${b.fromLap}–${b.toLap} · ${b.laps} laps · closest ${b.minGap.toFixed(2)} s · ${esc(battleEnd(b))}</span><button class="btn" data-bt="${i}">▶ WATCH</button></li>`).join("") ||
+      '<li class="none">No battles: nobody stayed within a second of the car ahead for three laps or more.</li>'}</ul>
+    <p class="anote">A battle is one car staying within 1 second of the car ahead for at least three laps in a row (laps behind the safety car don't count). <b>Watch</b> jumps to the start of the fight and follows the chasing car.</p>`;
+  info.querySelectorAll("[data-bt]").forEach(btn => btn.onclick = () => { const b = bs[+btn.dataset.bt]; closeAnalysis(); st.sel = b.a.num; setTime(b.t0 - 3); if (st.speed > 4) { st.speed = 4; syncSpeeds(); } setPlaying(true); });
 }
 /* ---------------- HUD & tower ---------------- */
 const rowsIn = $("#rowsIn"); let rowEls = {};
@@ -2133,10 +2174,10 @@ function fillRaceSelect(){
   const up = (idx.upcoming || []).filter(u => !u.pending && !prevs.some(p => p.round === u.round) && !idx.races.some(r => r.round === u.round)).map(u => `<option disabled>R${String(u.round).padStart(2, "0")} · ${esc(u.name)} · ${esc(d(u.date))} · not run yet</option>`).join("");
   const spr = (idx.sprints || []).map(r => `<option value="${r.session_key}">R${String(r.round).padStart(2, "0")} · ${esc(r.name.replace("Grand Prix", "GP"))} · Sprint · ${esc(d(r.date))}${r.winner ? " · won by " + esc(r.winner) : ""}${r.radio ? " · radio" : ""}</option>`).join("");
   const qs = (idx.quali || []).map(r => `<option value="${r.session_key}">R${String(r.round).padStart(2, "0")} · ${esc(r.name.replace("Grand Prix", "GP"))} · ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · ${esc(d(r.date))}${r.pole ? " · pole " + esc(r.pole) : ""}</option>`).join("");
-  sel.innerHTML = `<optgroup label="Grands Prix · ${idx.races.length}">${done}</optgroup>` + (spr ? `<optgroup label="Sprints · ${idx.sprints.length}">${spr}</optgroup>` : "") + (qs ? `<optgroup label="Qualifying · ghost laps">${qs}</optgroup>` : "") + (prevOpts || up ? `<optgroup label="Coming up · previews">${prevOpts}${up}</optgroup>` : "");
+  sel.innerHTML = `<optgroup label="${st.year} Grands Prix · ${idx.races.length}">${done}</optgroup>` + (spr ? `<optgroup label="Sprints · ${idx.sprints.length}">${spr}</optgroup>` : "") + (qs ? `<optgroup label="Qualifying · ghost laps">${qs}</optgroup>` : "") + (prevOpts || up ? `<optgroup label="Coming up · previews">${prevOpts}${up}</optgroup>` : "");
   if (st.meta) sel.value = String(st.meta.session_key);
 }
-$("#raceSel").addEventListener("change", e => { const r = allSessions().find(x => x.session_key === +e.target.value); if (r) location.hash = !r.kind || r.kind === "gp" ? "round-" + r.round : "s-" + r.session_key; e.target.blur(); });
+$("#raceSel").addEventListener("change", e => { const r = allSessions().find(x => x.session_key === +e.target.value); if (r) location.hash = (st.year !== 2026 ? st.year + "-" : "") + (!r.kind || r.kind === "gp" ? "round-" + r.round : "s-" + r.session_key); e.target.blur(); });
 function allSessions(){ return st.idx.races.concat(st.idx.sprints || [], st.idx.quali || [], st.idx.previews || []); }
 $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[data-sk]"); if (!b) return; closeCal(); const r = st.idx.races.find(x => x.session_key === +b.dataset.sk); if (r) { location.hash = "round-" + r.round; } });
 
@@ -2147,7 +2188,7 @@ async function loadRace(r){
   leaveQuali();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
-  document.title = `${r.name} · Grid Replay 2026`;
+  document.title = `${r.name} · Grid Replay ${st.year || ""}`;
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + r.name.toUpperCase();
   $("#podium").hidden = true;
   try {
@@ -2178,9 +2219,28 @@ function showPodium(){
   $("#pdPick").onclick = () => { $("#podium").hidden = true; const sel = $("#raceSel"); sel.focus(); try { sel.showPicker && sel.showPicker(); } catch (e) {} };
 }
 
+/* ---------------- seasons ---------------- */
+const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}].filter(s => !window.__EMBED || window.__EMBED[s.p + "index.json"]);
+st.year = null; st.prefix = "";
+$("#seasonSel").innerHTML = SEASONS.map(s => `<option value="${s.y}">${s.y}</option>`).join("");
+if (SEASONS.length < 2) $("#seasonSel").hidden = true;
+$("#seasonSel").addEventListener("change", e => { const def = e.target.value === String(SEASONS[0].y); location.hash = def ? "" : e.target.value; if (def) routeFromHash(); e.target.blur(); });
+async function loadSeason(y){
+  const S = SEASONS.find(s => s.y === y) || SEASONS[0]; st.year = S.y; st.prefix = S.p; st.season = null; st.seasonK = null; st.idx = null; st.meta = null;
+  $("#seasonSel").value = String(S.y); $("#brandSub").textContent = S.y + " season · telemetry replay";
+  $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING THE " + S.y + " SEASON";
+  st.seasonLoading = (async () => {
+    const key = S.p + "index.json";
+    const res = window.__EMBED && window.__EMBED[key] ? new Response(window.__EMBED[key]) : await fetch(key); if (!res.ok) throw new Error("HTTP " + res.status);
+    st.idx = await res.json(); if (!st.idx.races.length) throw new Error("No races in the index"); fillRaceSelect(); routeFromHash();
+  })();
+  try { await st.seasonLoading; } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+}
 function routeFromHash(){
-  if (!st.idx) return; const m = /^#round-(\d+)$/.exec(location.hash);
-  const m2 = /^#s-(\d+)$/.exec(location.hash);
+  const ym = /^#(\d{4})(?:-|$)/.exec(location.hash), y = ym ? +ym[1] : SEASONS[0].y;
+  if (SEASONS.some(s => s.y === y) && y !== st.year) { loadSeason(y); return; }
+  if (!st.idx) return; const h = location.hash.replace(/^#\d{4}-?/, "#"); const m = /^#round-(\d+)$/.exec(h);
+  const m2 = /^#s-(\d+)$/.exec(h);
   let r = m2 ? allSessions().find(x => x.session_key === +m2[1]) : m && st.idx.races.find(x => x.round === +m[1] && x.kind !== "sprint");
   if (!r) r = st.idx.races[st.idx.races.length - 1];
   if (!st.meta || st.meta.session_key !== r.session_key) loadRace(r);
@@ -2210,10 +2270,8 @@ applyFold();
 requestAnimationFrame(frame);
 
 (async () => {
-  try { const res = window.__EMBED && window.__EMBED["index.json"] ? new Response(window.__EMBED["index.json"]) : await fetch("index.json"); if (!res.ok) throw new Error("HTTP " + res.status);
-    st.idx = await res.json(); if (!st.idx.races.length) throw new Error("No races in the index"); fillRaceSelect();
-    routeFromHash();
-  } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN GRID-REPLAY-2026-SEASON.HTML (THE SINGLE-FILE VERSION) INSTEAD." : "COULDN'T LOAD THE 2026 SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+  try { routeFromHash(); await st.seasonLoading;
+  } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN GRID-REPLAY-2026-SEASON.HTML (THE SINGLE-FILE VERSION) INSTEAD." : "COULDN'T LOAD THE SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 })();
 })();
 </script>
