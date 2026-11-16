@@ -1,8 +1,10 @@
-"""Package the 2025 build (work2025/publish) into pub/2025/ with '2025/'-prefixed paths."""
-import gzip, json, os, shutil, struct
-SRC, DST, P = "work2025/publish", "pub/2025", "2025/"
+"""Package a past season's build (work<year>/publish) into pub/<year>/ with '<year>/'-prefixed paths.
+usage: python3 tools/package2025.py [year]   (default 2025)"""
+import gzip, json, os, shutil, struct, sys
+Y = sys.argv[1] if len(sys.argv) > 1 else "2025"
+SRC, DST, P = f"work{Y}/publish", f"pub/{Y}", f"{Y}/"
 idx = json.load(open(f"{SRC}/index.json"))
-SPRINT_KEYS = {9993, 10028}          # China & Miami sprints mislabelled by the resume record
+SPRINT_KEYS = {9993, 10028} if Y == "2025" else set()   # 2025 China & Miami sprints mislabelled by the resume record
 moved = [r for r in idx["races"] if r["session_key"] in SPRINT_KEYS]
 idx["races"] = [r for r in idx["races"] if r["session_key"] not in SPRINT_KEYS]
 for r in moved: r["kind"] = "sprint"
@@ -24,7 +26,7 @@ def season_from(idx):
             rows = [(drv[x["driver_number"]]["name_acronym"], f"{drv[x['driver_number']]['first_name']} {drv[x['driver_number']]['last_name']}",
                      drv[x["driver_number"]]["team_name"], "#" + (drv[x["driver_number"]]["team_colour"] or "888888"), x.get("points") or 0) for x in res]
         else:
-            b = gzip.decompress(open(f"work2025/race/data/{r['session_key']}.bin", "rb").read()); n = struct.unpack("<I", b[:4])[0]; h = json.loads(b[4:4 + n])
+            b = gzip.decompress(open(f"work{Y}/race/data/{r['session_key']}.bin", "rb").read()); n = struct.unpack("<I", b[:4])[0]; h = json.loads(b[4:4 + n])
             rows = [(d["code"], f"{d['first']} {d['last']}", d["team"], d["colour"], d["result"].get("points") or 0) for d in h["drivers"]]
         rounds.append({"label": ("R%02d " % r["round"]) + r.get("code", ""), "name": r["name"], "kind": r.get("kind") or "gp", "winner": r.get("winner")})
         for code, name, team, col, pts in rows:

@@ -9,7 +9,10 @@ idx = json.load(open(f"{out}/index.json"))
 tmp = tempfile.mkdtemp()
 for r in idx["races"]:
     sk = r["session_key"]; path = f"{out}/radio/{sk}.bin"
-    if os.path.exists(path) or r.get("radio") == 0:
+    if os.path.exists(path):   # already packed (e.g. on a resumed run): keep it and record it
+        rb = open(path, "rb").read(); r["radio"] = len(json.loads(rb[4:4 + struct.unpack("<I", rb[:4])[0]])); r["radio_file"] = f"radio/{sk}.bin"
+        continue
+    if r.get("radio") == 0:
         continue
     b = gzip.decompress(open(f"{out}/{r['file']}", "rb").read())
     n = struct.unpack("<I", b[:4])[0]; h = json.loads(b[4:4 + n]); T0 = h["T0"]
@@ -22,7 +25,9 @@ for r in idx["races"]:
         m = re.search(r"_(\d{8})_(\d{6})\.mp3$", url)
         if m:
             local = datetime.datetime.strptime(m.group(1) + m.group(2), "%Y%m%d%H%M%S").replace(tzinfo=datetime.timezone.utc)
-            t = local.timestamp() - off - T0
+            # file names carry local track time in most seasons but UTC in early 2024: use whichever matches OpenF1's clip date
+            cands = [local.timestamp() - off, local.timestamp()]
+            t = min(cands, key=lambda x: abs(x - t1(c["date"]))) - T0
         else:
             t = t1(c["date"]) - T0
         if t < -120 or t > h["chequer"] + 300:

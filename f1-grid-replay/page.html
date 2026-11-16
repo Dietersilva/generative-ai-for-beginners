@@ -2224,7 +2224,7 @@ function showPodium(){
 }
 
 /* ---------------- seasons ---------------- */
-const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}].filter(s => !window.__EMBED || window.__EMBED[s.p + "index.json"]);
+const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}].filter(s => !window.__EMBED || window.__EMBED[s.p + "index.json"]);
 st.year = null; st.prefix = "";
 $("#seasonSel").innerHTML = SEASONS.map(s => `<option value="${s.y}">${s.y}</option>`).join("");
 if (SEASONS.length < 2) $("#seasonSel").hidden = true;
