@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="aimeter-token" content="__AIMETER_TOKEN__">
+<meta name="robots" content="noindex, nofollow">
+<title>AI-Meter</title>
+<link rel="stylesheet" href="/app.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot" aria-hidden="true"></span><h1>AI-Meter</h1></div>
+  <div class="controls">
+    <label class="sr" for="month">Month</label>
+    <select id="month"></select>
+    <button id="refresh" type="button">Refresh</button>
+    <a id="export" class="btn" href="#">Export CSV</a>
+  </div>
+</header>
+<nav class="tabs" role="tablist">
+  <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+  <button role="tab" data-tab="chats" aria-selected="false">Chats &amp; sessions</button>
+  <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
+</nav>
+<main>
+  <div id="banner" class="banner" hidden></div>
+
+  <section id="tab-overview" class="tab">
+    <div class="kpis">
+      <div class="kpi"><span class="lbl">Paid this month</span><span id="k-paid" class="val">–</span></div>
+      <div class="kpi"><span class="lbl">Time tracked</span><span id="k-time" class="val">–</span></div>
+      <div class="kpi"><span class="lbl">Avg cost per hour</span><span id="k-rate" class="val">–</span></div>
+      <div class="kpi"><span class="lbl">Not yet assigned to a job</span><span id="k-unassigned" class="val">–</span></div>
+    </div>
+
+    <h2>Cost by job</h2>
+    <p class="hint">Each subscription's monthly price is split across jobs by the time you spent on them with that tool.</p>
+    <div class="tablewrap"><table id="jobs">
+      <thead><tr><th>Job</th><th class="w-bar">Share of spend</th><th class="num">%</th><th class="num">Time</th><th class="num">Cost</th><th>From</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+
+    <h2>Plan usage</h2>
+    <div id="plans" class="cards"></div>
+  </section>
+
+  <section id="tab-chats" class="tab" hidden>
+    <div class="filters">
+      <input id="search" type="search" placeholder="Search titles, projects, jobs" aria-label="Search">
+      <label class="check"><input id="only-unassigned" type="checkbox"> Unassigned only</label>
+    </div>
+    <p class="hint">Type a job name to assign a chat. Tip: add a rule under Settings to assign matching chats automatically.</p>
+    <div class="tablewrap"><table id="chats">
+      <thead><tr><th>Tool</th><th>Chat / session</th><th>Project</th><th class="num">Time</th><th class="num">Cost</th><th>Job</th></tr></thead>
+      <tbody></tbody>
+    </table></div>
+    <datalist id="joblist"></datalist>
+  </section>
+
+  <section id="tab-settings" class="tab" hidden>
+    <h2>Subscriptions</h2>
+    <p class="hint">What you pay per month, and which tools that subscription covers. A tool can only be in one subscription.</p>
+    <div id="subs"></div>
+    <button type="button" id="add-sub">+ Add subscription</button>
+
+    <h2>Custom tools</h2>
+    <p class="hint">Track any other AI tool. Websites are timed by the browser extension (allow the site in its options). Desktop apps (for example <code>cursor.exe</code>) are timed on Windows while they're in front.</p>
+    <div id="customs"></div>
+    <button type="button" id="add-custom">+ Add tool</button>
+
+    <h2>Job rules</h2>
+    <p class="hint">Chats whose title or project contains the text are assigned to the job. First match wins; a job you type on a chat always wins.</p>
+    <div id="rules"></div>
+    <button type="button" id="add-rule">+ Add rule</button>
+
+    <h2>Options</h2>
+    <div class="grid2">
+      <label>Idle cutoff (minutes)<input id="idle" type="number" min="1" max="60" step="1"></label>
+      <label>Currency<input id="currency" maxlength="8"></label>
+      <label class="check"><input id="homeun" type="checkbox"> Work started in my home folder counts as Unassigned</label>
+    </div>
+
+    <div class="savebar"><button type="button" id="save" class="primary">Save settings</button><span id="saved" class="hint" role="status"></span></div>
+
+    <h2>Browser extension pairing</h2>
+    <p class="hint">Open the AI-Meter Connector's options in Chrome or Edge and paste these. Keep the token private: it lets apps on this PC send data to AI-Meter.</p>
+    <div class="grid2">
+      <label>Port<input id="port" readonly></label>
+      <label>Pairing token<span class="row"><input id="token" type="password" readonly><button type="button" id="copy-token">Copy</button></span></label>
+    </div>
+  </section>
+</main>
+<footer class="foot">Runs only on this PC. Plan percentages come from each provider; cost per job is an estimate based on active time.</footer>
+</body>
+</html>

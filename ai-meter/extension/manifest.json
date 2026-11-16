@@ -1,0 +1,27 @@
+{
+  "manifest_version": 3,
+  "name": "AI-Meter Connector",
+  "version": "2.0.0",
+  "description": "Sends your Claude plan usage and the time you spend per chat on claude.ai and chatgpt.com to the AI-Meter app on this PC only.",
+  "minimum_chrome_version": "120",
+  "permissions": ["storage", "alarms", "scripting"],
+  "host_permissions": [
+    "https://claude.ai/*",
+    "https://chatgpt.com/*",
+    "http://127.0.0.1/*"
+  ],
+  "optional_host_permissions": ["https://*/*"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [
+    {
+      "matches": ["https://claude.ai/*", "https://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": { "default_title": "AI-Meter Connector" },
+  "options_ui": { "page": "options.html", "open_in_tab": true },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; connect-src http://127.0.0.1:*"
+  }
+}

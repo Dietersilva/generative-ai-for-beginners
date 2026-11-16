@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI-Meter Connector</title>
+<link rel="stylesheet" href="options.css">
+<script src="options.js" defer></script>
+</head>
+<body>
+<main>
+  <h1>AI-Meter Connector</h1>
+  <p class="hint">Connects this browser to the AI-Meter app on this PC. It times your claude.ai and chatgpt.com chats and reads your Claude plan usage %. Data goes only to <code>127.0.0.1</code> (this computer).</p>
+
+  <section>
+    <h2>1. Pair with the app</h2>
+    <p class="hint">In the AI-Meter dashboard open <b>Settings → Browser extension pairing</b> and copy the token.</p>
+    <label>Port <input id="port" type="number" min="1024" max="65535"></label>
+    <label>Pairing token <input id="token" type="password" autocomplete="off" spellcheck="false"></label>
+    <div class="row"><button id="save" class="primary" type="button">Save &amp; test</button><span id="result" role="status"></span></div>
+  </section>
+
+  <section>
+    <h2>2. Status</h2>
+    <p id="status" class="hint">–</p>
+    <button id="sync" type="button">Send now</button>
+  </section>
+
+  <section>
+    <h2>3. Custom tool websites</h2>
+    <p class="hint">Websites you added as custom tools in the AI-Meter dashboard. Chrome asks you to allow each one.</p>
+    <ul id="sites"></ul>
+  </section>
+</main>
+</body>
+</html>
