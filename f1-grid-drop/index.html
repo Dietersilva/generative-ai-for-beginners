@@ -178,6 +178,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .bs-say{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:10px;background:var(--panel-2);font-size:13.5px;line-height:1.35}
 .bs-say b{flex:0 0 auto;font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.14em;padding:2px 7px;border-radius:4px;color:#05070d}
 .bs-say.rex b{background:var(--red)} .bs-say.pri b{background:var(--cyan)}
+.bs-hear{align-self:flex-start;font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.1em;padding:8px 14px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text)}
+.bs-hear:hover{border-color:var(--muted)}
 .bs-h{margin:4px 0 0;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.16em;color:var(--dim)}
 .bs-list{display:flex;flex-direction:column;gap:4px}
 .bs-row{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:8px;background:var(--panel-2);font-size:13px}
@@ -424,7 +426,8 @@ const CODES = new Set(DRIVERS.map(d => d.code)), DBY = Object.fromEntries(DRIVER
 async function initPool(onChange) {
   if (!window.claude || !window.claude.use) return false;
   const get = n => Promise.resolve(window.claude.use(n)).catch(() => null);
-  const [db, room, user] = await Promise.all([get("db"), get("room"), get("user")]);
+  const [db, room, user, tts] = await Promise.all([get("db"), get("room"), get("user"), get("tts")]);
+  POOL.tts = tts; if (tts) try { tts.onState(e => { POOL.speaking = e.state !== "idle"; if (e.state === "idle" && e.reason === "not_granted") POOL.ttsOff = true; syncHear(); }); } catch (e) {}
   if (!db || !room || !user) return false;
   Object.assign(POOL, { db, room, user }); POOL.host = await user.canEdit(); POOL.myId = await user.id();
   db.doc("pool/state").onSnapshot(sn => { const prev = POOL.state; POOL.state = sn.exists ? sn.data() : null; POOL.ready = true;
@@ -480,6 +483,30 @@ const COND_LINES = {
          ["rex", "We've switched gravity to the Moon. Hold on to your hats."], ["pri", "Jumps last forever up there. Big air guaranteed."]],
   both: [["rex", "Rain AND moon gravity. Nobody has tried this before."], ["pri", "Raindrops falling in slow motion. Honestly, just pick your favourite."]],
 };
+// tap to hear the hosts: Claude voices where the platform offers them, otherwise the device's own voices
+function canHear() { return !POOL.ttsOff && !!(POOL.tts || ("speechSynthesis" in window)); }
+function syncHear() { document.querySelectorAll(".bs-hear").forEach(b => { b.textContent = POOL.speaking ? "■ STOP" : "🔊 HEAR IT"; b.setAttribute("aria-label", POOL.speaking ? "Stop the hosts" : "Hear the hosts"); b.hidden = !canHear(); }); }
+function hearLines(lines) { // runs straight from the tap, nothing awaited first, so phones allow the sound
+  const t = POOL.tts;
+  if (POOL.speaking) { POOL.speaking = false; if (t) t.stop().catch(() => {}); else try { speechSynthesis.cancel(); } catch (e) {} syncHear(); return; }
+  if (t) {
+    POOL.speaking = true; syncHear();
+    t.speak(lines.map(([who, text]) => ({ text, voice: who === "rex" ? "rounded" : "airy", language: "en" })))
+      .catch(e => { if (e && e.code === "not_granted") POOL.ttsOff = true; }).finally(() => { POOL.speaking = false; syncHear(); });
+    return;
+  }
+  try {
+    const vs = speechSynthesis.getVoices().filter(v => /^en/i.test(v.lang));
+    const rex = vs.find(v => /\bmale\b|daniel|george|ryan|arthur|guy|alfie/i.test(v.name)) || vs[0];
+    const pri = vs.find(v => v !== rex && /female|libby|sonia|serena|kate|samantha|karen|moira|tessa|zira|aria|jenny|martha/i.test(v.name)) || vs.find(v => v !== rex) || rex;
+    speechSynthesis.cancel(); POOL.speaking = true; syncHear();
+    const end = () => { POOL.speaking = false; syncHear(); };
+    lines.forEach(([who, text], i) => { const u = new SpeechSynthesisUtterance(text), v = who === "rex" ? rex : pri;
+      if (v) { u.voice = v; u.lang = v.lang; } else u.lang = "en-GB"; u.rate = who === "rex" ? 1.08 : 1; u.pitch = who === "rex" ? .95 : 1.12;
+      if (i === lines.length - 1) { u.onend = end; u.onerror = end; } speechSynthesis.speak(u); });
+    setTimeout(() => { if (POOL.speaking && !speechSynthesis.speaking) end(); }, 15000);
+  } catch (e) { POOL.speaking = false; syncHear(); }
+}
 function condCard(cond, raceNo) {
   const wrap = el("div", "bs-cond");
   if (!cond) return wrap;
@@ -491,7 +518,9 @@ function condCard(cond, raceNo) {
   const key = cond.rain && cond.moon ? "both" : cond.rain ? "rain" : cond.moon ? "moon" : null;
   if (key) { // same pair of lines for the whole race, so the slip doesn't flicker on each update
     const L = COND_LINES[key], i = ((raceNo || 1) * 2) % L.length;
-    for (const [who, text] of [L[i], L[(i + 1) % L.length]]) { const line = el("div", "bs-say " + who); line.append(el("b", null, who === "rex" ? "REX" : "PRIYA"), el("span", null, text)); wrap.append(line); }
+    const pair = [L[i], L[(i + 1) % L.length]];
+    for (const [who, text] of pair) { const line = el("div", "bs-say " + who); line.append(el("b", null, who === "rex" ? "REX" : "PRIYA"), el("span", null, text)); wrap.append(line); }
+    const hb = el("button", "bs-hear"); hb.type = "button"; hb.onclick = () => hearLines(pair); wrap.append(hb);
   }
   return wrap;
 }
@@ -547,7 +576,7 @@ async function renderShared(box, phone) {
     frag.append(el("p", "pn-note", POOL.host ? "Friends bet from their phones: share this page with them (Share menu, invite by email), then they open the link with #bet added to the end." : "You can pick here, or open this page's link with #bet at the end on your phone."));
     if (POOL.host) { const rs = el("button", "ghost danger", "NEW SESSION"); rs.type = "button"; const a = el("div", "pn-actions"); a.append(rs); frag.append(a); confirmButton(rs, "NEW SESSION", poolReset); }
   }
-  box.replaceChildren(frag);
+  box.replaceChildren(frag); syncHear();
 }
 async function betApp() { // the phone betting slip
   document.querySelector(".app").hidden = true; document.body.style.overflow = "auto";
