@@ -57,7 +57,7 @@ A typical race takes 30 to 40 seconds.
 
 ## More modes
 
-- **SPEED (1×, 1.5×, 2×):** fast-forwards the whole race. Physics and results are unchanged, and replays keep their slow motion.
+- **SPEED (1×, 1.5×, 2×, 3×, 4×):** fast-forwards the whole race. Physics and results are unchanged, and replays keep their slow motion.
 - **TURBO (T):** air drag cut to 35% and rolling resistance halved, so cars build far more speed. Expect more airtime and many more crashes: in a test with chaos on, 7 of 22 finished and the winner took 29.0 s.
 
 - **RAIN (W):** falling rain, overcast sky, a shiny wet track, spray behind the cars and much less grip.
@@ -78,6 +78,22 @@ A typical race takes 30 to 40 seconds.
 - **Driver view:** pick a car (click it, or its row) to open a picture-in-picture window from that driver's cockpit. Close it with ✕.
 - **Full screen:** shows a compact live top-12 running order on the right.
 - **Colour:** a vibrance pass makes colours more vivid.
+
+## Dinosaurs and wild animals
+
+- **T. rex:** one roams near the course and roars as the leader goes past.
+- **Long-necked dinosaurs:** three graze by the lake and on the hills.
+- **Pterodactyls:** five circle over the course, flapping their wings.
+- **Giraffes:** a family of three by the lake.
+- **Deer:** a herd of seven in the fields.
+- All of them wander and walk with animated legs.
+- **Chaos obstacle:** a T. rex crossing the road, which cars can crash into, with a replay.
+
+## Commentary
+
+- Plain English throughout, with no racing jargon. When a racing trick comes up, the hosts explain it.
+- About three times as many lines as before.
+- A race update roughly every 10 seconds of race time: who leads and by how many metres, where on the mountain they are, the leader's speed, how many are still racing, the battle in the middle of the field, and the car in last place.
 
 ## Instant replays
 

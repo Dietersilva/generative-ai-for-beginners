@@ -351,6 +351,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
         <button class="seg" data-speed="1" aria-pressed="true" title="Real time">1×</button>
         <button class="seg" data-speed="1.5" aria-pressed="false" title="Fast-forward one and a half times">1.5×</button>
         <button class="seg" data-speed="2" aria-pressed="false" title="Fast-forward twice as fast">2×</button>
+        <button class="seg" data-speed="3" aria-pressed="false" title="Fast-forward three times as fast">3×</button>
+        <button class="seg" data-speed="4" aria-pressed="false" title="Fast-forward four times as fast">4×</button>
       </div>
     </div>
     <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
@@ -1173,7 +1175,7 @@ let animAirships = null;
 
 /* ---------- chaos props: beach balls on the long downhill, giant bowling pins before the finish ---------- */
 let props = [];
-const OBST = { balls: "giant beach balls", pins: "giant bowling pins", tyres: "runaway monster tyres", windmill: "a crazy-golf windmill",
+const OBST = { trex: "a T-rex crossing the road", balls: "giant beach balls", pins: "giant bowling pins", tyres: "runaway monster tyres", windmill: "a crazy-golf windmill",
   cones: "a field of traffic cones", wreck: "a wrecking ball", bales: "a hay bale slalom" };
 function buildProps() {
   const list = [], pool = Object.keys(OBST);
@@ -1238,6 +1240,15 @@ function buildProps() {
       for (let k = 0; k < (i < 4 ? 2 : 1); k++) { const b = new CANNON.Body({ mass: 45, material: pm.prop, linearDamping: .15, angularDamping: .3 }); b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .7)));
         b.position.set(x, surfaceY(x) + .62 + k*1.22, z); b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), slopeQ(x)); b.kind = "bale";
         const m = new THREE.Mesh(bg, bm); m.castShadow = true; add(b, m); } });
+  }
+  if (has("trex")) { // a T-rex wandering back and forth across the road
+    const x = track.run1bX + 118, y0 = surfaceY(x), A = makeTrex(); A.root.scale.setScalar(.9);
+    const b = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: pm.prop });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(2.2, 1.3, 1.2)), new CANNON.Vec3(.3, 3.9, 0)); b.addShape(new CANNON.Box(new CANNON.Vec3(.6, 1.7, 1.1)), new CANNON.Vec3(.2, 1.7, 0));
+    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(x, y0, 0); b.kind = "trex"; let ph = 0;
+    add(b, A.root, { update(t) { const z = 7.5*Math.sin(t*.32 + .8), vz = 7.5*.32*Math.cos(t*.32 + .8); b.position.set(x, y0, z); b.velocity.set(0, 0, vz);
+        b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), vz >= 0 ? -Math.PI/2 : Math.PI/2); },
+      after() { ph += .12; A.legs.forEach((l, i) => l.rotation.z = Math.sin(ph + A.gait[i])*A.stride); A.body.position.y = Math.abs(Math.sin(ph))*A.bob; } });
   }
   if (has("pins")) {
     const prof = [[0,-1.6],[.42,-1.6],[.62,-1.05],[.64,-.6],[.52,-.1],[.31,.45],[.29,.7],[.41,1.05],[.43,1.3],[.3,1.62],[0,1.74]].map(([r, y]) => new THREE.Vector2(r, y));
@@ -1341,75 +1352,94 @@ function pick(key, arr) { let i = Math.floor(Math.random()*arr.length); if (arr.
 const chance = p => Math.random() < p;
 let commGate = {};
 function gate(key, sec) { const t = performance.now()/1000; if (commGate[key] && t - commGate[key] < sec) return false; commGate[key] = t; return true; }
-const C = {
+const C = { // plain-English commentary: Rex calls the action, Priya explains it
   intro() { commGate = {};
-    say("rex", pick("i1", [`Good ${opts.tod === "night" ? "evening" : "afternoon"} and welcome to F1 Bezerk! Twenty-two cars, no engines, and one very large mountain.`,
-      "Welcome to F1 Bezerk, where gravity is the only power unit on the grid.", "Hello and welcome! It's F1 Bezerk. A kilometre of downhill, and nobody has an engine."]), 3);
-    say("pri", opts.deg >= 88 ? pick("i2", ["Eighty-eight degrees off the top, Rex. That's not a ramp, that's a cliff with paint on it.", "The first drop is basically vertical. I've checked twice."])
-      : opts.deg >= 72 ? pick("i3", ["Seventy-two degrees off the top. Somebody in race control has a sense of humour.", "Seventy-two degrees. I wouldn't walk down that, never mind race it."])
-      : pick("i4", ["Only fifty degrees today. Practically a gentle stroll.", "Fifty degrees. The sensible option, for once."]), 3);
-    if (opts.rain) { say("rex", "And the heavens have opened! It's a wet one today!", 3); say("pri", "Less grip, more spray, and a lot more praying.", 2); }
-    if (opts.turbo) { say("rex", "Turbo mode! Hardly any drag today, so they're going to be flying!", 3); say("pri", "Faster cars, bigger jumps, harder landings. The recovery crews are on standby.", 2); }
-    if (opts.moon) { say("rex", "Gravity has been set to the Moon! One sixth of normal!", 3); say("pri", "And there's no air up there either, so no slipstream. Just physics.", 2); }
-    if (opts.giant) { const gc = cars[cars.length - 1]; say("rex", `And at the back of the grid, a giant ${sur(gc)}! Nobody can explain this.`, 3); say("pri", "It does make overtaking interesting.", 2); }
-    if (opts.reverse) { say("rex", "And today, for reasons nobody can explain, they're doing the whole thing backwards!", 3); say("pri", "Twenty-two drivers, all looking over their shoulders. What could go wrong?", 2); }
+    say("rex", pick("i1", [`Good ${opts.tod === "night" ? "evening" : "afternoon"} and welcome to F1 Bezerk! Twenty-two Formula 1 cars, no engines, and one giant mountain. First to the bottom wins.`,
+      "Hello everyone! Today the drivers race down a mountain, and gravity is the only engine they've got.",
+      "Welcome to F1 Bezerk! No engines, no brakes, no plan. Just twenty-two cars and a very big hill.",
+      "It's race day on the mountain! Twenty-two cars are lined up at the top, and the only way is down."]), 3);
+    say("pri", opts.deg >= 88 ? pick("i2", ["The first drop is eighty-eight degrees. That's basically straight down.", "The opening drop today is almost vertical. Think of a lift shaft, but with racing cars."])
+      : opts.deg >= 72 ? pick("i3", ["The first drop is seventy-two degrees. That's steeper than a staircase.", "Seventy-two degrees off the top. Steeper than any ski slope in the world."])
+      : pick("i4", ["Today's first drop is fifty degrees. Still steeper than the steepest ski slope.", "Fifty degrees off the top. The gentle option, if any of this is gentle."]), 3);
+    if (opts.turbo) { say("rex", "Turbo mode is on! The air resistance is turned way down, so expect huge speeds!", 3); say("pri", "Faster cars mean bigger jumps and harder landings. The rescue crews are ready.", 2); }
+    if (opts.rain) { say("rex", "And it's raining on the mountain! It's a wet race today!", 3); say("pri", "Wet tyres grip less, so watch for cars sliding sideways.", 2); }
+    if (opts.moon) { say("rex", "Gravity has been set to the Moon! That's one sixth of normal!", 3); say("pri", "There's no air on the Moon either, so nobody can hide behind another car. Expect slow, floaty jumps.", 2); }
+    if (opts.giant) { const gc = cars[cars.length - 1]; say("rex", `And at the back of the grid, a giant ${sur(gc)}! Two and a half times normal size!`, 3); say("pri", "Getting past that will not be easy.", 2); }
+    if (opts.reverse) { say("rex", "And today, for reasons nobody can explain, they're racing the whole thing backwards!", 3); say("pri", "Twenty-two drivers, all looking over their shoulders. What could go wrong?", 2); }
     if (opts.chaos && track.obstacles) { const o = track.obstacles.map(k => OBST[k]); const list = o.slice(0, -1).join(", ") + " and " + o[o.length - 1];
-      say("rex", pick("i5", [`Chaos mode is on. Today's surprises: ${list}.`, `And waiting on the course today: ${list}. Good luck, everyone.`]), 2);
-      if (track.obstacles.includes("wreck")) say("pri", "A wrecking ball. On a race track. I've raised this with the organisers.", 1);
-      else if (track.obstacles.includes("windmill")) say("pri", "There's a windmill on the course. Like crazy golf, but at a hundred kilometres an hour.", 1); }
+      say("rex", pick("i5", [`Surprises on the course today: ${list}.`, `Waiting on the way down: ${list}. Good luck, everyone.`]), 2);
+      if (track.obstacles.includes("trex")) say("pri", "Yes, there is a real dinosaur walking across the road. I have checked.", 1);
+      else if (track.obstacles.includes("wreck")) say("pri", "A wrecking ball. On a race track. I've complained to the organisers.", 1);
+      else if (track.obstacles.includes("windmill")) say("pri", "There's a giant spinning windmill on the course. Timing is everything.", 1); }
   },
-  go() { say("rex", pick("go", ["Lights out, and away they... fall!", "Lights out! Here comes the drop!", "It's lights out, and gravity takes over!"]), 3); },
-  crest(c) { say("rex", pick("cr", [`${sur(c)} is first over the edge!`, `Over the top goes ${sur(c)}!`, `${sur(c)} leads them into the abyss!`]), 2);
-    say("pri", pick("cr2", ["No brakes, no engine, no regrets.", "That is a very long way down.", "Brave. Or there's simply no brake pedal to find."]), 1); },
-  air(c, t) { if (!gate("air", 5)) return; say("rex", pick("air", [`${sur(c)} is flying! ${t.toFixed(1)} seconds in the air!`, `Look at ${sur(c)}! Airborne for ${t.toFixed(1)} seconds!`]), 1);
-    if (chance(.6)) say("pri", pick("air2", ["Somebody check if that needed a flight plan.", "Air traffic control will want a word.", "Landing gear down, please.", "Lovely hang time. Terrible for the suspension."]), 1); },
-  contact(a, b) { if (!gate("contact", 4)) return; say("rex", pick("co", [`Contact! ${sur(a)} and ${sur(b)}!`, `${sur(a)} and ${sur(b)} bang wheels!`, `Ooh, ${sur(a)} into ${sur(b)}!`]), 1);
-    if (chance(.55)) say("pri", pick("co2", ["That'll buff out.", "The stewards will want a word. If we had any stewards.", "Rubbing is racing, apparently.", "Insurance premiums are going up."]), 1); },
-  wall(c) { if (!gate("wall", 5)) return; say("rex", pick("wa", [`${sur(c)} into the wall!`, `${sur(c)} finds the barrier!`, `Big moment for ${sur(c)}, straight into the wall!`]), 1);
-    if (chance(.5)) say("pri", pick("wa2", ["The wall always wins.", "That's going to cost a front wing.", "Not the racing line I'd have chosen."]), 1); },
+  go() { say("rex", pick("go", ["Lights out, and away they go! Rolling towards the edge!", "And they're off! Here comes the drop!", "Lights out! Gravity takes over!", "Go, go, go! The race is on!"]), 3); },
+  crest(c) { say("rex", pick("cr", [`${sur(c)} is first over the edge!`, `Over the top goes ${sur(c)}!`, `${sur(c)} leads them over the cliff!`]), 2);
+    say("pri", pick("cr2", ["From here it's pure gravity. No brakes, no engine.", "Hold on tight. This is the steep bit.", "Their stomachs must be somewhere back at the top."]), 1); },
+  air(c, t) { if (!gate("air", 5)) return; say("rex", pick("air", [`${sur(c)} is flying! ${t.toFixed(1)} seconds in the air!`, `Look at ${sur(c)}! Airborne for ${t.toFixed(1)} seconds!`, `Huge jump from ${sur(c)}!`]), 1);
+    if (chance(.6)) say("pri", pick("air2", ["The tricky part is the landing.", "You can't steer in mid-air, so that's a nervous wait.", "Big jumps look great, but they cost speed when you land.", "That's a long time with no grip at all."]), 1); },
+  contact(a, b) { if (!gate("contact", 4)) return; say("rex", pick("co", [`${sur(a)} and ${sur(b)} bump into each other!`, `Contact between ${sur(a)} and ${sur(b)}!`, `Ooh! ${sur(a)} hits ${sur(b)}!`]), 1);
+    if (chance(.55)) say("pri", pick("co2", ["No harm done, I think.", "That's going to leave a mark.", "Close racing. Maybe a little too close.", "They'll be talking about that one afterwards."]), 1); },
+  wall(c) { if (!gate("wall", 5)) return; say("rex", pick("wa", [`${sur(c)} hits the wall!`, `${sur(c)} scrapes along the barrier!`, `Big moment for ${sur(c)}, straight into the wall!`]), 1);
+    if (chance(.5)) say("pri", pick("wa2", ["The wall always wins.", "That will slow them right down.", "That front wing won't be the same again."]), 1); },
   out(c, why) { if (!gate("out", 3)) return;
-    if (why === "OFF TRACK") { say("rex", pick("ot", [`${sur(c)} is over the fence and off the mountain!`, `Oh no, ${sur(c)} has gone over the barrier!`, `${sur(c)} is going down the hillside!`]), 3); return; }
-    if (why === "FLIPPED") { say("rex", pick("fl", [`${sur(c)} is upside down!`, `${sur(c)} is on the roof!`, `Oh no, ${sur(c)} has flipped it!`]), 2); if (chance(.6)) say("pri", pick("fl2", ["Technically still in one piece.", "Wrong way up, I'm afraid.", "That's a tricky one to explain to the team."]), 1); }
-    else say("rex", pick("st", [`That's the end of the race for ${sur(c)}.`, `${sur(c)} has ground to a halt.`, `${sur(c)} is out of it.`]), 2);
-    if (!race.said.crane) { race.said.crane = 1; say("pri", "And the marshals are lifting it clear. They brought a crane. Of course they did.", 1); } },
-  lead(a, b) { if (!gate("lead", 3)) return; say("rex", pick("le", [`${sur(a)} takes the lead from ${sur(b)}!`, `New leader! It's ${sur(a)}!`, `${sur(a)} sweeps past ${sur(b)} for the lead!`]), 2);
-    if (chance(.45)) say("pri", pick("le2", ["The slipstream did all the work there.", "Perfectly timed tow.", "That's how you use somebody else's air."]), 1); },
-  kicker(c) { say("rex", pick("ki", [`Here's the kicker, and ${sur(c)} launches!`, `${sur(c)} hits the kicker and takes off!`]), 2); },
-  plunge(c) { say("rex", pick("pl", [`Into the second drop goes ${sur(c)}!`, `${sur(c)} leads them into the plunge!`]), 2); if (chance(.5)) say("pri", "Twenty-two degrees. Positively relaxing after the first one.", 1); },
-  rollers(c) { say("rex", pick("ro", ["The rollers! Everybody is bouncing!", `${sur(c)} over the rollers, wheels in the air!`]), 1); },
-  ball(c) { if (!gate("ball", 4)) return; say("rex", pick("ba", [`${sur(c)} hits a beach ball!`, `Beach ball! ${sur(c)} sends it flying!`]), 1);
-    if (chance(.5)) say("pri", pick("ba2", ["The beach ball is unharmed. Mostly.", "Summer holidays are cancelled.", "That wasn't in the briefing."]), 1); },
-  pins(c) { say("rex", pick("pi", [`${sur(c)} goes bowling!`, `Into the pins goes ${sur(c)}!`]), 2); },
-  strike(c) { say("rex", `Strike! ${sur(c)} knocks down all ten pins!`, 2); say("pri", "A perfect frame. Shame it doesn't count for points.", 1); },
-  trap(c, kmh, beat) { if (!gate("trap", 6)) return; say("rex", beat ? `${sur(c)} goes quickest through the speed trap, ${kmh} kilometres an hour!` : `${sur(c)} through the speed trap at ${kmh} kilometres an hour!`, 1); },
-  final(a, b) { say("rex", pick("fi", [`${sur(a)} and ${sur(b)}, side by side to the line!`, `It's ${sur(a)} from ${sur(b)}, who's got it?`]), 3); },
+    if (why === "OFF TRACK") { say("rex", pick("ot", [`${sur(c)} goes over the barrier and down the mountain!`, `Oh no, ${sur(c)} has left the track completely!`, `${sur(c)} is tumbling down the hillside!`]), 3);
+      if (chance(.6)) say("pri", pick("ot2", ["That's a long walk back up.", "The animals down there are getting quite a show."]), 1); return; }
+    if (why === "FLIPPED") { say("rex", pick("fl", [`${sur(c)} is upside down!`, `${sur(c)} has rolled over!`, `Oh no, ${sur(c)} has flipped it!`]), 2); if (chance(.6)) say("pri", pick("fl2", [`That's the end of ${sur(c)}'s race.`, "Wrong way up, I'm afraid.", "The driver is fine. The car, less so."]), 1); }
+    else say("rex", pick("st", [`That's the end of the race for ${sur(c)}.`, `${sur(c)} has come to a stop.`, `${sur(c)} is out of the race.`]), 2);
+    if (!race.said.crane) { race.said.crane = 1; say("pri", "The marshals will lift that car out of the way with a crane. They really do have a crane.", 1); } },
+  lead(a, b) { if (!gate("lead", 3)) return; say("rex", pick("le", [`${sur(a)} takes the lead from ${sur(b)}!`, `New leader! It's ${sur(a)}!`, `${sur(a)} sweeps past ${sur(b)} into first place!`]), 2);
+    if (chance(.5)) say("pri", pick("le2", [`${sur(a)} tucked in right behind ${sur(b)}, where there's less wind to push against, then pulled out and went past.`, "That's the trick: hide behind the car in front, save speed, then pounce.", "Lovely timing on that move."]), 1); },
+  kicker(c) { say("rex", pick("ki", [`${sur(c)} hits the ramp and takes off!`, `Here's the big jump, and ${sur(c)} is airborne!`]), 2); },
+  plunge(c) { say("rex", pick("pl", [`Here comes the second drop, and ${sur(c)} is still in front!`, `${sur(c)} leads them into the second drop!`]), 2); if (chance(.5)) say("pri", "This one is only twenty-two degrees. Almost relaxing after the first.", 1); },
+  rollers(c) { say("rex", pick("ro", ["Now the bumpy section! Cars bouncing everywhere!", `${sur(c)} over the bumps, wheels in the air!`]), 1); },
+  ball(c) { if (!gate("ball", 4)) return; say("rex", pick("ba", [`${sur(c)} hits a giant beach ball!`, `Beach ball! ${sur(c)} sends it flying!`]), 1);
+    if (chance(.5)) say("pri", pick("ba2", ["The beach ball is fine. Mostly.", "That wasn't in the safety briefing."]), 1); },
+  pins(c) { say("rex", pick("pi", [`${sur(c)} goes bowling!`, `Into the giant bowling pins goes ${sur(c)}!`]), 2); },
+  strike(c) { say("rex", `Strike! ${sur(c)} knocks down all ten pins!`, 2); say("pri", "A perfect strike. Sadly, there are no points for bowling.", 1); },
+  trap(c, kmh, beat) { if (!gate("trap", 6)) return; say("rex", beat ? `${sur(c)} is the fastest yet past the speed camera, ${kmh} kilometres an hour!` : `${sur(c)} goes past the speed camera at ${kmh} kilometres an hour!`, 1); },
+  final(a, b) { say("rex", pick("fi", [`${sur(a)} and ${sur(b)}, side by side to the finish line!`, `It's ${sur(a)} or ${sur(b)}, who's going to get there first?`]), 3); },
   win(w, second) { if (!w) return;
     say("rex", pick("wi", [`${sur(w)} wins F1 Bezerk!`, `It's ${sur(w)}! ${sur(w)} takes the win!`, `Chequered flag, and ${sur(w)} wins it!`]), 3);
-    if (second && second.d.team === w.d.team) say("rex", `And it's a ${w.d.team} one-two!`, 3);
+    if (second && second.d.team === w.d.team) say("rex", `And it's first and second for ${w.d.team}!`, 3);
     const m = second ? second.finT - w.finT : null;
-    say("pri", m === null ? "The only car to make it. Survival is a skill too." : m < .1 ? `By ${m.toFixed(2)} seconds. A whisker.` : m < .5 ? `${m.toFixed(1)} seconds in it. Close one.`
-      : pick("wi2", ["Comfortable. As comfortable as falling off a mountain can be.", "Never in doubt. Well, slightly in doubt."]), 3); },
-  tyresGo() { say("rex", "The monster tyres have been released! They're rolling down the hill!", 2); say("pri", "Who signed off on this?", 1); },
+    say("pri", m === null ? "The only car to make it to the bottom. Surviving counts too." : m < .1 ? `Won by ${m.toFixed(2)} seconds. That's a blink of an eye.` : m < .5 ? `Just ${m.toFixed(1)} seconds between them. Close one.`
+      : pick("wi2", ["A comfortable win. Well, as comfortable as falling off a mountain can be.", "Never in doubt. Well, slightly in doubt."]), 3); },
+  tyresGo() { say("rex", "The giant tyres have been released! They're rolling down the hill!", 2); say("pri", "Who thought this was a good idea?", 1); },
   hit(kind, c) { const n = sur(c), L = {
-      cone: [`${n} scatters the cones!`, `Cones everywhere, thanks to ${n}!`], bale: [`${n} ploughs into the hay!`, `Straw everywhere! That's ${n}!`],
+      cone: [`${n} scatters the traffic cones!`, `Cones everywhere, thanks to ${n}!`], bale: [`${n} ploughs into the hay bales!`, `Straw everywhere! That's ${n}!`],
       wreck: [`${n} is hit by the wrecking ball!`, `Wrecking ball! ${n} never saw it coming!`], windmill: [`${n} gets whacked by the windmill!`, `The windmill gets ${n}!`],
-      tyre: [`${n} collides with a runaway tyre!`, `${n} is taken out by a monster tyre!`] };
-    say("rex", pick("h_" + kind, L[kind]), kind === "wreck" || kind === "windmill" ? 3 : 1);
-    if (kind === "wreck" && chance(.7)) say("pri", pick("hw", ["Timing is everything. That was not it.", "Ninety kilograms of steel versus one soapbox. No contest."]), 1);
-    if (kind === "windmill" && chance(.7)) say("pri", pick("hm", ["Should have waited for the gap.", "Crazy golf rules: it's all about timing."]), 1); },
+      tyre: [`${n} crashes into a runaway tyre!`, `${n} is knocked aside by a giant tyre!`], trex: [`${n} has run into the T-rex!`, `${n} hits the dinosaur!`, `The T-rex takes out ${n}!`] };
+    say("rex", pick("h_" + kind, L[kind]), kind === "wreck" || kind === "windmill" || kind === "trex" ? 3 : 1);
+    if (kind === "wreck" && chance(.7)) say("pri", pick("hw", ["Bad timing. Very bad timing.", "A tonne of steel against one race car. No contest."]), 1);
+    if (kind === "windmill" && chance(.7)) say("pri", pick("hm", ["You have to wait for the gap between the blades.", "Like crazy golf, but at a hundred kilometres an hour."]), 1);
+    if (kind === "trex" && chance(.8)) say("pri", pick("ht", ["The dinosaur seems fine. The car, not so much.", "Sixty-six million years of evolution, and it still doesn't look both ways."]), 1); },
+  dino() { say("rex", pick("dn", ["Is that... a dinosaur by the track?", "There's a T-rex next to the course! Nobody told me about this!", "Look at that! A T-rex is watching the race!"]), 2);
+    say("pri", pick("dn2", ["Nobody told the dinosaurs there was a race today.", "It's roaring at the cars. I don't think it's a fan.", "Keep your arms inside the car, everyone."]), 1); },
+  update() { // a regular, plain-English update on the race
+    const r = cars.filter(c => c.status === "race").sort((a, b) => b.s - a.s); if (!r.length) return;
+    const lead = r[0], frac = lead.s/Math.max(1, track.length), where = frac < .3 ? "near the top" : frac < .6 ? "halfway down the mountain" : frac < .85 ? "into the second half" : "nearly at the bottom";
+    const opts2 = [];
+    if (r[1]) opts2.push(["rex", `${sur(lead)} leads, with ${sur(r[1])} ${Math.max(1, Math.round(lead.s - r[1].s))} metres behind.`]);
+    opts2.push(["rex", `We're ${where}, and ${sur(lead)} is out in front.`]);
+    opts2.push(["pri", `${sur(lead)} is doing ${Math.round(lead.spd*3.6)} kilometres an hour right now.`]);
+    opts2.push(["pri", `${r.length} of the twenty-two cars are still racing.`]);
+    if (r.length > 5) opts2.push(["rex", `Battling in the middle of the pack: ${sur(r[3])}, ${sur(r[4])} and ${sur(r[5])}.`]);
+    const last = r[r.length - 1]; if (r.length > 3) opts2.push(["pri", `Spare a thought for ${sur(last)}, in last place but still going.`]);
+    opts2.push(["pri", pick("fill", ["Fun fact: these cars have no engines today, just gravity.", "Up above, the pterodactyls are following the race too.", "The long-necked dinosaurs by the lake haven't looked up once."])]);
+    const [who, text] = opts2[Math.floor(Math.random()*opts2.length)]; say(who, text, 0); },
   replay(kind, car, intro) {
-    if (intro) say("rex", pick("hl", ["Here are the highlights!", "Let's relive the best bits."]), 3);
+    if (intro) say("rex", pick("hl", ["Here are the highlights!", "Let's watch the best moments again."]), 3);
     else say("rex", pick("rp", ["Let's see that again!", "Here's the replay.", "Roll the replay!", "Let's have another look at that."]), 3);
     const s2 = car ? sur(car) : "";
-    const lines = { flip: ["Watch the nose dig in, and over it goes.", "Physics had an opinion, and it shared it."],
-      off: [`There goes ${s2}, over the fence and down the mountain.`, "That's a long walk back to the paddock."],
-      contact: ["Slow it down and it looks even worse.", "See the gap close? Nobody was giving an inch."],
-      wall: ["Straight in. The wall didn't move an inch."], strike: ["Perfect line through the pins. Textbook bowling."],
-      air: ["Look at the height on that!", "Cleared for take-off."], obst: ["Watch it come in from the side. Brutal.", "Let's look at the timing on that. Terrible luck."], finish: [`Look at ${s2} at the line. Beautiful.`, "Every hundredth counted there."] };
-    say("pri", pick("rp_" + kind, lines[kind] || lines.contact), 2);
-  },
-  end(dnf) { say("pri", dnf ? `${dnf} car${dnf > 1 ? "s" : ""} didn't make it to the finish. The recovery crews will need a bigger truck.` : "All twenty-two made it down in one piece. Remarkable.", 2);
-    say("rex", "That's all from F1 Bezerk. Same time next week, if the mountain is still standing.", 2); },
+    const lines = { flip: ["Watch the front dig in, and over it goes.", "In slow motion you can see exactly where it went wrong."],
+      off: [`There goes ${s2}, over the barrier and down the mountain.`, "That's a long way to fall."],
+      contact: ["Slow it down and it looks even worse.", "See the gap close? Neither driver backed off."],
+      wall: ["Straight into the barrier. The wall didn't move an inch."], strike: ["Perfect line through the pins. Textbook bowling."],
+      air: ["Look at the height on that!", "Cleared for take-off."], obst: ["Watch it come in from the side. Brutal.", "Wrong place, wrong time."],
+      finish: [`Look at ${s2} at the line. Beautiful.`, "Every hundredth of a second counted there."] };
+    say("pri", pick("rp_" + kind, lines[kind] || lines.contact), 2); },
+  end(dnf) { say("pri", dnf ? `${dnf} car${dnf > 1 ? "s" : ""} didn't make it to the bottom. The rescue crews are going to be busy.` : "All twenty-two made it down in one piece. Remarkable.", 2);
+    say("rex", pick("bye", ["That's all from F1 Bezerk. Same time next week, if the mountain is still standing.", "That's the race! Thanks for watching F1 Bezerk.", "What a race! See you next time on F1 Bezerk."]), 2); },
 };
 
 /* ---------- instant replays: record the last 10 s, replay incidents in slow motion with an orbiting camera ---------- */
@@ -1552,6 +1582,114 @@ function confirmButton(btn, label, fn) { // two taps to confirm, since pop-up co
   let armed = false, t = 0;
   btn.addEventListener("click", () => { if (!armed) { armed = true; btn.textContent = "TAP AGAIN TO CONFIRM"; clearTimeout(t); t = setTimeout(() => { armed = false; btn.textContent = label; }, 4000); return; }
     armed = false; clearTimeout(t); btn.textContent = label; fn(); });
+}
+
+/* ---------- creatures: dinosaurs and wild animals roaming the fields, the lake and the sky ---------- */
+const creatureMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85, flatShading: true });
+const SPH = new THREE.SphereGeometry(1, 12, 9), CYL = new THREE.CylinderGeometry(1, 1, 1, 8), CONE = new THREE.ConeGeometry(1, 1, 8), CUBE = new THREE.BoxGeometry(1, 1, 1);
+function cp(list, geo, c, x, y, z, sx, sy, sz, rx = 0, ry = 0, rz = 0) { list.push({ geo, m: partMatrix(x, y, z, rx, ry, rz, sx, sy, sz), c: new THREE.Color(c) }); }
+function cmesh(list) { const m = new THREE.Mesh(mergeParts(list), creatureMat); m.castShadow = true; m.userData.ownGeo = true; return m; }
+function limb(parent, x, y, z, len, thick, c, foot) { // hangs from a hip or shoulder; swing it with rotation.z
+  const g = new THREE.Group(); g.position.set(x, y, z); const L = []; cp(L, CYL, c, 0, -len/2, 0, thick, len, thick);
+  if (foot) cp(L, SPH, foot, thick*.35, -len, 0, thick*1.5, thick*.6, thick*1.25); g.add(cmesh(L)); parent.add(g); return g; }
+function stick(L, geo, c, x0, y0, x1, y1, r) { const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy); cp(L, geo, c, (x0 + x1)/2, (y0 + y1)/2, 0, r, len, r, 0, 0, -Math.atan2(dx, dy)); }
+function makeTrex() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
+  const G = "#4f8a3a", D = "#355f27", B = "#b9c77a", L = [];
+  cp(L, SPH, G, 0, 4.3, 0, 2.6, 1.6, 1.35, 0, 0, .22); cp(L, SPH, B, .5, 3.9, 0, 2.1, 1.1, 1.1, 0, 0, .22);
+  cp(L, CONE, G, -3.7, 3.7, 0, 1.15, 5.2, 1.15, 0, 0, Math.PI/2 + .14);
+  stick(L, CYL, G, 1.8, 4.9, 2.8, 5.9, .75);
+  for (const z of [-.95, .95]) stick(L, CYL, D, 1.7, 4, 2.3, 3.3, .14);
+  for (let k = 0; k < 6; k++) cp(L, SPH, D, -1.5 + k*.6, 5.75 - k*.04, 0, .18, .32, .18); // ridge along the back
+  body.add(cmesh(L));
+  const head = new THREE.Group(); head.position.set(3, 6.1, 0); body.add(head);
+  const Hd = []; cp(Hd, SPH, G, .9, 0, 0, 1.55, .78, .78); cp(Hd, SPH, "#ffd23f", 1.25, .38, .58, .15, .15, .1); cp(Hd, SPH, "#ffd23f", 1.25, .38, -.58, .15, .15, .1);
+  for (let k = 0; k < 5; k++) for (const z of [-.42, .42]) cp(Hd, CONE, "#f4f1e4", 2.05 - k*.32, -.42, z, .07, .26, .07, Math.PI, 0, 0);
+  head.add(cmesh(Hd));
+  const jaw = new THREE.Group(); jaw.position.set(.3, -.4, 0); head.add(jaw); const J = []; cp(J, SPH, D, .95, -.12, 0, 1.3, .32, .66);
+  for (let k = 0; k < 4; k++) for (const z of [-.38, .38]) cp(J, CONE, "#f4f1e4", 1.8 - k*.32, .14, z, .06, .22, .06); jaw.add(cmesh(J));
+  const legs = [limb(root, .2, 3.7, .95, 3.5, .5, D, D), limb(root, .2, 3.7, -.95, 3.5, .5, D, D)];
+  return { root, body, head, jaw, legs, gait: [0, Math.PI], stride: .5, bob: .25 };
+}
+function makeSauropod() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const G = "#7d8f66", D = "#5f6f4b", L = [];
+  cp(L, SPH, G, 0, 5.2, 0, 4.6, 2.7, 2.4); cp(L, SPH, "#a7b48d", 0, 4.4, 0, 3.8, 1.8, 2.1);
+  cp(L, CONE, G, -6.4, 4.6, 0, 1.3, 7, 1.3, 0, 0, Math.PI/2 + .2);
+  for (let k = 0; k < 7; k++) cp(L, SPH, "#8fa37a", -3 + k, 7.7 - Math.abs(k - 3)*.18, 0, .35, .3, .5);
+  body.add(cmesh(L));
+  const neck = new THREE.Group(); neck.position.set(3.4, 6.2, 0); body.add(neck); const N = [];
+  stick(N, CYL, G, 0, 0, 3.6, 6.2, .75); cp(N, SPH, G, 4, 6.7, 0, 1.05, .6, .6); cp(N, SPH, "#111", 4.45, 6.95, .45, .1, .1, .1); cp(N, SPH, "#111", 4.45, 6.95, -.45, .1, .1, .1);
+  neck.add(cmesh(N));
+  const legs = [limb(root, 2.5, 4.4, 1.5, 4.2, .75, D, D), limb(root, 2.5, 4.4, -1.5, 4.2, .75, D, D), limb(root, -2.4, 4.4, 1.5, 4.2, .8, D, D), limb(root, -2.4, 4.4, -1.5, 4.2, .8, D, D)];
+  return { root, body, neck, legs, gait: [0, Math.PI, Math.PI, 0], stride: .28, bob: .15 };
+}
+function makeGiraffe() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const Y = "#e2ad4c", S2 = "#8a5a2b", L = [];
+  cp(L, SPH, Y, 0, 3.3, 0, 1.6, .95, .72);
+  for (const [x, y, z] of [[.5, 3.9, .55], [-.6, 3.6, .6], [0, 3.1, -.65], [-.8, 3.4, -.5], [.8, 3.3, -.55], [.2, 3.5, .7]]) cp(L, SPH, S2, x, y, z, .3, .24, .08);
+  cp(L, CONE, Y, -1.8, 3.2, 0, .12, 1.2, .12, 0, 0, Math.PI/2 + .6); body.add(cmesh(L));
+  const neck = new THREE.Group(); neck.position.set(1.2, 3.7, 0); body.add(neck); const N = [];
+  stick(N, CYL, Y, 0, 0, 1.2, 3.1, .3); for (const t of [.3, .6, .85]) cp(N, SPH, S2, 1.2*t, 3.1*t, .26, .18, .16, .05);
+  cp(N, SPH, Y, 1.55, 3.3, 0, .55, .3, .3); for (const z of [-.13, .13]) cp(N, CYL, S2, 1.2, 3.75, z, .05, .35, .05); neck.add(cmesh(N));
+  const legs = [limb(root, 1, 3, .4, 3, .14, Y, S2), limb(root, 1, 3, -.4, 3, .14, Y, S2), limb(root, -1, 3, .4, 3, .14, Y, S2), limb(root, -1, 3, -.4, 3, .14, Y, S2)];
+  return { root, body, neck, legs, gait: [0, Math.PI, Math.PI, 0], stride: .35, bob: .06 };
+}
+function makeDeer() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const B = "#8b5a33", L = [];
+  cp(L, SPH, B, 0, 1.45, 0, .95, .5, .38); cp(L, SPH, "#e8dcc6", -.95, 1.55, 0, .14, .18, .14);
+  stick(L, CYL, B, .7, 1.6, 1.05, 2.2, .14); cp(L, SPH, B, 1.25, 2.25, 0, .3, .17, .16);
+  for (const z of [-.12, .12]) { stick(L, CYL, "#d8c7a4", 1.1, 2.35, .9, 2.9, .03); stick(L, CYL, "#d8c7a4", 1.0, 2.6, 1.25, 2.85, .025); }
+  body.add(cmesh(L));
+  const legs = [limb(root, .6, 1.3, .22, 1.3, .07, B, "#3a2a1c"), limb(root, .6, 1.3, -.22, 1.3, .07, B, "#3a2a1c"), limb(root, -.6, 1.3, .22, 1.3, .08, B, "#3a2a1c"), limb(root, -.6, 1.3, -.22, 1.3, .08, B, "#3a2a1c")];
+  return { root, body, legs, gait: [0, Math.PI, Math.PI, 0], stride: .6, bob: .08 };
+}
+function makePtero() {
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const P = "#8a6a5c", L = [];
+  cp(L, SPH, P, 0, 0, 0, 1.3, .38, .38); cp(L, CONE, "#c4553a", .9, .55, 0, .12, 1.2, .25, 0, 0, -.9); cp(L, CONE, "#d9c7a0", 1.9, -.05, 0, .14, 1.4, .14, 0, 0, -Math.PI/2);
+  body.add(cmesh(L));
+  const wings = [-1, 1].map(sz => { const w = new THREE.Group(); body.add(w); const W = []; cp(W, CUBE, "#6d5248", 0, 0, sz*2.3, 1.4, .06, 4.2); cp(W, CUBE, "#6d5248", -.4, 0, sz*4.2, .8, .05, 1.4); w.add(cmesh(W)); w.userData.sz = sz; return w; });
+  return { root, body, wings };
+}
+const CRITTERS = [];
+function buildCreatures() {
+  const g = new THREE.Group(), r = rng(66);
+  const walker = (make, scale, home, rad, speed) => { const a = make(); a.root.scale.setScalar(scale); g.add(a.root);
+    Object.assign(a, { home, rad, speed, x: home.x + (r() - .5)*rad, z: home.z + (r() - .5)*rad, h: r()*6, tx: home.x, tz: home.z, wait: r()*4, ph: r()*6, sc: scale }); CRITTERS.push(a); return a; };
+  walker(makeSauropod, 1.5, { x: 300, z: -175 }, 70, 1.1); walker(makeSauropod, 1.25, { x: 1000, z: -270 }, 80, 1);
+  walker(makeSauropod, 1.1, { x: 640, z: 330 }, 70, 1.2);
+  for (let i = 0; i < 3; i++) walker(makeGiraffe, 1.2 - i*.15, { x: 45 + i*14, z: -320 }, 40, 1.4);
+  for (let i = 0; i < 7; i++) walker(makeDeer, 1, { x: 430 + (i % 3)*6, z: 175 + i*4 }, 55, 2.6);
+  const rex = walker(makeTrex, 1.35, { x: 600, z: -50 }, 70, 2.2); rex.roars = true; rex.roarT = 0;
+  for (let i = 0; i < 5; i++) { const p = makePtero(); p.root.scale.setScalar(1.3); g.add(p.root);
+    Object.assign(p, { fly: true, cx: 100 + i*190, cz: (r() - .5)*120, R: 70 + r()*70, alt: 55 + (1 - i/5)*80 + r()*20, w: (.14 + r()*.08)*(r() < .5 ? -1 : 1), a: r()*6, ph: r()*6 }); CRITTERS.push(p); }
+  scene.add(g);
+}
+function animateCreatures(dt, t) {
+  const leadX = race && race.phase === "race" && cars.length ? cars.reduce((m, c) => c.status === "race" ? Math.max(m, c.mesh.position.x) : m, -1e9) : -1e9;
+  for (const a of CRITTERS) {
+    if (a.fly) { // pterodactyls circle and swoop, wings flapping
+      a.a += a.w*dt; const x = a.cx + Math.cos(a.a)*a.R, z = a.cz + Math.sin(a.a)*a.R, y = a.alt + Math.sin(t*.6 + a.ph)*6;
+      a.root.position.set(x, y, z); a.root.rotation.set(0, -(a.a + Math.sign(a.w)*Math.PI/2), Math.sign(a.w)*.35);
+      const flap = Math.sin(t*5 + a.ph)*.55; for (const w of a.wings) w.rotation.x = w.userData.sz*flap; continue;
+    }
+    // walkers wander around home, turning smoothly, legs swinging with their speed
+    let moving = true;
+    if (a.wait > 0) { a.wait -= dt; moving = false; }
+    else { const dx = a.tx - a.x, dz = a.tz - a.z, d = Math.hypot(dx, dz);
+      if (d < 2) { a.wait = 2 + Math.random()*5; const ang = Math.random()*Math.PI*2, rr = Math.random()*a.rad; a.tx = a.home.x + Math.cos(ang)*rr; a.tz = a.home.z + Math.sin(ang)*rr; moving = false; }
+      else { const want = Math.atan2(dz, dx); let dh = want - a.h; dh = Math.atan2(Math.sin(dh), Math.cos(dh)); a.h += Math.max(-1, Math.min(1, dh))*dt*1.2;
+        a.x += Math.cos(a.h)*a.speed*dt; a.z += Math.sin(a.h)*a.speed*dt; } }
+    if (moving) a.ph += dt*a.speed*2.2/a.sc;
+    a.root.position.set(a.x, terrainH(a.x, a.z), a.z); a.root.rotation.y = -a.h;
+    a.legs.forEach((l, i) => l.rotation.z = moving ? Math.sin(a.ph + a.gait[i])*a.stride : l.rotation.z*.9);
+    a.body.position.y = moving ? Math.abs(Math.sin(a.ph))*a.bob : 0;
+    if (a.neck) a.neck.rotation.z = Math.sin(t*.4 + a.ph)*.08 - (moving ? 0 : .12); // grazing: neck dips when standing
+    if (a.roars) { // the T-rex roars when the leader goes past
+      if (a.roarT > 0) a.roarT -= dt;
+      if (Math.abs(leadX - a.x) < 45 && a.roarT <= 0) { a.roarT = 4; if (!race.said.dino) { race.said.dino = 1; C.dino(); } }
+      const open = a.roarT > 2.2 ? Math.min(1, (4 - a.roarT)*2) : a.roarT > 0 ? Math.max(0, (a.roarT - 1.4)) : 0;
+      a.jaw.rotation.z = -.65*open; a.head.rotation.z = .25*open; }
+  }
 }
 
 /* ---------- grid ---------- */
@@ -1717,7 +1855,7 @@ function buildWorld() {
   buildRows(); syncVisuals(); snapCamera(); if (POOL.on) poolOpen(); renderBets(); renderSeason();
 }
 function disposeGroup(g) {
-  g.traverse(o => { if (o.userData.keep) return; if (o.userData.own) { o.geometry.dispose(); o.material.dispose(); } if (o.isInstancedMesh) o.dispose(); if (o.material && o.material.map) o.material.map.dispose(); if (o.isSprite) o.material.dispose(); });
+  g.traverse(o => { if (o.userData.keep) return; if (o.userData.own) { o.geometry.dispose(); o.material.dispose(); } if (o.userData.ownGeo) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); if (o.material && o.material.map) o.material.map.dispose(); if (o.isSprite) o.material.dispose(); });
 }
 
 /* ---------- race logic ---------- */
@@ -1791,7 +1929,7 @@ function releaseCars() { for (const c of cars) { c.relT = race.simT + c.release;
 
 function simulate(dt) {
   race.acc = (race.acc || 0) + dt; let n = 0;
-  while (race.acc >= STEP && n < 18) {
+  while (race.acc >= STEP && n < 26) {
     race.acc -= STEP; n++; race.simT += STEP;
     const racing = race.phase === "race" || race.phase === "done";
     if (racing) for (const c of cars) if (c.status === "grid" && race.simT >= c.relT) {
@@ -1808,7 +1946,7 @@ function simulate(dt) {
     for (const k of world.contacts) { const a = k.bi.car, b = k.bj.car; if (a && !k.bj.car && k.bj.tag !== "wall" && !k.bj.prop) a.touch = true; if (b && !k.bi.car && k.bi.tag !== "wall" && !k.bi.prop) b.touch = true; }
     if (racing) postStep(STEP);
   }
-  if (n === 18) race.acc = 0;
+  if (n === 26) race.acc = 0;
 }
 function postStep(h) {
   const t = race.simT - race.goAt;
@@ -1865,6 +2003,7 @@ function postStep(h) {
   }
   recFrame(); checkPending();
   if (race.finishAt && race.simT >= race.finishAt) { race.finishAt = 0; const clip = REC.buf.filter(f => f.t >= race.finishFrom); if (clip.length > 20) race.finish = { kind: "finish", car: race.winner, label: `THE FINISH · ${race.winner.d.code}`, clip }; }
+  if (race.phase === "race" && race.simT - race.goAt > 7 && race.simT - (race.lastUpd || race.goAt) > 10) { race.lastUpd = race.simT; C.update(); }
   if (race.phase === "race" && !race.said.final) {
     const r = cars.filter(c => c.status === "race").sort((a, b) => b.body.position.x - a.body.position.x);
     if (r.length > 1 && r[0].body.position.x > track.finX - 80 && r[0].body.position.x - r[1].body.position.x < 7 && !cars.some(c => c.status === "fin")) { race.said.final = 1; C.final(r[0], r[1]); }
@@ -1890,7 +2029,7 @@ function onCollide(car, e) {
   if (iv > 3) { const k = e.contact, p = k.bi.position.vadd(k.ri); FX.sparks(p, car.body.velocity, Math.min(40, Math.round(iv*3)));
     if (car === focusCar()) shake = Math.min(1.2, shake + iv*.04); }
   if (other.prop) {
-    const k = other.kind; if (k === "wreck" || k === "windmill" || k === "tyre") FX.sparks(car.body.position, car.body.velocity, 26);
+    const k = other.kind; if (k === "wreck" || k === "windmill" || k === "tyre" || k === "trex") FX.sparks(car.body.position, car.body.velocity, 26);
     if (iv > 1.5 && (!car.lastHit[k] || now - car.lastHit[k] > 2.5)) { car.lastHit[k] = now;
       if (k === "ball") { event("BEACH BALL", `${car.d.code} hits a beach ball`, "#ffd23f", car); C.ball(car); }
       else if (k === "pin") { if (!race.said.pins) { race.said.pins = 1; event("BOWLING", `${car.d.code} goes bowling`, "#ffd23f", car); C.pins(car); setTimeout(() => checkStrike(car), 2500); } }
@@ -1898,6 +2037,7 @@ function onCollide(car, e) {
       else if (k === "bale") { if (gate("bales", 5)) { event("HAY", `${car.d.code} ploughs into the hay`, "#d9b45a", car); C.hit("bale", car); } }
       else if (k === "wreck") { event("WRECKING BALL", `${car.d.code} is hit by the wrecking ball`, "#ff2f45", car); C.hit("wreck", car); incident("obst", car, `WRECKING BALL · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
       else if (k === "windmill") { event("WINDMILL", `${car.d.code} gets whacked by the windmill`, "#ff2f45", car); C.hit("windmill", car); incident("obst", car, `WINDMILL · ${car.d.code}`, 3); }
+      else if (k === "trex") { event("T-REX", `${car.d.code} runs into the T-rex`, "#4f8a3a", car); C.hit("trex", car); incident("obst", car, `T-REX · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
       else if (k === "tyre") { event("TYRE", `${car.d.code} hits a runaway tyre`, "#ff8a3d", car); C.hit("tyre", car); incident("obst", car, `RUNAWAY TYRE · ${car.d.code}`, 2); } }
     return;
   }
@@ -2178,7 +2318,7 @@ function frame(now) {
   else if (race) simulate(dt);
   const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
   FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position);
-  if (opts.rain && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCrowd(tNow);
+  if (opts.rain && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
   if (race) {
     if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
     hudT += dt; if (hudT > .12) { hudT = 0; updateTower(); updateCard();
@@ -2284,6 +2424,7 @@ addEventListener("keydown", e => {
 await document.fonts.ready.catch(() => {});
 resize();
 buildScenery();
+buildCreatures();
 animAirships = airships();
 { let tod = "day"; try { tod = localStorage.getItem("gridDrop.tod") || "day"; } catch (e) {} setTimeOfDay(tod === "night" ? "night" : "day"); }
 buildWorld();
