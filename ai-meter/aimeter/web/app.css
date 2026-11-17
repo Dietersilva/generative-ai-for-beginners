@@ -84,3 +84,29 @@ td input.job { width: 100%; min-width: 140px; }
 .empty { color: var(--muted); padding: 14px; }
 .foot { text-align: center; color: var(--muted); font-size: 12px; padding: 20px 16px; }
 @media (max-width: 600px) { .kpi .val { font-size: 20px; } td.title { max-width: 180px; } }
+
+/* v2.1: tool cards, projects, diagnostics */
+:root { --t-claude: #d0743c; --t-chatgpt: #13926f; --t-minimax: #2f6fde; --t-c1: #8a5cd6; --t-c2: #1f9fb0; --t-c3: #b7791f; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --t-claude: #e8895a; --t-chatgpt: #2fc596; --t-minimax: #6aa0ff; --t-c1: #b08ef0; --t-c2: #4cc9d8; --t-c3: #f2b84b; } }
+:root[data-theme="dark"] { --t-claude: #e8895a; --t-chatgpt: #2fc596; --t-minimax: #6aa0ff; --t-c1: #b08ef0; --t-c2: #4cc9d8; --t-c3: #f2b84b; }
+.card.tool { cursor: pointer; border-top: 3px solid var(--tc, var(--accent)); }
+.card.tool:hover { border-color: var(--accent); }
+.card .head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card .money { font-weight: 600; font-variant-numeric: tabular-nums; }
+.win .left { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.win .left.low { color: var(--bad); }
+.win .left.mid { color: var(--warn); }
+.nolimit { font-size: 13px; color: var(--muted); background: var(--panel2); border-radius: 8px; padding: 8px; margin: 8px 0; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 10px 0 4px; }
+.stats div { background: var(--panel2); border-radius: 8px; padding: 6px 8px; }
+.stats b { display: block; font-size: 15px; font-variant-numeric: tabular-nums; }
+.stats span { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.mini { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+.mini td, .mini th { padding: 5px 4px; border-bottom: 1px solid var(--line); }
+.expand-hint { font-size: 12px; color: var(--accent); margin-top: 6px; }
+.stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; background: var(--bar-bg); min-width: 120px; }
+.stack > span { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--muted); margin: 6px 0 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.covers { font-size: 13px; color: var(--muted); align-self: center; }
+.diag { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow: auto; max-height: 420px; font-size: 12px; }

@@ -1,5 +1,5 @@
 ; Inno Setup script: builds AI-Meter-Setup.exe (no admin rights needed).
-#define AppVersion "2.0.0"
+#define AppVersion "2.1.0"
 
 [Setup]
 AppId={{6F2B8C1E-4A7D-4E3B-9C55-2D8E61A0B7F4}

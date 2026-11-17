@@ -68,8 +68,12 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
     });
     return false;
   }
-  if (msg.type === "plan" && sender.tab && msg.provider === "claude" && Array.isArray(msg.windows)) {
-    locked(() => chrome.storage.local.set({ pendingPlan: { provider: "claude", windows: msg.windows.slice(0, 12) } }));
+  if (msg.type === "plan" && sender.tab && (msg.provider === "claude" || msg.provider === "chatgpt") && Array.isArray(msg.windows)) {
+    locked(async () => {
+      const { pendingPlans = {} } = await get(["pendingPlans"]);
+      pendingPlans[msg.provider] = { provider: msg.provider, windows: msg.windows.slice(0, 12) };
+      await chrome.storage.local.set({ pendingPlans });
+    });
     return false;
   }
   if (msg.type === "syncNow") { sync().then(() => reply(true), () => reply(false)); return true; }
@@ -81,16 +85,17 @@ async function sync() {
   return locked(async () => {
     try {
       const { sourceId } = await settings();
-      const { totals = {}, dirty = {}, pendingPlan = null, lastConfigAt = 0 } =
-        await get(["totals", "dirty", "pendingPlan", "lastConfigAt"]);
+      const { totals = {}, dirty = {}, pendingPlans = {}, lastConfigAt = 0 } =
+        await get(["totals", "dirty", "pendingPlans", "lastConfigAt"]);
+      const plans = Object.values(pendingPlans);
       const keys = Object.keys(dirty).filter((k) => totals[k]);
-      if (keys.length || pendingPlan) {
-        await call("/api/ingest", { source: sourceId, time: keys.map((k) => totals[k]), plans: pendingPlan ? [pendingPlan] : [] });
+      if (keys.length || plans.length) {
+        await call("/api/ingest", { source: sourceId, time: keys.map((k) => totals[k]), plans });
       }
       // prune old days
       const cutoff = new Date(Date.now() - KEEP_DAYS * 86400000).toISOString().slice(0, 10);
       for (const k of Object.keys(totals)) if (totals[k].day < cutoff) delete totals[k];
-      const set = { totals, dirty: {}, pendingPlan: null, lastSync: Date.now(), lastError: "" };
+      const set = { totals, dirty: {}, pendingPlans: {}, lastSync: Date.now(), lastError: "" };
       if (Date.now() - lastConfigAt > 10 * 60000) {
         set.appConfig = await call("/api/config");
         set.lastConfigAt = Date.now();

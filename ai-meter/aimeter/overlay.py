@@ -11,7 +11,7 @@ from typing import Any, Callable
 BG, PANEL, TEXT, MUTED, LINE = "#15171c", "#1d2027", "#e8eaee", "#9aa3af", "#2d323b"
 BLUE, AMBER, RED, GREEN = "#4f8cf7", "#f2b84b", "#f26b6b", "#3ccf7c"
 FONT = ("Segoe UI", 10)
-WIDTH = 310
+WIDTH = 330
 
 
 def _dur(sec: float) -> str:
@@ -48,6 +48,7 @@ class Overlay:
         self.save_pos = save_pos
         self.toggle_flag = threading.Event()
         self.collapsed = bool(pos.get("collapsed"))
+        self.expanded: set[str] = set()
         self.root = tk.Tk()
         self.root.title("AI-Meter")
         self.root.configure(bg=BG)
@@ -120,14 +121,14 @@ class Overlay:
     def toggle_collapse(self) -> None:
         self.collapsed = not self.collapsed
         self._remember()
-        self.render()
+        self._redraw()
 
     def open_dashboard(self) -> None:
         webbrowser.open(self.url)
 
     def refresh_now(self) -> None:
         self.on_refresh()
-        self.root.after(1500, self.render)
+        self.root.after(1500, self._redraw)
 
     def quit(self) -> None:
         self._remember()
@@ -145,66 +146,91 @@ class Overlay:
             c.create_rectangle(0, 0, max(0, min(100, pct)) / 100 * w, 6, fill=color, width=0)
         c.bind("<Configure>", draw)
 
+    def toggle_tool(self, sub_id: str) -> None:
+        if sub_id in self.expanded:
+            self.expanded.discard(sub_id)
+        else:
+            self.expanded.add(sub_id)
+        self._redraw()
+
+    def _click_all(self, widget: tk.Widget, fn) -> None:
+        widget.bind("<Button-1>", lambda e: fn())
+        widget.configure(cursor="hand2")
+        for child in widget.winfo_children():
+            self._click_all(child, fn)
+
     def render(self) -> None:
+        self._redraw()
+        self.root.after(5000, self.render)
+
+    def _redraw(self) -> None:
         try:
             st = self.get_state()
-        except Exception as exc:  # keep the window alive
-            st = {"error": str(exc)}
+        except Exception:  # keep the window alive
+            st = {"error": True}
         for w in self.body.winfo_children():
             w.destroy()
+        small = ("Segoe UI", 9)
         if "error" in st:
             tk.Label(self.body, text="Couldn't load data", fg=AMBER, bg=BG, font=FONT).pack(anchor="w")
         else:
             cur = st["currency"]
             for s in st["subscriptions"]:
-                if not s["tools"]:
-                    continue
                 card = tk.Frame(self.body, bg=PANEL, padx=10, pady=8)
                 card.pack(fill="x", pady=4)
                 top = tk.Frame(card, bg=PANEL)
                 top.pack(fill="x")
-                tk.Label(top, text=s["name"], fg=TEXT, bg=PANEL, font=("Segoe UI Semibold", 10)).pack(side="left")
+                arrow = "▾" if s["id"] in self.expanded else "▸"
+                tk.Label(top, text=f"{arrow} {s['name']}", fg=TEXT, bg=PANEL, font=("Segoe UI Semibold", 10)).pack(side="left")
                 tk.Label(top, text=f"today {_dur(s['today_seconds'])}", fg=MUTED, bg=PANEL, font=FONT).pack(side="right")
-                if self.collapsed:
-                    worst = max((w["used_pct"] or 0 for w in s["windows"]), default=None)
-                    if worst is not None:
-                        self._bar(card, worst)
-                    continue
                 if not s["windows"]:
-                    tk.Label(card, text="no plan % · time tracking only", fg=MUTED, bg=PANEL,
-                             font=("Segoe UI", 9)).pack(anchor="w")
-                for w in s["windows"]:
-                    pct = w["used_pct"] or 0
+                    tk.Label(card, text=s.get("no_plan_hint") or "no plan limits · time only", fg=MUTED, bg=PANEL,
+                             font=small, wraplength=WIDTH - 50, justify="left").pack(anchor="w")
+                windows = s["windows"] if not self.collapsed else sorted(
+                    s["windows"], key=lambda w: w.get("left_pct") if w.get("left_pct") is not None else 100)[:1]
+                for w in windows:
+                    left = w.get("left_pct") or 0.0
                     row = tk.Frame(card, bg=PANEL)
                     row.pack(fill="x", pady=(4, 0))
-                    tk.Label(row, text=w["label"], fg=MUTED, bg=PANEL, font=("Segoe UI", 9)).pack(side="left")
+                    tk.Label(row, text=f"{w['label']}", fg=MUTED, bg=PANEL, font=small).pack(side="left")
                     reset = _until(w.get("resets_at"))
-                    tk.Label(row, text=f"{pct:.0f}% used" + (f" · {reset}" if reset else ""),
-                             fg=RED if pct >= 90 else TEXT, bg=PANEL, font=("Segoe UI", 9)).pack(side="right")
-                    self._bar(card, pct)
-                if s.get("credits_remaining") is not None:
+                    color = RED if left <= 10 else AMBER if left <= 30 else TEXT
+                    tk.Label(row, text=f"{left:.0f}% left" + (f" · {reset}" if reset else ""),
+                             fg=color, bg=PANEL, font=small).pack(side="right")
+                    self._bar(card, w.get("used_pct") or 0)
+                if s.get("credits_remaining") is not None and not self.collapsed:
                     tk.Label(card, text=f"credits left: {s['credits_remaining']:,.0f}", fg=MUTED, bg=PANEL,
-                             font=("Segoe UI", 9)).pack(anchor="w")
+                             font=small).pack(anchor="w")
+                if s["id"] in self.expanded:
+                    tk.Label(card, text=f"THIS MONTH · {_dur(s['month_seconds'])}", fg=MUTED, bg=PANEL,
+                             font=("Segoe UI", 8, "bold")).pack(anchor="w", pady=(6, 0))
+                    if not s["projects"]:
+                        tk.Label(card, text="no activity yet", fg=MUTED, bg=PANEL, font=small).pack(anchor="w")
+                    for p in s["projects"][:6]:
+                        r = tk.Frame(card, bg=PANEL)
+                        r.pack(fill="x")
+                        name = p["project"] if len(p["project"]) <= 22 else p["project"][:21] + "…"
+                        tk.Label(r, text=name, fg=TEXT, bg=PANEL, font=small).pack(side="left")
+                        tk.Label(r, text=f"{_dur(p['seconds'])} · {_money(p['cost'], cur)}", fg=MUTED, bg=PANEL,
+                                 font=small).pack(side="right")
+                self._click_all(card, lambda sid=s["id"]: self.toggle_tool(sid))
             if not self.collapsed:
-                jobs = [j for j in st["top_jobs"] if j["cost"] > 0 or j["seconds"] > 0]
+                jobs = [j for j in st["top_jobs"] if j["seconds"] > 0]
                 foot = tk.Frame(self.body, bg=BG)
                 foot.pack(fill="x", pady=(8, 0))
-                tk.Label(foot, text=f"THIS MONTH · {_money(st['month_total'], cur)} PAID", fg=MUTED, bg=BG,
+                tk.Label(foot, text=f"TOP PROJECTS THIS MONTH · {_money(st['month_total'], cur)} PAID", fg=MUTED, bg=BG,
                          font=("Segoe UI", 8, "bold")).pack(anchor="w")
                 if st.get("setup_needed"):
-                    tk.Label(foot, text="Add your subscription prices in the dashboard ▤", fg=AMBER, bg=BG,
-                             font=("Segoe UI", 9), cursor="hand2").pack(anchor="w")
+                    tk.Label(foot, text="Add your prices in the dashboard ▤", fg=AMBER, bg=BG, font=small).pack(anchor="w")
                 for j in jobs[:4]:
                     r = tk.Frame(foot, bg=BG)
                     r.pack(fill="x")
-                    name = j["job"] if len(j["job"]) <= 26 else j["job"][:25] + "…"
-                    tk.Label(r, text=name, fg=TEXT, bg=BG, font=("Segoe UI", 9)).pack(side="left")
-                    tk.Label(r, text=f"{_money(j['cost'], cur)} · {j['pct_cost']:.0f}%", fg=MUTED, bg=BG,
-                             font=("Segoe UI", 9)).pack(side="right")
+                    name = j["job"] if len(j["job"]) <= 24 else j["job"][:23] + "…"
+                    tk.Label(r, text=name, fg=TEXT, bg=BG, font=small).pack(side="left")
+                    tk.Label(r, text=f"{_dur(j['seconds'])} · {_money(j['cost'], cur)}", fg=MUTED, bg=BG,
+                             font=small).pack(side="right")
         self.root.update_idletasks()
-        h = self.root.winfo_reqheight()
-        self.root.geometry(f"{WIDTH}x{h}")
-        self.root.after(5000, self.render)
+        self.root.geometry(f"{WIDTH}x{self.root.winfo_reqheight()}")
 
     def run(self) -> None:
         self.root.mainloop()

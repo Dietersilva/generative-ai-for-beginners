@@ -149,6 +149,9 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 self._json(200, build_state(app.store, app.config))
             elif url.path == "/api/report":
                 self._json(200, build_report(app.store, app.config, month or None))
+            elif url.path == "/api/diagnostics":
+                self._json(200, {"version": __version__, "statuses": app.store.statuses(),
+                                 "plans": app.store.plans()})
             elif url.path == "/api/config":
                 cfg = app.config.get()
                 cfg.pop("token", None)
@@ -157,7 +160,7 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 rep = build_report(app.store, app.config, month or None)
                 buf = io.StringIO()
                 w = csv.writer(buf)
-                w.writerow(["month", "job", "hours", "cost", "currency", "pct_of_spend", "chats"])
+                w.writerow(["month", "project", "hours", "cost", "currency", "pct_of_spend", "chats"])
                 for j in rep["jobs"]:
                     w.writerow([rep["month"], _csv_safe(j["job"]), f"{j['seconds'] / 3600:.2f}",
                                 f"{j['cost']:.2f}", rep["currency"], f"{j['pct_cost']:.1f}", j["chats"]])

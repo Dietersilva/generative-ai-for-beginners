@@ -29,22 +29,24 @@ BUILTIN_TOOLS: dict[str, dict[str, str]] = {
     "minimax": {"name": "MiniMax Code", "kind": "local"},
 }
 
+# The three built-in plans. Their tools are fixed so a tool can never be
+# filed under the wrong subscription.
+BUILTIN_PLANS: list[dict[str, Any]] = [
+    {"id": "claude", "name": "Claude", "tools": ["claude_web", "claude_code"]},
+    {"id": "chatgpt", "name": "ChatGPT Work", "tools": ["chatgpt_web", "codex"]},
+    {"id": "minimax", "name": "MiniMax Code", "tools": ["minimax"]},
+]
+
 DEFAULTS: dict[str, Any] = {
-    "version": 2,
+    "version": 3,
     "port": DEFAULT_PORT,
     "token": "",
     "idle_cap_minutes": 5,
     "currency": "USD",
-    "subscriptions": [
-        {"id": "claude", "name": "Claude", "monthly_cost": 0.0,
-         "tools": ["claude_web", "claude_code"], "basis": "time"},
-        {"id": "chatgpt", "name": "ChatGPT Work", "monthly_cost": 0.0,
-         "tools": ["chatgpt_web", "codex"], "basis": "time"},
-        {"id": "minimax", "name": "MiniMax Code", "monthly_cost": 0.0,
-         "tools": ["minimax"], "basis": "time"},
-    ],
+    "subscriptions": [{**p, "monthly_cost": 0.0, "basis": "time"} for p in BUILTIN_PLANS],
     "custom_tools": [],
     "rules": [],
+    "project_aliases": {},
     "home_folder_is_unassigned": True,
     "overlay": {"x": None, "y": None, "collapsed": False},
 }
@@ -62,6 +64,11 @@ def clean_text(value: Any, limit: int = MAX_NAME) -> str:
 def make_id(name: str, prefix: str = "") -> str:
     base = _ID_RE.sub("_", name.lower()).strip("_")[:32] or "item"
     return f"{prefix}{base}"
+
+
+def project_key(name: str) -> str:
+    """Names that differ only in case, spaces, dashes or underscores are the same project."""
+    return re.sub(r"[^a-z0-9]+", "", (name or "").lower())[:80]
 
 
 def _clean_domain(d: Any) -> str | None:
@@ -105,8 +112,11 @@ def sanitize(raw: dict[str, Any]) -> dict[str, Any]:
     cfg["currency"] = clean_text(raw.get("currency") or "USD", 8) or "USD"
     cfg["home_folder_is_unassigned"] = bool(raw.get("home_folder_is_unassigned", True))
 
+    raw_subs = raw.get("subscriptions") if isinstance(raw.get("subscriptions"), list) else []
+    by_id = {s.get("id"): s for s in raw_subs if isinstance(s, dict)}
+
     customs = []
-    seen_ids: set[str] = set(BUILTIN_TOOLS)
+    seen_ids: set[str] = set(BUILTIN_TOOLS) | {p["id"] for p in BUILTIN_PLANS}
     for t in raw.get("custom_tools") or []:
         if not isinstance(t, dict):
             continue
@@ -120,39 +130,25 @@ def sanitize(raw: dict[str, Any]) -> dict[str, Any]:
         seen_ids.add(tid)
         sites = [d for d in (_clean_domain(x) for x in (t.get("sites") or [])[:20]) if d]
         apps = [a for a in (_clean_app(x) for x in (t.get("apps") or [])[:20]) if a]
-        customs.append({"id": tid, "name": name, "sites": sites, "apps": apps})
+        cost = t.get("monthly_cost")
+        if cost is None and isinstance(by_id.get(tid), dict):  # migrate from v2
+            cost = by_id[tid].get("monthly_cost")
+        customs.append({"id": tid, "name": name, "sites": sites, "apps": apps,
+                        "monthly_cost": round(_num(cost), 2)})
     cfg["custom_tools"] = customs
 
-    known_tools = set(BUILTIN_TOOLS) | {t["id"] for t in customs}
     subs = []
-    sub_ids: set[str] = set()
-    claimed: set[str] = set()
-    raw_subs = raw.get("subscriptions")
-    if not isinstance(raw_subs, list):
-        raw_subs = DEFAULTS["subscriptions"]
-    for s in raw_subs[:30]:
-        if not isinstance(s, dict):
-            continue
-        name = clean_text(s.get("name"))
-        if not name:
-            continue
-        sid = s.get("id") if isinstance(s.get("id"), str) else make_id(name)
-        sid = _ID_RE.sub("_", sid.lower())[:48] or make_id(name)
-        while sid in sub_ids:
-            sid += "_2"
-        sub_ids.add(sid)
-        tools = []
-        for tool in s.get("tools") or []:
-            # A tool can only belong to one subscription, otherwise its time
-            # would be paid for twice.
-            if tool in known_tools and tool not in claimed:
-                tools.append(tool)
-                claimed.add(tool)
-        basis = s.get("basis") if s.get("basis") in ("time", "tokens") else "time"
-        subs.append({"id": sid, "name": name,
+    for p in BUILTIN_PLANS:
+        s = by_id.get(p["id"]) or {}
+        subs.append({"id": p["id"], "name": clean_text(s.get("name")) or p["name"],
                      "monthly_cost": round(_num(s.get("monthly_cost")), 2),
-                     "tools": tools, "basis": basis})
+                     "tools": list(p["tools"]),
+                     "basis": s.get("basis") if s.get("basis") in ("time", "tokens") else "time"})
+    for t in customs:
+        subs.append({"id": t["id"], "name": t["name"], "monthly_cost": t["monthly_cost"],
+                     "tools": [t["id"]], "basis": "time"})
     cfg["subscriptions"] = subs
+    known_tools = set(BUILTIN_TOOLS) | {t["id"] for t in customs}
 
     rules = []
     for r in (raw.get("rules") or [])[:500]:
@@ -166,6 +162,14 @@ def sanitize(raw: dict[str, Any]) -> dict[str, Any]:
         tool = r.get("tool") if r.get("tool") in known_tools else ""
         rules.append({"contains": contains, "job": job, "field": field, "tool": tool})
     cfg["rules"] = rules
+
+    aliases = {}
+    raw_alias = raw.get("project_aliases") if isinstance(raw.get("project_aliases"), dict) else {}
+    for k, v in list(raw_alias.items())[:1000]:
+        key, target = project_key(str(k)), clean_text(v)
+        if key and target and project_key(target) != key:
+            aliases[key] = target
+    cfg["project_aliases"] = aliases
 
     ov = raw.get("overlay") if isinstance(raw.get("overlay"), dict) else {}
     cfg["overlay"] = {
@@ -189,6 +193,9 @@ class Config:
         except (OSError, ValueError):
             raw = {}
         cfg = sanitize(raw)
+        if raw and (raw.get("version") != cfg["version"] or raw.get("subscriptions") != cfg["subscriptions"]):
+            self.data = cfg  # write back repaired / upgraded settings
+            self.save()
         if not cfg["token"]:
             cfg["token"] = secrets.token_urlsafe(24)
             self.data = cfg
@@ -204,7 +211,7 @@ class Config:
         with self._lock:
             merged = copy.deepcopy(self.data)
             for key in ("subscriptions", "custom_tools", "rules", "idle_cap_minutes",
-                        "currency", "home_folder_is_unassigned", "overlay"):
+                        "currency", "home_folder_is_unassigned", "overlay", "project_aliases"):
                 if key in patch:
                     merged[key] = patch[key]
             cleaned = sanitize(merged)

@@ -64,6 +64,74 @@ def _reset_time(item: dict[str, Any], *names: str) -> float | None:
     return None
 
 
+def _shape(obj: Any, depth: int = 0) -> Any:
+    """Field names and numbers only, for Diagnostics. Strings are reduced to
+    their length so nothing sensitive can be stored or shown."""
+    if depth > 4:
+        return "..."
+    if isinstance(obj, dict):
+        return {str(k)[:60]: _shape(v, depth + 1) for k, v in list(obj.items())[:40]}
+    if isinstance(obj, list):
+        return [_shape(v, depth + 1) for v in obj[:5]]
+    if isinstance(obj, bool) or obj is None or isinstance(obj, (int, float)):
+        return obj
+    return f"<text, {len(str(obj))} chars>"
+
+
+def _pct(item: dict[str, Any], *prefixes: str) -> float | None:
+    """used % for a window: direct percent, remaining percent, or used/total counts."""
+    for k, v in item.items():
+        kl = k.lower()
+        if any(p in kl for p in prefixes) and "percent" in kl:
+            f = to_float(v)
+            if f is None:
+                continue
+            return max(0.0, min(100.0, 100.0 - f if "remain" in kl or "left" in kl else f))
+    used = total = None
+    for k, v in item.items():
+        kl = k.lower()
+        if not any(p in kl for p in prefixes):
+            continue
+        if "total" in kl or "limit" in kl:
+            total = to_float(v)
+        elif "usage" in kl or "used" in kl or "count" in kl:
+            used = to_float(v)
+    if used is not None and total:
+        return max(0.0, min(100.0, 100.0 * used / total))
+    return None
+
+
+def _reset(item: dict[str, Any], *prefixes: str) -> float | None:
+    for k, v in item.items():
+        kl = k.lower()
+        if any(p in kl for p in prefixes) and ("end" in kl or "reset" in kl):
+            t = to_epoch(v)
+            if t:
+                return t
+    return None
+
+
+def parse_plan(raw: dict[str, Any]) -> list[dict[str, Any]]:
+    data = raw.get("data") if isinstance(raw.get("data"), dict) else raw
+    items = [i for i in (data.get("model_remains") or data.get("remains") or []) if isinstance(i, dict)]
+    if not items and isinstance(data, dict):
+        items = [data]
+    windows: list[dict[str, Any]] = []
+    many = len(items) > 1
+    for item in items:
+        prefix = f"{item.get('model_name')} " if many and item.get("model_name") else ""
+        five = _pct(item, "interval", "5h", "five", "hour")
+        week = _pct(item, "week")
+        if five is not None:
+            windows.append({"key": f"{prefix}five_hour".replace(" ", "_").lower(), "label": f"{prefix}5-hour window",
+                            "used_pct": five,
+                            "resets_at": _reset(item, "interval", "5h", "five", "hour") or to_epoch(item.get("end_time"))})
+        if week is not None:
+            windows.append({"key": f"{prefix}weekly".replace(" ", "_").lower(), "label": f"{prefix}Weekly",
+                            "used_pct": week, "resets_at": _reset(item, "week")})
+    return windows
+
+
 def fetch_account() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     """Plan windows and credit balance from MiniMax's API."""
     token = _auth_token()
@@ -73,22 +141,12 @@ def fetch_account() -> tuple[list[dict[str, Any]], dict[str, Any]]:
 
     try:
         raw = http_json(f"{OPEN_API_BASE}/v1/api/openplatform/coding_plan/remains", headers=headers)
-        items = [i for i in raw.get("model_remains") or [] if isinstance(i, dict)]
-        many = len(items) > 1
-        for item in items:
-            prefix = f"{item.get('model_name')} " if many and item.get("model_name") else ""
-            five = to_float(item.get("current_interval_used_percent"))
-            week = to_float(item.get("current_weekly_used_percent"))
-            if five is not None:
-                windows.append({"key": f"{prefix}five_hour".strip(), "label": f"{prefix}5-hour window",
-                                "used_pct": max(0.0, min(100.0, five)),
-                                "resets_at": _reset_time(item, "end_time", "interval_end_time")})
-            if week is not None:
-                windows.append({"key": f"{prefix}weekly".strip(), "label": f"{prefix}Weekly",
-                                "used_pct": max(0.0, min(100.0, week)),
-                                "resets_at": _reset_time(item, "weekly_end_time", "week_end_time")})
+        status["plan_debug"] = _shape(raw)
+        windows = parse_plan(raw)
+        if not windows:
+            status["plan_error"] = "MiniMax answered but sent no plan limits (see Diagnostics)"
     except CollectorError as exc:
-        status["plan_error"] = str(exc)
+        status["plan_error"] = f"MiniMax plan limits: {exc}"
 
     try:
         info = http_json(f"{AGENT_BASE}/matrix/api/v1/commerce/get_membership_info", method="POST", headers=headers)

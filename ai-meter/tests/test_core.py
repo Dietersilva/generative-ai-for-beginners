@@ -126,10 +126,23 @@ class ConfigAndCosting(unittest.TestCase):
     def test_token_created_and_private(self):
         self.assertGreaterEqual(len(self.config.get()["token"]), 24)
 
-    def test_tool_in_one_subscription_only(self):
-        c = sanitize({"subscriptions": [{"name": "A", "tools": ["claude_web"]}, {"name": "B", "tools": ["claude_web", "codex"]}]})
-        self.assertEqual(c["subscriptions"][0]["tools"], ["claude_web"])
-        self.assertEqual(c["subscriptions"][1]["tools"], ["codex"])
+    def test_broken_v2_settings_are_repaired(self):
+        # every tool ticked under MiniMax, Claude/ChatGPT left empty (seen in the field)
+        c = sanitize({"subscriptions": [
+            {"id": "claude", "name": "Claude", "monthly_cost": 20, "tools": []},
+            {"id": "chatgpt", "name": "ChatGPT Work", "monthly_cost": 20, "tools": []},
+            {"id": "minimax", "name": "MiniMax Code", "monthly_cost": 20,
+             "tools": ["claude_web", "claude_code", "chatgpt_web", "codex", "minimax"]}]})
+        tools = {s["id"]: s["tools"] for s in c["subscriptions"]}
+        self.assertEqual(tools["claude"], ["claude_web", "claude_code"])
+        self.assertEqual(tools["chatgpt"], ["chatgpt_web", "codex"])
+        self.assertEqual(tools["minimax"], ["minimax"])
+        self.assertEqual([s["monthly_cost"] for s in c["subscriptions"]], [20, 20, 20])
+
+    def test_custom_tool_has_own_price(self):
+        c = sanitize({"custom_tools": [{"name": "Perplexity", "sites": ["perplexity.ai"], "monthly_cost": 20}]})
+        sub = [s for s in c["subscriptions"] if s["id"].startswith("custom_")][0]
+        self.assertEqual((sub["name"], sub["monthly_cost"], sub["tools"]), ("Perplexity", 20, [c["custom_tools"][0]["id"]]))
 
     def test_dashboard_cannot_change_token(self):
         tok = self.config.get()["token"]
@@ -139,9 +152,9 @@ class ConfigAndCosting(unittest.TestCase):
 
     def test_cost_split_by_time_per_subscription(self):
         self.config.update({"subscriptions": [
-            {"id": "claude", "name": "Claude", "monthly_cost": 100, "tools": ["claude_web", "claude_code"]},
-            {"id": "gpt", "name": "GPT", "monthly_cost": 30, "tools": ["chatgpt_web"]},
-            {"id": "mm", "name": "MiniMax", "monthly_cost": 20, "tools": ["minimax"]}],
+            {"id": "claude", "name": "Claude", "monthly_cost": 100},
+            {"id": "chatgpt", "name": "GPT", "monthly_cost": 30},
+            {"id": "minimax", "name": "MiniMax", "monthly_cost": 20}],
             "rules": [{"contains": "router", "job": "Home network"}]})
         day = time.strftime("%Y-%m-%d")
         col = Collector(self.store, self.config)
@@ -160,6 +173,32 @@ class ConfigAndCosting(unittest.TestCase):
         # idempotent: resending the same totals doesn't double count
         col.ingest({"source": "t", "time": [{"tool": "claude_web", "chat_id": "a", "day": day, "seconds": 3000}]})
         self.assertAlmostEqual(build_report(self.store, self.config)["total_seconds"], 4600)
+
+    def test_projects_combined_across_tools(self):
+        self.config.update({"subscriptions": [
+            {"id": "claude", "monthly_cost": 20, "name": "Claude"},
+            {"id": "chatgpt", "monthly_cost": 30, "name": "ChatGPT"},
+            {"id": "minimax", "monthly_cost": 0, "name": "MiniMax"}]})
+        day = time.strftime("%Y-%m-%d")
+        col = Collector(self.store, self.config)
+        col.ingest({"source": "t", "time": [
+            {"tool": "claude_web", "chat_id": "a", "day": day, "seconds": 1800, "project": "Trading Bot"},
+            {"tool": "chatgpt_web", "chat_id": "b", "day": day, "seconds": 600, "project": "trading-bot"},
+            {"tool": "chatgpt_web", "chat_id": "c", "day": day, "seconds": 600, "project": "Website"}]})
+        rep = build_report(self.store, self.config)
+        projects = {p["project"]: p for p in rep["projects"]}
+        self.assertIn("Trading Bot", projects)  # spelling with the most time wins
+        tb = projects["Trading Bot"]
+        self.assertAlmostEqual(tb["seconds"], 2400)
+        self.assertAlmostEqual(tb["cost"], 20 + 15)
+        self.assertEqual(set(tb["by_sub"]), {"claude", "chatgpt"})
+        chatgpt = [s for s in rep["subscriptions"] if s["id"] == "chatgpt"][0]
+        self.assertEqual([(p["project"], p["cost"]) for p in chatgpt["projects"]], [("Trading Bot", 15.0), ("Website", 15.0)])
+        # merge "Website" into "Trading Bot"
+        self.config.update({"project_aliases": {"Website": "Trading Bot"}})
+        rep = build_report(self.store, self.config)
+        self.assertEqual([p["project"] for p in rep["projects"]], ["Trading Bot"])
+        self.assertAlmostEqual(rep["projects"][0]["cost"], 50)
 
     def test_home_folder_unassigned(self):
         from aimeter.paths import HOME

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AI-Meter Connector",
-  "version": "2.0.0",
-  "description": "Sends your Claude plan usage and the time you spend per chat on claude.ai and chatgpt.com to the AI-Meter app on this PC only.",
+  "version": "2.1.0",
+  "description": "Sends your Claude and ChatGPT plan limits and the time you spend per chat on claude.ai and chatgpt.com to the AI-Meter app on this PC only.",
   "minimum_chrome_version": "120",
   "permissions": ["storage", "alarms", "scripting"],
   "host_permissions": [

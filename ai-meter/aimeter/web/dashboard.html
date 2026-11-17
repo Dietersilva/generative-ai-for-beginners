@@ -20,7 +20,8 @@
   </div>
 </header>
 <nav class="tabs" role="tablist">
-  <button role="tab" data-tab="overview" aria-selected="true">Overview</button>
+  <button role="tab" data-tab="overview" aria-selected="true">Tools</button>
+  <button role="tab" data-tab="projects" aria-selected="false">Projects</button>
   <button role="tab" data-tab="chats" aria-selected="false">Chats &amp; sessions</button>
   <button role="tab" data-tab="settings" aria-selected="false">Settings</button>
 </nav>
@@ -32,46 +33,48 @@
       <div class="kpi"><span class="lbl">Paid this month</span><span id="k-paid" class="val">–</span></div>
       <div class="kpi"><span class="lbl">Time tracked</span><span id="k-time" class="val">–</span></div>
       <div class="kpi"><span class="lbl">Avg cost per hour</span><span id="k-rate" class="val">–</span></div>
-      <div class="kpi"><span class="lbl">Not yet assigned to a job</span><span id="k-unassigned" class="val">–</span></div>
+      <div class="kpi"><span class="lbl">Not yet in a project</span><span id="k-unassigned" class="val">–</span></div>
     </div>
+    <h2>Your tools</h2>
+    <p class="hint">Plan limits refresh every few minutes. Click a tool to see its projects this month.</p>
+    <div id="plans" class="cards"></div>
+  </section>
 
-    <h2>Cost by job</h2>
-    <p class="hint">Each subscription's monthly price is split across jobs by the time you spent on them with that tool.</p>
-    <div class="tablewrap"><table id="jobs">
-      <thead><tr><th>Job</th><th class="w-bar">Share of spend</th><th class="num">%</th><th class="num">Time</th><th class="num">Cost</th><th>From</th></tr></thead>
+  <section id="tab-projects" class="tab" hidden>
+    <h2>Projects across all tools</h2>
+    <p class="hint">Total time and cost per project for the month. Projects with the same name in different tools are combined (case, spaces and dashes are ignored). Use <b>Merge into</b> to combine projects with different names.</p>
+    <div id="legend" class="legend"></div>
+    <div class="tablewrap"><table id="projects">
+      <thead><tr><th>Project</th><th class="w-bar">Time by tool</th><th class="num">Total time</th><th class="num">Cost</th><th class="num">% of spend</th><th>Merge into</th></tr></thead>
       <tbody></tbody>
     </table></div>
-
-    <h2>Plan usage</h2>
-    <div id="plans" class="cards"></div>
   </section>
 
   <section id="tab-chats" class="tab" hidden>
     <div class="filters">
-      <input id="search" type="search" placeholder="Search titles, projects, jobs" aria-label="Search">
+      <input id="search" type="search" placeholder="Search titles, projects, tools" aria-label="Search">
       <label class="check"><input id="only-unassigned" type="checkbox"> Unassigned only</label>
     </div>
-    <p class="hint">Type a job name to assign a chat. Tip: add a rule under Settings to assign matching chats automatically.</p>
+    <p class="hint">Type a project name to file a chat under it. Tip: add a rule under Settings to file matching chats automatically.</p>
     <div class="tablewrap"><table id="chats">
-      <thead><tr><th>Tool</th><th>Chat / session</th><th>Project</th><th class="num">Time</th><th class="num">Cost</th><th>Job</th></tr></thead>
+      <thead><tr><th>Tool</th><th>Chat / session</th><th>Detected project / folder</th><th class="num">Time</th><th class="num">Cost</th><th>Project</th></tr></thead>
       <tbody></tbody>
     </table></div>
     <datalist id="joblist"></datalist>
   </section>
 
   <section id="tab-settings" class="tab" hidden>
-    <h2>Subscriptions</h2>
-    <p class="hint">What you pay per month, and which tools that subscription covers. A tool can only be in one subscription.</p>
+    <h2>Tools and prices</h2>
+    <p class="hint">What you pay per month for each tool. Claude covers claude.ai and Claude Code; ChatGPT covers chatgpt.com and Codex.</p>
     <div id="subs"></div>
-    <button type="button" id="add-sub">+ Add subscription</button>
 
-    <h2>Custom tools</h2>
-    <p class="hint">Track any other AI tool. Websites are timed by the browser extension (allow the site in its options). Desktop apps (for example <code>cursor.exe</code>) are timed on Windows while they're in front.</p>
+    <h2>Add your own tools</h2>
+    <p class="hint">Websites are timed by the browser extension (click <b>Allow</b> for the site in its options). Desktop apps (for example <code>cursor.exe</code>) are timed on Windows while they're in front.</p>
     <div id="customs"></div>
     <button type="button" id="add-custom">+ Add tool</button>
 
-    <h2>Job rules</h2>
-    <p class="hint">Chats whose title or project contains the text are assigned to the job. First match wins; a job you type on a chat always wins.</p>
+    <h2>Project rules</h2>
+    <p class="hint">Chats whose title or project contains the text are filed under the project. First match wins; a project you type on a chat always wins.</p>
     <div id="rules"></div>
     <button type="button" id="add-rule">+ Add rule</button>
 
@@ -90,8 +93,13 @@
       <label>Port<input id="port" readonly></label>
       <label>Pairing token<span class="row"><input id="token" type="password" readonly><button type="button" id="copy-token">Copy</button></span></label>
     </div>
+
+    <h2>Diagnostics</h2>
+    <p class="hint">What each tool last reported. Contains no logins or message text, so it's safe to screenshot when asking for help.</p>
+    <button type="button" id="load-diag">Show diagnostics</button>
+    <pre id="diag" class="diag" hidden></pre>
   </section>
 </main>
-<footer class="foot">Runs only on this PC. Plan percentages come from each provider; cost per job is an estimate based on active time.</footer>
+<footer class="foot">Runs only on this PC. Plan limits come from each provider; cost per project is an estimate based on active time.</footer>
 </body>
 </html>

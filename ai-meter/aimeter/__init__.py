@@ -3,5 +3,5 @@
 Everything runs locally. Nothing is uploaded anywhere.
 """
 
-__version__ = "2.0.0"
+__version__ = "2.1.0"
 APP_NAME = "AI-Meter"

@@ -124,7 +124,7 @@ class Collector:
         else:
             prev = self.store.statuses().get("minimax", {})
             for k in ("credits_remaining", "subscription_type", "has_token_plan", "plan_error",
-                      "credit_error", "account_error"):
+                      "credit_error", "account_error", "plan_debug"):
                 if k in prev:
                     status[k] = prev[k]
         self.store.set_status("minimax", status)
@@ -167,7 +167,7 @@ class Collector:
             accepted += 1
         plans = 0
         for p in (payload.get("plans") or [])[:10]:
-            if not isinstance(p, dict) or p.get("provider") not in ("claude",):
+            if not isinstance(p, dict) or p.get("provider") not in ("claude", "chatgpt"):
                 continue
             windows = []
             for w in (p.get("windows") or [])[:12]:
@@ -182,7 +182,9 @@ class Collector:
                                 "resets_at": to_epoch(w.get("resets_at"))})
             if windows:
                 self.store.set_plan(p["provider"], windows)
-                self.store.set_status("claude_web", {"ok": True, "message": "plan usage from claude.ai"})
+                tool = "claude_web" if p["provider"] == "claude" else "chatgpt_web"
+                site = "claude.ai" if p["provider"] == "claude" else "chatgpt.com"
+                self.store.set_status(tool, {"ok": True, "message": f"plan limits from {site}"})
                 plans += 1
         if accepted:
             self.store.set_status("browser_extension", {"ok": True, "message": "connected"})
