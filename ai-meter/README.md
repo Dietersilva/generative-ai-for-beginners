@@ -46,7 +46,7 @@ plans, so time is the fairest measure available.
 
 ## Install (Windows)
 
-1. Get the build: from GitHub **Actions → AI-Meter Windows build → artifact**,
+1. Get the build: from GitHub **Actions → AI-Meter Windows build → artifact** (a folder build: `app\AI-Meter.exe` plus its `_internal` files),
    or build it yourself with `build.ps1` (needs Python 3.11+).
 2. Run the installer:
 

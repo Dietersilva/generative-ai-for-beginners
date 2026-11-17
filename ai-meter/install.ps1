@@ -9,8 +9,11 @@ $installDir = Join-Path $env:LOCALAPPDATA 'Programs\AI-Meter'
 Get-Process -Name 'AI-Meter' -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Milliseconds 500
 
+# Replace the program files only. Your settings and history live elsewhere
+# (%APPDATA%\AI-Meter and %LOCALAPPDATA%\AI-Meter) and are kept.
+if (Test-Path $installDir) { Remove-Item $installDir -Recurse -Force }
 New-Item -ItemType Directory -Force -Path $installDir | Out-Null
-Copy-Item (Join-Path $here 'AI-Meter.exe') -Destination $installDir -Force
+Copy-Item (Join-Path $here 'app\*') -Destination $installDir -Recurse -Force
 Copy-Item (Join-Path $here 'ai-meter.ico') -Destination $installDir -Force -ErrorAction SilentlyContinue
 $extDst = Join-Path $installDir 'extension'
 if (Test-Path $extDst) { Remove-Item $extDst -Recurse -Force }
