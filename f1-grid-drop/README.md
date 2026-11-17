@@ -31,10 +31,20 @@ A typical race takes 30 to 40 seconds.
   - Driver mistakes.
   - Messy launches off the drops.
   - Bouncier contact between cars.
-  - Beach balls and bowling pins.
-
-  In testing, about 12 of 22 cars finished with chaos on and about 18 with it off.
+  - A random four of seven obstacles each race, announced by the hosts at the start: giant beach balls, giant bowling pins, runaway monster tyres, a crazy-golf windmill, traffic cones, a wrecking ball and a hay bale slalom.
+- **Reverse mode:** every car races the whole course backwards.
+- **Off the mountain:** cars that clear the barrier tumble down the solid mountainside.
 - Marshals lift crashed cars clear after a few seconds.
+- Like F1, the race closes 15 seconds after the winner finishes. Cars still running are listed as DNF.
+
+## Instant replays
+
+- Flips, cars going off the mountain, wrecking-ball and windmill hits, runaway tyres, big crashes, bowling strikes and big air get a slow-motion replay.
+- Each replay opens with a swipe transition and plays in cinematic letterbox with an orbiting camera, while the hosts react.
+- The race pauses during a replay, so you don't miss anything.
+- Up to four replays per race, none in the final 130 m.
+- After the race, **HIGHLIGHTS** replays the big moments and the finish.
+- Skip a replay with SKIP, Space or Enter.
 
 ## Commentary
 
@@ -44,20 +54,24 @@ A typical race takes 30 to 40 seconds.
 
 ## Scenery and effects
 
-- **Day:** sky, clouds, mountains and about 1,000 trees.
+- **Terrain:** generated rolling hills and mountains, with grass, rock and snow.
+- **Day:** a physically based sky with sun haze, clouds, and forests of conifer and broadleaf trees.
 - **Night:** floodlights, stars and fireworks.
 - **Landmarks:** a lake with a giant rubber duck, a hillside "F1 BEZERK" sign, wind turbines, hot-air balloons, a blimp and a TV helicopter that follows the leader.
 - **At the finish:** a speed trap board, a jumbotron with a live chase camera, and a crowd that jumps as cars pass.
-- **Effects:** sparks, dust, confetti and camera shake.
+- **Effects:** sparks, dust, confetti, camera shake, and a soft glow on lights and fireworks.
+- **Cars:** clear-coat paint that reflects the sky, multi-element wings, mirrors, tyre markings and wheel spokes.
+- **Track:** textured asphalt.
 
 ## Controls
 
-Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
+Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · P replays · V reverse · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 
 - One HTML file.
-- three.js 0.160.0 for 3D graphics and cannon-es 0.20.0 for physics, both pinned and loaded from jsDelivr.
+- three.js 0.160.0 (with its Sky, bloom and output add-ons) for 3D graphics and cannon-es 0.20.0 for physics, all pinned and loaded from jsDelivr through an import map.
+- If the add-ons fail to load, the page falls back to the basic look.
 - **Smooth motion:**
   - Cars are drawn between physics steps.
   - Sharpness lowers automatically on slow devices and rises again when there's headroom.
