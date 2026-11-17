@@ -346,12 +346,20 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     <button class="tog" id="slowTog" aria-pressed="false"><i></i>SLOW-MO</button>
     <button class="tog" id="chaosTog" aria-pressed="true"><i></i>CHAOS</button>
     <button class="tog" id="revTog" aria-pressed="false" title="Every car races the whole course backwards (V)"><i></i>BACKWARDS</button>
+    <div class="grp"><span>SPEED</span>
+      <div class="pills" role="group" aria-label="Race speed">
+        <button class="seg" data-speed="1" aria-pressed="true" title="Real time">1×</button>
+        <button class="seg" data-speed="1.5" aria-pressed="false" title="Fast-forward one and a half times">1.5×</button>
+        <button class="seg" data-speed="2" aria-pressed="false" title="Fast-forward twice as fast">2×</button>
+      </div>
+    </div>
+    <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
     <button class="tog" id="rainTog" aria-pressed="false" title="Rain: less grip, spray and a wet track (W)"><i></i>RAIN</button>
     <button class="tog" id="moonTog" aria-pressed="false" title="Moon gravity: one sixth of Earth's, and no air (M)"><i></i>MOON</button>
     <button class="tog" id="giantTog" aria-pressed="false" title="One random car is giant and starts at the back (G)"><i></i>GIANT</button>
     <button class="tog" id="replayTog" aria-pressed="true" title="Slow-motion replays of crashes, flips and big moments"><i></i>REPLAYS</button>
     <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
-    <span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · W rain · M moon · G giant · + − zoom · F full screen</span>
+    <span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · T turbo · W rain · M moon · G giant · + − zoom · F full screen</span>
   </section>
 
   <aside class="tower" aria-label="Running order">
@@ -457,7 +465,7 @@ async function poolNames(keys, nicks) {
 async function poolOpen() { // race screen: open betting for the race on the grid
   if (!POOL.host || !POOL.ready || typeof cars === "undefined" || !cars.length) { POOL.pendingOpen = true; return; }
   POOL.pendingOpen = false; const st = POOL.state || {}, grid = cars.map(c => c.d.code);
-  const cond = { rain: !!opts.rain, moon: !!opts.moon, giant: !!opts.giant, reverse: !!opts.reverse, chaos: !!opts.chaos, deg: opts.deg, night: opts.tod === "night" };
+  const cond = { rain: !!opts.rain, moon: !!opts.moon, turbo: !!opts.turbo, giant: !!opts.giant, reverse: !!opts.reverse, chaos: !!opts.chaos, deg: opts.deg, night: opts.tod === "night" };
   if (st.phase === "open" && JSON.stringify(st.grid) === JSON.stringify(grid) && JSON.stringify(st.cond) === JSON.stringify(cond)) return;
   const next = { session: st.session || 1, raceNo: st.phase === "open" ? st.raceNo : (st.raceNo || 0) + 1, phase: "open", grid, cond, picks: {}, result: st.result || null };
   try { await POOL.db.doc("pool/state").set(next); } catch (e) {}
@@ -515,7 +523,7 @@ function condCard(cond, raceNo) {
   if (!cond) return wrap;
   const chips = el("div", "bs-chips");
   const add = (txt, cls) => chips.append(el("span", "bs-chip" + (cls ? " " + cls : ""), txt));
-  add(`${cond.deg}° DROP`); if (cond.rain) add("🌧 RAIN", "rain"); if (cond.moon) add("🌙 MOON GRAVITY", "moon");
+  add(`${cond.deg}° DROP`); if (cond.rain) add("🌧 RAIN", "rain"); if (cond.moon) add("🌙 MOON GRAVITY", "moon"); if (cond.turbo) add("⚡ TURBO", "rain");
   if (cond.night) add("NIGHT"); if (cond.giant) add("GIANT CAR"); if (cond.reverse) add("BACKWARDS"); if (cond.chaos) add("CHAOS");
   wrap.append(chips);
   const key = cond.rain && cond.moon ? "both" : cond.rain ? "rain" : cond.moon ? "moon" : null;
@@ -594,7 +602,7 @@ if (BET_ONLY) { betApp(); await new Promise(() => {}); } // phones stop here: no
 const D2R = Math.PI/180, H = 64, W = 18, T = 0.5; let G = 9.81;       // drop height, track width, half slab thickness
 const KICK_AT = 80, KICK_LEN = 13, KICK_DEG = 14;
 const STEP = 1/120;
-const opts = { deg: 72, grid: "std", jump: true, slow: false, cam: "tv", tod: "day", chaos: true, comm: true, replays: true, reverse: false, zoom: { tv: 1, side: 1, onboard: 1, crow: 1, drone: 1, giant: 1, replay: 1 } };
+const opts = { deg: 72, grid: "std", jump: true, slow: false, cam: "tv", tod: "day", chaos: true, comm: true, replays: true, reverse: false, turbo: false, speed: 1, zoom: { tv: 1, side: 1, onboard: 1, crow: 1, drone: 1, giant: 1, replay: 1 } };
 
 /* ---------- renderer & scene ---------- */
 const canvas = $("#cv"), stageEl = $("#stage");
@@ -1341,6 +1349,7 @@ const C = {
       : opts.deg >= 72 ? pick("i3", ["Seventy-two degrees off the top. Somebody in race control has a sense of humour.", "Seventy-two degrees. I wouldn't walk down that, never mind race it."])
       : pick("i4", ["Only fifty degrees today. Practically a gentle stroll.", "Fifty degrees. The sensible option, for once."]), 3);
     if (opts.rain) { say("rex", "And the heavens have opened! It's a wet one today!", 3); say("pri", "Less grip, more spray, and a lot more praying.", 2); }
+    if (opts.turbo) { say("rex", "Turbo mode! Hardly any drag today, so they're going to be flying!", 3); say("pri", "Faster cars, bigger jumps, harder landings. The recovery crews are on standby.", 2); }
     if (opts.moon) { say("rex", "Gravity has been set to the Moon! One sixth of normal!", 3); say("pri", "And there's no air up there either, so no slipstream. Just physics.", 2); }
     if (opts.giant) { const gc = cars[cars.length - 1]; say("rex", `And at the back of the grid, a giant ${sur(gc)}! Nobody can explain this.`, 3); say("pri", "It does make overtaking interesting.", 2); }
     if (opts.reverse) { say("rex", "And today, for reasons nobody can explain, they're doing the whole thing backwards!", 3); say("pri", "Twenty-two drivers, all looking over their shoulders. What could go wrong?", 2); }
@@ -1733,7 +1742,8 @@ function stepCars(h, racing) {
       if (dx > 2 && dx < 25 && Math.abs(o.body.position.z - c.body.position.z) < 1.8) c.draft = Math.max(c.draft, .45*(1 - (dx - 2)/23));
     }
     if (sp > .05) {
-      let f = (opts.moon ? 0 : .5*1.2*c.cda*(1 - c.draft)*sp*sp) + (grounded ? c.crr*c.body.mass*G : 0) + (c.touch && c.wc < 2 ? .45*c.body.mass*G : 0); // scraping on its floor or roof
+      const tb = opts.turbo ? .35 : 1; // turbo: far less air drag and rolling resistance
+      let f = (opts.moon ? 0 : .5*1.2*c.cda*tb*(1 - c.draft)*sp*sp) + (grounded ? c.crr*(opts.turbo ? .5 : 1)*c.body.mass*G : 0) + (c.touch && c.wc < 2 ? .45*c.body.mass*G : 0); // scraping on its floor or roof
       if (c.status === "fin" || (c.status === "out" && c.out !== "OFF TRACK")) f += c.body.mass*(grounded || c.touch ? 5.5 : 0);
       tmpF.copy(v); tmpF.scale(-Math.min(f, c.body.mass*sp/h*.9)/sp, tmpF); c.body.applyForce(tmpF);
     }
@@ -1781,7 +1791,7 @@ function releaseCars() { for (const c of cars) { c.relT = race.simT + c.release;
 
 function simulate(dt) {
   race.acc = (race.acc || 0) + dt; let n = 0;
-  while (race.acc >= STEP && n < 10) {
+  while (race.acc >= STEP && n < 18) {
     race.acc -= STEP; n++; race.simT += STEP;
     const racing = race.phase === "race" || race.phase === "done";
     if (racing) for (const c of cars) if (c.status === "grid" && race.simT >= c.relT) {
@@ -1798,7 +1808,7 @@ function simulate(dt) {
     for (const k of world.contacts) { const a = k.bi.car, b = k.bj.car; if (a && !k.bj.car && k.bj.tag !== "wall" && !k.bj.prop) a.touch = true; if (b && !k.bi.car && k.bi.tag !== "wall" && !k.bi.prop) b.touch = true; }
     if (racing) postStep(STEP);
   }
-  if (n === 10) race.acc = 0;
+  if (n === 18) race.acc = 0;
 }
 function postStep(h) {
   const t = race.simT - race.goAt;
@@ -2164,9 +2174,9 @@ function renderPip() { // a small window with the selected driver's own view, dr
 function frame(now) {
   const raw = Math.min(.25, (now - last)/1000), dt = Math.min(.05, raw); last = now; adaptQuality(raw);
   if (RP.active) { /* the race waits while the replay plays */ }
-  else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1));
+  else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1)*opts.speed); // SPEED fast-forwards the race; replays keep their own pace
   else if (race) simulate(dt);
-  const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1);
+  const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
   FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position);
   if (opts.rain && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCrowd(tNow);
   if (race) {
@@ -2192,7 +2202,9 @@ document.querySelectorAll("[data-grid]").forEach(b => b.addEventListener("click"
 $("#jumpTog").addEventListener("click", e => { opts.jump = !opts.jump; e.currentTarget.setAttribute("aria-pressed", String(opts.jump)); rebuild(); });
 $("#slowTog").addEventListener("click", () => toggleSlow());
 document.querySelectorAll("[data-tod]").forEach(b => b.addEventListener("click", () => setTimeOfDay(b.dataset.tod)));
-for (const [id, key] of [["rainTog", "rain"], ["moonTog", "moon"], ["giantTog", "giant"]]) $("#" + id).addEventListener("click", () => {
+document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click", () => { opts.speed = +b.dataset.speed;
+  document.querySelectorAll("[data-speed]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }));
+for (const [id, key] of [["rainTog", "rain"], ["moonTog", "moon"], ["giantTog", "giant"], ["turboTog", "turbo"]]) $("#" + id).addEventListener("click", () => {
   opts[key] = !opts[key]; $("#" + id).setAttribute("aria-pressed", String(opts[key])); if (key === "rain") setTimeOfDay(opts.tod); rebuild(); });
 $("#revTog").addEventListener("click", () => { opts.reverse = !opts.reverse; $("#revTog").setAttribute("aria-pressed", String(opts.reverse)); rebuild(); });
 $("#chaosTog").addEventListener("click", () => { opts.chaos = !opts.chaos; $("#chaosTog").setAttribute("aria-pressed", String(opts.chaos)); rebuild(); });
@@ -2250,6 +2262,7 @@ addEventListener("keydown", e => {
   else if (e.key === "p" || e.key === "P") toggleReplays();
   else if (e.key === "v" || e.key === "V") $("#revTog").click();
   else if (e.key === "w" || e.key === "W") $("#rainTog").click();
+  else if (e.key === "t" || e.key === "T") $("#turboTog").click();
   else if (e.key === "m" || e.key === "M") $("#moonTog").click();
   else if (e.key === "g" || e.key === "G") $("#giantTog").click();
   else if (e.key === "+" || e.key === "=") zoomBy(1/1.2);

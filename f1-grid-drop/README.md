@@ -57,6 +57,9 @@ A typical race takes 30 to 40 seconds.
 
 ## More modes
 
+- **SPEED (1×, 1.5×, 2×):** fast-forwards the whole race. Physics and results are unchanged, and replays keep their slow motion.
+- **TURBO (T):** air drag cut to 35% and rolling resistance halved, so cars build far more speed. Expect more airtime and many more crashes: in a test with chaos on, 7 of 22 finished and the winner took 29.0 s.
+
 - **RAIN (W):** falling rain, overcast sky, a shiny wet track, spray behind the cars and much less grip.
 - **MOON (M):** one-sixth gravity and no air (so no drag and no slipstream). Floaty and slow.
 - **GIANT (G):** one random car is 2.5× bigger and starts at the back.
