@@ -32,7 +32,7 @@ A typical race takes 30 to 40 seconds.
   - Messy launches off the drops.
   - Bouncier contact between cars.
   - A random four of seven obstacles each race, announced by the hosts at the start: giant beach balls, giant bowling pins, runaway monster tyres, a crazy-golf windmill, traffic cones, a wrecking ball and a hay bale slalom.
-- **Reverse mode:** every car races the whole course backwards.
+- **Backwards mode:** every car races the whole course backwards. Drivers steer with the leading (rear) wheels, which keeps the cars stable.
 - **Off the mountain:** cars that clear the barrier tumble down the solid mountainside.
 - Marshals lift crashed cars clear after a few seconds.
 - Like F1, the race closes 15 seconds after the winner finishes. Cars still running are listed as DNF.
@@ -65,7 +65,7 @@ A typical race takes 30 to 40 seconds.
 
 ## Controls
 
-Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · P replays · V reverse · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
+Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 
