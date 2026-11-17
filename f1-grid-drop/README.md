@@ -69,6 +69,7 @@ A typical race takes 30 to 40 seconds.
   - **CHASE** follows a car from behind.
   - **CROW** flies behind and above the leader like a bird, gently swaying.
   - **DRONE** looks straight down on the pack, with the race running left to right, zooming out as the field spreads.
+  - **GIANT** (key 6, giant mode only) puts you in the giant car's driver's seat, pitching and rolling with it. In giant mode the DRONE hovers over the giant car.
   - Every camera zooms with the mouse wheel, a pinch, or − / +.
 
 - **Driver view:** pick a car (click it, or its row) to open a picture-in-picture window from that driver's cockpit. Close it with ✕.
@@ -110,6 +111,8 @@ Space start · R reset · 1–5 camera (TV, side, chase, crow, drone) · S slow-
 - One HTML file.
 - three.js 0.160.0 (with its Sky, bloom and output add-ons) for 3D graphics and cannon-es 0.20.0 for physics, all pinned and loaded from jsDelivr through an import map.
 - If the add-ons fail to load, the page falls back to the basic look.
+- **Speed:** each car is merged into one painted mesh, one dark mesh and four wheel meshes, which cuts draw calls from about 1,500 to about 330 per frame with no visible change. Sharpness starts at 1.5× and rises to 2× on fast machines. The jumbotron skips drawing when it's off-screen, and cars that have stopped after the finish leave the physics simulation.
+- **Backups:** `backups/` keeps a copy of the page from before the performance work.
 - **Smooth motion:**
   - Cars are drawn between physics steps.
   - Sharpness lowers automatically on slow devices and rises again when there's headroom.
