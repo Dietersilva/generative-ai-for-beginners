@@ -43,7 +43,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .hud-tl{top:14px;left:16px;display:flex;flex-direction:column;gap:8px}
 .timebox{display:flex;align-items:baseline;gap:8px;font-family:var(--f-display);font-style:italic}
 .timebox .lbl{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.14em}
-.timebox .cur{font-size:40px;font-weight:800;line-height:.9;font-variant-numeric:tabular-nums}
+.timebox .cur{font-size:40px;font-weight:800;line-height:.9;font-variant-numeric:tabular-nums;text-shadow:0 2px 14px #000c,0 0 2px #000}
 .flag{align-self:flex-start;font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.12em;padding:3px 10px;border-radius:4px;transform:skewX(-10deg);background:var(--panel-2);color:var(--muted)}
 .flag.go{background:#13301f;color:var(--gain)}
 .flag.chq{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/10px 10px;color:#000;text-shadow:0 0 4px #fff,0 0 8px #fff}
@@ -156,7 +156,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 
 /* running order */
 .tower{grid-area:tower;display:flex;flex-direction:column;min-height:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
-.tower-hd{display:flex;align-items:baseline;justify-content:space-between;padding:12px 14px 8px;border-bottom:1px solid var(--line)}
+.tower-hd{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 10px;padding:12px 14px 8px;border-bottom:1px solid var(--line)}
 .tower-hd h2{margin:0;font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.14em}
 .tower-hd span{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .rows{position:relative;flex:1;overflow-y:auto;min-height:0}
@@ -191,7 +191,8 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .sz .pt{font-family:var(--f-mono);font-weight:700}
 .betbox{width:min(520px,100%);display:flex;flex-direction:column;gap:4px;padding:10px 12px;border:1px solid var(--line-2);border-radius:12px;background:var(--panel);text-align:left}
 .betbox h3{margin:0 0 4px;font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.16em;color:#ffd23f}
-.betbox .r{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;font-size:13px}
+.betbox .r{display:grid;grid-template-columns:minmax(0,1fr) auto 48px 64px;align-items:baseline;gap:10px;font-size:13px}
+.betbox .r strong{font-family:var(--f-mono);font-weight:700;text-align:right}
 .betbox .r b{font-family:var(--f-display);letter-spacing:.04em;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .betbox .r span{font-family:var(--f-mono);color:var(--muted)}
 .betbox .r em{font-style:normal;font-family:var(--f-mono);font-weight:700;color:var(--gain)}
@@ -1355,8 +1356,8 @@ const visorMat = new THREE.MeshStandardMaterial({ color: 0x0b0d12, roughness: .1
 const PAINT = []; // car paint materials that reflect the sky
 function carMesh(colour) {
   const g = new THREE.Group();
-  const tc = new THREE.MeshPhysicalMaterial({ color: colour, roughness: .3, metalness: .35, clearcoat: 1, clearcoatRoughness: .07, envMapIntensity: 1.1 });
-  const accent = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colour).lerp(new THREE.Color(0xffffff), .55), roughness: .35, metalness: .2, clearcoat: 1, clearcoatRoughness: .1 });
+  const tc = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colour).offsetHSL(0, .08, -.03), roughness: .38, metalness: .12, clearcoat: .8, clearcoatRoughness: .12, envMapIntensity: .35 });
+  const accent = new THREE.MeshPhysicalMaterial({ color: new THREE.Color(colour).lerp(new THREE.Color(0xffffff), .55), roughness: .35, metalness: .1, clearcoat: .8, clearcoatRoughness: .12, envMapIntensity: .35 });
   for (const m of [tc, accent]) { m.envMap = opts.tod === "day" ? LOOK.envDay : null; PAINT.push(m); }
   const part = (geo, mat, sx, sy, sz, x, y, z, rx = 0, ry = 0, rz = 0) => { const m = new THREE.Mesh(geo, mat); if (geo === unitBox) m.scale.set(sx, sy, sz); m.position.set(x, y, z); m.rotation.set(rx, ry, rz); m.castShadow = true; g.add(m); return m; };
   part(unitBox, mats.carbon, 4.7, .05, 1.45, -.05, -.26, 0);                 // floor
@@ -1581,7 +1582,7 @@ function postStep(h) {
     // g-force from smoothed velocity change
     const dv = Math.hypot(v.x - c.lastV.x, v.y - c.lastV.y + G*h, v.z - c.lastV.z)/h/G;
     c.gEma += (dv - c.gEma)*Math.min(1, h/0.06); if (c.status === "race" && c.gEma > c.peakG) c.peakG = c.gEma; c.lastV.copy(v);
-    const air = c.wc === 0 && sp > 3;
+    const air = c.wc === 0 && sp > 3 && !c.touch; // a car sliding on its roof is not flying
     const pc = pieceAt(b.position.x);
     if (air && opts.chaos && !c.kicked && (pc.k === "crest" || pc.k === "steep" || pc.k === "crest2" || pc.k === "steep2")) { // a messy launch off the edge
       c.kicked = pc.k; if (Math.random() < .35) { const av = b.angularVelocity; av.x += (Math.random() - .5)*2.2; av.z += (Math.random() - .5)*1.5; av.y += (Math.random() - .5)*1; } }
@@ -1786,9 +1787,9 @@ function showResults() {
   if (race.betResults && race.betResults.length) {
     const bb = document.createElement("div"); bb.className = "betbox"; const h3 = document.createElement("h3"); h3.textContent = "BETTING SLIP"; bb.append(h3);
     race.betResults.slice().sort((a, b) => b.pts - a.pts || b.total - a.total).forEach(r => { const row = document.createElement("div"); row.className = "r";
-      const b = document.createElement("b"), sp = document.createElement("span"), em = document.createElement("em");
-      b.textContent = r.name; sp.textContent = r.pick ? `picked ${r.pick} · ${r.total} total` : `no pick · ${r.total} total`; em.textContent = r.pts ? `+${r.pts}` : "0"; if (!r.pts) em.className = "zero";
-      row.append(b, sp, em); bb.append(row); });
+      const b = document.createElement("b"), sp = document.createElement("span"), em = document.createElement("em"), tot = document.createElement("strong");
+      b.textContent = r.name; sp.textContent = r.pick ? `picked ${r.pick}` : "no pick"; em.textContent = r.pts ? `+${r.pts}` : "+0"; if (!r.pts) em.className = "zero"; tot.textContent = `${r.total} pts`;
+      row.append(b, sp, em, tot); bb.append(row); });
     wrap.insertBefore(bb, wrap.lastElementChild);
   }
   R.append(wrap);

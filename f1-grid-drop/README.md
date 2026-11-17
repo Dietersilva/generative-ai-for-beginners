@@ -37,6 +37,26 @@ A typical race takes 30 to 40 seconds.
 - Marshals lift crashed cars clear after a few seconds.
 - Like F1, the race closes 15 seconds after the winner finishes. Cars still running are listed as DNF.
 
+## Betting pool and season
+
+- **BETS tab (pass-and-play):** add any number of players. Each picks a winner before the start; picks lock at lights out.
+- **Scoring:** winner 10 points, podium (2nd or 3rd) 3 points, and double for a long shot (a driver who started 11th or lower).
+- **Totals:** they carry over between races until you press **NEW SESSION**, which zeroes the points but keeps the names. LUCKY DIP picks for anyone who hasn't chosen.
+- **SEASON tab:** F1 points (25, 18, 15, 12, 10, 8, 6, 4, 2, 1) and wins across races, with RESET SEASON. The SEASON grid order puts the points leader on pole.
+- **Storage:** both are saved in this browser only, so they survive a reload but aren't shared with other devices. Resets need a second tap to confirm.
+
+## More modes
+
+- **RAIN (W):** falling rain, overcast sky, a shiny wet track, spray behind the cars and much less grip.
+- **MOON (M):** one-sixth gravity and no air (so no drag and no slipstream). Floaty and slow.
+- **GIANT (G):** one random car is 2.5× bigger and starts at the back.
+
+## Watching
+
+- **Driver view:** pick a car (click it, or its row) to open a picture-in-picture window from that driver's cockpit. Close it with ✕.
+- **Full screen:** shows a compact live top-12 running order on the right.
+- **Colour:** a vibrance pass makes colours more vivid.
+
 ## Instant replays
 
 - Flips, cars going off the mountain, wrecking-ball and windmill hits, runaway tyres, big crashes, bowling strikes and big air get a slow-motion replay.
