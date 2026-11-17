@@ -42,7 +42,8 @@ A typical race takes 30 to 40 seconds.
 - **The race screen** (the owner's computer or TV) is the host. It opens betting for each race, locks picks at lights out, scores the race and keeps the leaderboard in the page's shared database. Only the owner or an Editor can write there.
 - **Friends** open the page's link with `#bet` added to the end. That loads a light betting slip without the 3D race. They tap a driver, and the pick travels through the page's live room. They can change it until lights out.
 - **Everyone sees** the live picks, the locked picks, the latest result and the leaderboard.
-- **Race conditions on the slip:** the drop angle plus rain, moon gravity, night, giant car, backwards and chaos, as tags. For rain and moon gravity, Rex and Priya add a short exchange, and a combined one when both are on. It updates live as the host changes settings. A 🔊 HEAR IT button reads the exchange aloud: Claude voices where the platform offers them (two different voices), otherwise the phone's own voices. Tap again to stop.
+- **Race conditions on the slip:** the drop angle plus rain, showers, stampede, moon gravity, night, giant car, backwards and chaos, as tags. For rain and moon gravity, Rex and Priya add a short exchange, and a combined one when both are on. It updates live as the host changes settings. A 🔊 HEAR IT button reads the exchange aloud: Claude voices where the platform offers them (two different voices), otherwise the phone's own voices. Tap again to stop.
+- **Cheering:** friends tap 👏 🔥 😱 🦖 or 🏁 on the slip. The emoji floats up the race screen with their name (or "A fan"). Only those five emoji are accepted, and names are shown as plain text.
 - **Totals** carry over between races until the host presses NEW SESSION.
 - **Requirements:** each friend needs a claude.ai account and an invitation to the page from the owner (Share menu, invite by email), and must be signed in. People arriving by a public link can't join the live room.
 - **Fallback:** when the shared features aren't available, for example a downloaded copy of the page, the BETS tab falls back to pass-and-play on one screen.
@@ -63,6 +64,19 @@ A typical race takes 30 to 40 seconds.
 - **RAIN (W):** falling rain, overcast sky, a shiny wet track, spray behind the cars and much less grip.
 - **MOON (M):** one-sixth gravity and no air (so no drag and no slipstream). Floaty and slow.
 - **GIANT (G):** one random car is 2.5× bigger and starts at the back.
+- **SHOWERS (H):** the race starts dry. When the leader is halfway down, the rain arrives: the sky clouds over, the track turns wet and every car loses grip.
+- **STAMPEDE (K):** a herd of three T. rexes and four raptors chases the field down the mountain, a few metres behind the last car still racing. Cars that slow down or crash get trampled, with a replay.
+
+## Celebrations
+
+- The winner does donuts on the run-off, with tyre smoke.
+- Fireworks launch from the letters of the hillside sign, day and night.
+
+## Records
+
+- **RECORDS tab:** all-time bests: the fastest win for each drop angle, top speed, biggest air, closest finish, hardest hit and most crashes in one race. Each shows the driver, the date and the race settings.
+- A **NEW RECORD** banner and a line from Priya when one is broken.
+- Saved in this browser only. RESET RECORDS needs a second tap to confirm.
 
 ## Watching
 
@@ -123,7 +137,7 @@ A typical race takes 30 to 40 seconds.
 
 ## Controls
 
-Space start · R reset · 1–5 camera (TV, side, chase, crow, drone) · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
+Space start · R reset · H showers · K stampede · 1–5 camera (TV, side, chase, crow, drone) · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 
@@ -132,6 +146,8 @@ Space start · R reset · 1–5 camera (TV, side, chase, crow, drone) · S slow-
 - If the add-ons fail to load, the page falls back to the basic look.
 - **Speed:** each car is merged into one painted mesh, one dark mesh and four wheel meshes, which cuts draw calls from about 1,500 to about 330 per frame with no visible change. Sharpness starts at 1.5× and rises to 2× on fast machines. The jumbotron skips drawing when it's off-screen, and cars that have stopped after the finish leave the physics simulation.
 - **Backups:** `backups/` keeps a copy of the page from before the performance work.
+- **Physics speed-up:** the course has about 880 fixed physics pieces. The stock physics engine compared every one of them with every other one on every step. The page now keeps them sorted along the course and checks each car only against the pieces near it, which made each physics step about 3.5 times faster in testing.
+- **No stutter:** if a slow computer can't keep up, the race runs slightly slower for a moment instead of freezing a frame.
 - **Smooth motion:**
   - Cars are drawn between physics steps.
   - Sharpness lowers automatically on slow devices and rises again when there's headroom.

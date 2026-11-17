@@ -161,10 +161,27 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tower-hd span{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .rows{position:relative;flex:1;overflow-y:auto;min-height:0}
 .tabs{display:flex;gap:2px;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:2px}
-.tab{padding:4px 9px;border-radius:7px;font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.1em;color:var(--muted)}
+.tab{padding:4px 7px;border-radius:7px;font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.06em;color:var(--muted)}
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
 .panel{flex:1;overflow-y:auto;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .pn-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.reclist{display:flex;flex-direction:column;gap:6px}
+.rec{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
+.rec b{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.06em}
+.rec span{font-family:var(--f-display);font-weight:800;font-size:15px;color:var(--text);text-align:right}
+.rec small{grid-column:1/-1;font-size:11px;color:var(--muted);line-height:1.4}
+.rec.new{border-color:var(--gold,#ffd23f);box-shadow:0 0 0 1px var(--gold,#ffd23f) inset}
+.cheers{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden}
+.cheer{position:absolute;bottom:14%;display:flex;flex-direction:column;align-items:center;gap:3px;animation:cheerUp 3.4s ease-out forwards}
+.cheer b{font-size:46px;line-height:1;filter:drop-shadow(0 3px 8px rgba(0,0,0,.55))}
+.cheer span{font:800 12px/1 var(--f-display);letter-spacing:.08em;color:#fff;background:rgba(0,0,0,.6);padding:4px 8px;border-radius:999px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@keyframes cheerUp{0%{transform:translateY(40px) scale(.5);opacity:0}12%{transform:translateY(0) scale(1.18);opacity:1}22%{transform:translateY(-4vh) scale(1)}80%{opacity:1}100%{transform:translateY(-52vh);opacity:0}}
+@media (prefers-reduced-motion:reduce){.cheer{animation-duration:2.2s}}
+.bs-cheer{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.bs-cheer-l{flex-basis:100%;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.12em;color:var(--muted)}
+.bs-cheer-b{font-size:28px;line-height:1;width:54px;height:54px;border-radius:14px;border:1px solid var(--line-2);background:var(--panel-2);transition:transform .15s}
+.bs-cheer-b.pop{transform:scale(1.25)}
+.bs-cheer-ok{font-size:12px;color:var(--muted);min-height:1em}
 .panel-in,.bs{display:flex;flex-direction:column;gap:10px}
 .bs-status{font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.12em;padding:6px 10px;border-radius:8px;background:var(--panel-2);color:var(--muted);align-self:flex-start}
 .bs-status.open{background:#13301f;color:var(--gain)} .bs-status.locked{background:var(--sc);color:#1b1200} .bs-status.done{background:#fff;color:#05070d}
@@ -282,6 +299,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
   </header>
 
   <main class="stage" id="stage">
+    <div class="cheers" id="cheers" aria-hidden="true"></div>
     <canvas id="cv" aria-label="3D view of the soapbox race"></canvas>
     <div class="hud hud-tl">
       <div class="timebox"><span class="lbl">TIME</span><span class="cur" id="clock">0.000</span></div>
@@ -357,16 +375,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     </div>
     <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
     <button class="tog" id="rainTog" aria-pressed="false" title="Rain: less grip, spray and a wet track (W)"><i></i>RAIN</button>
+    <button class="tog" id="showerTog" aria-pressed="false" title="Showers: the race starts dry and the rain arrives halfway down (H)"><i></i>SHOWERS</button>
+    <button class="tog" id="stampTog" aria-pressed="false" title="Dino stampede: a herd of dinosaurs chases the cars down the mountain (K)"><i></i>STAMPEDE</button>
     <button class="tog" id="moonTog" aria-pressed="false" title="Moon gravity: one sixth of Earth's, and no air (M)"><i></i>MOON</button>
     <button class="tog" id="giantTog" aria-pressed="false" title="One random car is giant and starts at the back (G)"><i></i>GIANT</button>
     <button class="tog" id="replayTog" aria-pressed="true" title="Slow-motion replays of crashes, flips and big moments"><i></i>REPLAYS</button>
     <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
-    <span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · T turbo · W rain · M moon · G giant · + − zoom · F full screen</span>
+    <span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · T turbo · W rain · H showers · K stampede · M moon · G giant · + − zoom · F full screen</span>
   </section>
 
   <aside class="tower" aria-label="Running order">
     <div class="tower-hd"><div class="tabs" role="tablist" aria-label="Panels">
-      <button class="tab" role="tab" data-tab="order" aria-selected="true">ORDER</button><button class="tab" role="tab" data-tab="bets" aria-selected="false">BETS</button><button class="tab" role="tab" data-tab="season" aria-selected="false">SEASON</button>
+      <button class="tab" role="tab" data-tab="order" aria-selected="true">ORDER</button><button class="tab" role="tab" data-tab="bets" aria-selected="false">BETS</button><button class="tab" role="tab" data-tab="season" aria-selected="false">SEASON</button><button class="tab" role="tab" data-tab="records" aria-selected="false">RECORDS</button>
     </div><span id="towerSub">22 cars</span></div>
     <div class="rows" id="pnOrder"><div class="rows-in" id="rows"></div></div>
     <div class="panel" id="pnBets" hidden><div id="betShared" class="bs" hidden></div><div id="betLocal" class="panel-in">
@@ -379,6 +399,11 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <p class="pn-note" id="seasonNote"></p>
       <div id="seasonList" class="seasonlist"></div>
       <div class="pn-actions"><button class="ghost danger" id="seasonReset">RESET SEASON</button></div>
+    </div>
+    <div class="panel" id="pnRecords" hidden>
+      <p class="pn-note" id="recNote"></p>
+      <div id="recList" class="reclist"></div>
+      <div class="pn-actions"><button class="ghost danger" id="recReset">RESET RECORDS</button></div>
     </div>
     <div class="tower-ft">Grid uses the 2026 drivers' standings after the São Paulo GP, taken from Grid Replay. Every race is a new simulation: random push starts, small setup differences, slipstream and crashes decide it. Rex and Priya are fictional hosts. Fan-made, not affiliated with Formula 1.</div>
   </aside>
@@ -447,10 +472,36 @@ async function initPool(onChange) {
       if (POOL.state && (!prev || prev.raceNo !== POOL.state.raceNo)) { POOL.myPick = ""; room.presence({ pick: null }).catch(() => {}); }
       if (POOL.host && POOL.pendingOpen) poolOpen(); onChange(); }, () => { POOL.ready = true; onChange(); });
   db.doc("pool/scores").onSnapshot(sn => { POOL.scores = sn.exists ? sn.data() : { players: {} }; onChange(); }, () => {});
-  room.onPeers(() => { clearTimeout(POOL.rt); POOL.rt = setTimeout(onChange, 250); }, () => {});
+  room.onPeers(() => { if (!BET_ONLY) seeCheers(); // the race screen shows cheers from phones
+    const sig = JSON.stringify(livePicks()); if (sig === POOL.sig) return; POOL.sig = sig; // only redraw the slip when picks or names change
+    clearTimeout(POOL.rt); POOL.rt = setTimeout(onChange, 250); }, () => {});
   if (POOL.nick) room.presence({ nick: POOL.nick }).catch(() => {});
   setTimeout(() => { if (!POOL.ready) { POOL.ready = true; onChange(); } }, 10000);
   return true;
+}
+const CHEERS = ["👏", "🔥", "😱", "🦖", "🏁"], CHEER_SET = new Set(CHEERS);
+POOL.cheerSeen = {}; POOL.cheerLog = []; POOL.cheerT = 0; POOL.cheerSaid = 0;
+function sendCheer(e, btn, note) { // phone: a tap sets a cheer in this viewer's presence; the race screen sees it change
+  if (!CHEER_SET.has(e) || !POOL.room) return; const now = Date.now(); if (now - POOL.cheerT < 600) return; POOL.cheerT = now;
+  POOL.room.presence({ cheer: e, cheerAt: now, nick: POOL.nick || null }).catch(() => {});
+  btn.classList.add("pop"); setTimeout(() => btn.classList.remove("pop"), 180); if (note) note.textContent = `${e} sent to the big screen`;
+}
+function seeCheers() {
+  const now = Date.now();
+  for (const p of POOL.room.peers()) { const pr = p.presence || {}, at = pr.cheerAt;
+    if (typeof at !== "number" || !CHEER_SET.has(pr.cheer)) continue;
+    const key = p.peer, prev = POOL.cheerSeen[key]; POOL.cheerSeen[key] = at;
+    if (prev === at || (prev === undefined && now - p.updatedAt > 4000)) continue; // only fresh taps, not old ones from before this screen opened
+    showCheer(pr.cheer, p.by, typeof pr.nick === "string" ? pr.nick.slice(0, 16) : ""); }
+}
+async function showCheer(e, by, nick) {
+  const box = $("#cheers"); if (!box || box.childElementCount > 30) return;
+  let name = nick; if (!name && by) name = (await poolNames([by], {}))[by]; if (!name || name === "Someone") name = "A fan";
+  const d = el("div", "cheer"); d.append(el("b", null, e), el("span", null, name));
+  d.style.left = `${6 + Math.random()*80}%`; d.addEventListener("animationend", () => d.remove()); box.append(d); setTimeout(() => d.remove(), 5000);
+  const now = Date.now(); POOL.cheerLog = POOL.cheerLog.filter(t => now - t < 6000); POOL.cheerLog.push(now);
+  if (POOL.cheerLog.length >= 6 && now - POOL.cheerSaid > 30000 && typeof race !== "undefined" && race && race.phase === "race") { POOL.cheerSaid = now;
+    say("pri", pick("ch", ["Listen to that! The phones are going wild.", "The fans on their phones are loving this.", "That's a lot of cheering from the betting slips!"]), 1); }
 }
 function livePicks() { // what everyone in the room has picked for the current race
   const out = {}, st = POOL.state; if (!st) return out;
@@ -467,7 +518,7 @@ async function poolNames(keys, nicks) {
 async function poolOpen() { // race screen: open betting for the race on the grid
   if (!POOL.host || !POOL.ready || typeof cars === "undefined" || !cars.length) { POOL.pendingOpen = true; return; }
   POOL.pendingOpen = false; const st = POOL.state || {}, grid = cars.map(c => c.d.code);
-  const cond = { rain: !!opts.rain, moon: !!opts.moon, turbo: !!opts.turbo, giant: !!opts.giant, reverse: !!opts.reverse, chaos: !!opts.chaos, deg: opts.deg, night: opts.tod === "night" };
+  const cond = { rain: !!opts.rain, showers: !!opts.showers && !opts.rain, stampede: !!opts.stampede, moon: !!opts.moon, turbo: !!opts.turbo, giant: !!opts.giant, reverse: !!opts.reverse, chaos: !!opts.chaos, deg: opts.deg, night: opts.tod === "night" };
   if (st.phase === "open" && JSON.stringify(st.grid) === JSON.stringify(grid) && JSON.stringify(st.cond) === JSON.stringify(cond)) return;
   const next = { session: st.session || 1, raceNo: st.phase === "open" ? st.raceNo : (st.raceNo || 0) + 1, phase: "open", grid, cond, picks: {}, result: st.result || null };
   try { await POOL.db.doc("pool/state").set(next); } catch (e) {}
@@ -525,7 +576,7 @@ function condCard(cond, raceNo) {
   if (!cond) return wrap;
   const chips = el("div", "bs-chips");
   const add = (txt, cls) => chips.append(el("span", "bs-chip" + (cls ? " " + cls : ""), txt));
-  add(`${cond.deg}° DROP`); if (cond.rain) add("🌧 RAIN", "rain"); if (cond.moon) add("🌙 MOON GRAVITY", "moon"); if (cond.turbo) add("⚡ TURBO", "rain");
+  add(`${cond.deg}° DROP`); if (cond.rain) add("🌧 RAIN", "rain"); if (cond.moon) add("🌙 MOON GRAVITY", "moon"); if (cond.turbo) add("⚡ TURBO", "rain"); if (cond.showers) add("🌦 SHOWERS", "rain"); if (cond.stampede) add("🦖 STAMPEDE", "moon");
   if (cond.night) add("NIGHT"); if (cond.giant) add("GIANT CAR"); if (cond.reverse) add("BACKWARDS"); if (cond.chaos) add("CHAOS");
   wrap.append(chips);
   const key = cond.rain && cond.moon ? "both" : cond.rain ? "rain" : cond.moon ? "moon" : null;
@@ -561,6 +612,10 @@ async function renderShared(box, phone) {
   const lockedMine = st && !open && me && picks[me] ? picks[me].pick : "", mine = open ? POOL.myPick : lockedMine;
   const mp = el("p", "bs-mine"); mp.textContent = !st ? "" : open ? (mine ? `Your pick: ${DBY[mine].name}. Change it any time before lights out.` : "Tap a driver to place your bet.") : (lockedMine ? `Locked in: ${DBY[lockedMine].name}` : "No pick this race.");
   frag.append(mp);
+  if (st && (phone || !POOL.host)) { // cheer: shows up live on the race screen with your name
+    const cb = el("div", "bs-cheer"), note = el("div", "bs-cheer-ok"); cb.append(el("span", "bs-cheer-l", "CHEER ON THE BIG SCREEN"));
+    CHEERS.forEach(e => { const b = el("button", "bs-cheer-b", e); b.type = "button"; b.setAttribute("aria-label", `Send ${e} to the race screen`); b.onclick = () => sendCheer(e, b, note); cb.append(b); });
+    cb.append(note); note.style.flexBasis = "100%"; frag.append(cb); }
   const grid = (st && Array.isArray(st.grid) ? st.grid : DRIVERS.map(d => d.code)).filter(c => CODES.has(c));
   const choose = code => { if (!POOL.state || POOL.state.phase !== "open" || !CODES.has(code)) return; POOL.myPick = code;
     POOL.room.presence({ pick: code, race: POOL.state.raceNo, nick: POOL.nick || null }).catch(() => {}); renderShared(box, phone); };
@@ -654,7 +709,7 @@ function vnoise(x, z) { const xi = Math.floor(x), zi = Math.floor(z), xf = x - x
 function fbm(x, z, o = 5) { let s = 0, a = .5, f = 1; for (let i = 0; i < o; i++) { s += a*vnoise(x*f, z*f); f *= 2.03; a *= .5; } return s/.97; }
 const sstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a)/(b - a))); return t*t*(3 - 2*t); };
 const COURSE = { x0: -80, x1: 1330, half: 95 };
-const LAKE = { x: 170, z: -235, r: 105 }, SIGN = { x: 700, z: -620 };
+const LAKE = { x: 170, z: -235, r: 105 }, SIGN = { x: 700, z: -620 }, SIGN_PTS = []; // SIGN_PTS: tops of the sign's letters, for fireworks
 function terrainH(x, z) {
   const dx = Math.max(0, COURSE.x0 - x, x - COURSE.x1), dz = Math.max(0, Math.abs(z) - COURSE.half), d = Math.hypot(dx, dz);
   const n = fbm(x/560 + 3.1, z/560 - 1.7), rg = 1 - Math.abs(fbm(x/310 + 9, z/310 + 4)*2 - 1);
@@ -865,6 +920,7 @@ function buildTrack() {
       heads.push({ cx: x, cy: y + 15.4, cz: sz*(W/2 + 2.4), hx: 1.2, hy: .6, hz: .45, ang: 0 }); } }
     trackGroup.add(instanced(poles, mats.steel), instanced(heads, mats.lamp, null, false)); }
   props = opts.chaos ? buildProps() : [];
+  if (opts.stampede) props.push(...buildHerd());
   scene.add(trackGroup);
   $("#fDrop").textContent = `${Math.round(track.startY)} m`; $("#fDeg").textContent = `${opts.deg}°`; $("#fFin").textContent = `${(track.length/1000).toFixed(2)} km`;
 }
@@ -974,7 +1030,7 @@ function buildScenery() {
       const tex = textTexture((c, w, h) => { c.clearRect(0,0,w,h); c.fillStyle = "#ffffff"; c.font = "800 230px 'Saira Condensed', 'Arial Narrow', sans-serif"; c.textAlign = "center"; c.textBaseline = "alphabetic"; c.fillText(ch, w/2, h - 18); }, 192, 256);
       const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, alphaTest: .4, emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: .25, side: THREE.DoubleSide });
       const x = SIGN.x - total/2 + i*(lw + gap) + lw/2, gy = terrainH(x, zS), m = new THREE.Mesh(new THREE.PlaneGeometry(lw, 21), mat);
-      m.position.set(x, gy + 14, zS); m.rotation.x = -.15; g.add(m); scenery.sign.push(mat);
+      m.position.set(x, gy + 14, zS); m.rotation.x = -.15; g.add(m); scenery.sign.push(mat); SIGN_PTS.push({ x, y: gy + 25, z: zS + 2 });
       for (const px of [-4, 4]) { const post = new THREE.Mesh(unitBox, mats.steel); post.scale.set(.5, 8, .5); post.position.set(x + px, gy + 3.5, zS - 1.6); g.add(post); } }); }
   // wind turbines on the far hills
   { const white = new THREE.MeshStandardMaterial({ color: 0xf2f4f8, roughness: .5 });
@@ -1030,7 +1086,7 @@ function animateCrowd(t) { // fans jump as the leader goes past, and all of them
 
 /* ---------- day and night ---------- */
 function setTimeOfDay(mode) {
-  opts.tod = mode; const day = mode === "day";
+  opts.tod = mode; const day = mode === "day", wet = opts.rain || WEATHER.wet;
   document.querySelectorAll("[data-tod]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tod === mode)));
   scene.background = day && LOOK.sky ? null : SKY[mode]; if (LOOK.sky) LOOK.sky.visible = day;
   for (const m of PAINT) { m.envMap = day ? LOOK.envDay : null; m.needsUpdate = true; }
@@ -1045,15 +1101,15 @@ function setTimeOfDay(mode) {
   if (scenery.clouds) scenery.clouds.visible = day; if (scenery.stars) scenery.stars.visible = !day;
   for (const m of scenery.sign) m.emissiveIntensity = day ? .25 : 1.6;
   if (scenery.water) scenery.water.material.color.set(day ? 0x2f7fb3 : 0x0d2235);
-  if (opts.rain) { // overcast, dark and wet
+  if (wet) { // overcast, dark and wet
     scene.background = day ? SKY.rain : SKY.night; if (LOOK.sky) LOOK.sky.visible = false;
     scene.fog.color.set(day ? 0x8d97a3 : 0x05070d); scene.fog.near = day ? 40 : 30; scene.fog.far = day ? 680 : 430;
     sun.intensity = day ? 1.1 : .9; hemi.intensity = day ? .95 : .8; renderer.toneMappingExposure = day ? .9 : 1.05;
     for (const m of PAINT) { m.envMap = null; m.needsUpdate = true; }
     if (scenery.clouds) scenery.clouds.visible = false; if (scenery.stars) scenery.stars.visible = false;
   }
-  mats.asphalt.roughness = opts.rain ? .28 : .86; mats.asphalt.metalness = opts.rain ? .25 : 0; mats.asphalt.color.set(opts.rain ? 0xb8bcc4 : 0xffffff);
-  RAIN.lines.visible = opts.rain; RAIN.lines.material.opacity = day ? .38 : .22;
+  mats.asphalt.roughness = wet ? .28 : .86; mats.asphalt.metalness = wet ? .25 : 0; mats.asphalt.color.set(wet ? 0xb8bcc4 : 0xffffff);
+  RAIN.lines.visible = wet; RAIN.lines.material.opacity = day ? .38 : .22;
   try { localStorage.setItem("gridDrop.tod", mode); } catch (e) {}
 }
 
@@ -1082,7 +1138,8 @@ const FX = (() => {
     dust(p, n, day) { for (let k = 0; k < n; k++) emit(solid, p.x + rnd(3), p.y - .2, p.z + rnd(3), rnd(6), 1 + Math.random()*2.5, rnd(6), 1 + Math.random()*.8, day ? col.setRGB(.72, .66, .55) : col.setRGB(.42, .45, .52), -.6, 2.4); },
     confetti(p, dir, n) { const pal = ["#ff2f45","#ffd23f","#3fd8ff","#38e383","#b65cff","#ffffff","#f47600"];
       for (let k = 0; k < n; k++) emit(solid, p.x, p.y, p.z, rnd(6) + dir.x*(6 + Math.random()*8), 9 + Math.random()*10, rnd(6) + dir.z*(6 + Math.random()*8), 3 + Math.random()*2.5, col.set(pal[k % pal.length]), 3, 1.6); },
-    firework(x, z) { rockets.push({ x, y: 2, z, vy: 34 + Math.random()*10, fuse: .9 + Math.random()*.6, t: 0, hue: Math.random() }); },
+    firework(x, z, y0 = 2) { rockets.push({ x, y: y0, z, vy: 34 + Math.random()*10, fuse: .9 + Math.random()*.6, t: 0, hue: Math.random() }); },
+    smoke(p) { for (let k = 0; k < 2; k++) emit(solid, p.x + rnd(1.2), p.y - .1, p.z + rnd(1.2), rnd(1.5), .8 + Math.random()*1.2, rnd(1.5), 1.6 + Math.random()*1.2, col.setRGB(.8, .8, .82), -.5, 1.4); },
     update(dt) {
       for (let i = rockets.length - 1; i >= 0; i--) { const r = rockets[i]; r.t += dt; r.y += r.vy*dt; r.vy -= 9.81*dt;
         emit(glow, r.x + rnd(.3), r.y, r.z + rnd(.3), rnd(1), -2, rnd(1), .35, col.setHSL(.1, 1, .7), 0, 1);
@@ -1108,6 +1165,7 @@ const FX = (() => {
   return api;
 })();
 let shake = 0, party = null;
+const WEATHER = { wet: false }; // SHOWERS: dry at the start, wet from halfway down
 const RAIN = (() => { // streaks of rain in a box that follows the camera
   const n = 2600, off = new Float32Array(n*3), pos = new Float32Array(n*6), geo = new THREE.BufferGeometry();
   for (let i = 0; i < n; i++) { off[i*3] = (Math.random() - .5)*90; off[i*3+1] = Math.random()*55 - 15; off[i*3+2] = (Math.random() - .5)*90; }
@@ -1120,12 +1178,14 @@ const RAIN = (() => { // streaks of rain in a box that follows the camera
       pos[j] = x; pos[j+1] = yy; pos[j+2] = z; pos[j+3] = x + .12; pos[j+4] = yy - 1.1; pos[j+5] = z + .05; }
     geo.attributes.position.needsUpdate = true; } };
 })();
-function celebrate() { party = { t: 0, next: 0 }; }
+function celebrate() { party = { t: 0, next: 0, sign: .6 }; }
 function updateParty(dt) {
   if (!party || !track.finX) return; party.t += dt;
   if (party.t < 3.2) for (const sz of [-1, 1]) FX.confetti({ x: track.finX, y: 7.8, z: sz*(W/2 + 1) }, { x: .3, z: -sz }, Math.ceil(dt*140));
   if (opts.tod === "night" && party.t > party.next && party.t < 9) { party.next = party.t + .35 + Math.random()*.5; FX.firework(track.finX - 60 + Math.random()*140, (Math.random() < .5 ? -1 : 1)*(W/2 + 40 + Math.random()*40)); }
   if (opts.tod === "day" && party.t > party.next && party.t < 6) { party.next = party.t + .6; for (const sz of [-1, 1]) FX.confetti({ x: track.finX - 50 + Math.random()*100, y: 14, z: sz*(W/2 + 30) }, { x: 0, z: -sz*.2 }, 60); }
+  if (SIGN_PTS.length && party.t > party.sign && party.t < 9) { party.sign = party.t + .4 + Math.random()*.4; // fireworks from the hillside sign, day or night
+    const p = SIGN_PTS[Math.floor(Math.random()*SIGN_PTS.length)]; FX.firework(p.x, p.z, p.y); }
   if (party.t > 10) party = null;
 }
 function airships() { // three hot-air balloons and a blimp
@@ -1408,11 +1468,20 @@ const C = { // plain-English commentary: Rex calls the action, Priya explains it
   hit(kind, c) { const n = sur(c), L = {
       cone: [`${n} scatters the traffic cones!`, `Cones everywhere, thanks to ${n}!`], bale: [`${n} ploughs into the hay bales!`, `Straw everywhere! That's ${n}!`],
       wreck: [`${n} is hit by the wrecking ball!`, `Wrecking ball! ${n} never saw it coming!`], windmill: [`${n} gets whacked by the windmill!`, `The windmill gets ${n}!`],
-      tyre: [`${n} crashes into a runaway tyre!`, `${n} is knocked aside by a giant tyre!`], trex: [`${n} has run into the T-rex!`, `${n} hits the dinosaur!`, `The T-rex takes out ${n}!`] };
-    say("rex", pick("h_" + kind, L[kind]), kind === "wreck" || kind === "windmill" || kind === "trex" ? 3 : 1);
+      tyre: [`${n} crashes into a runaway tyre!`, `${n} is knocked aside by a giant tyre!`], trex: [`${n} has run into the T-rex!`, `${n} hits the dinosaur!`, `The T-rex takes out ${n}!`],
+      herd: [`The stampede catches ${n}!`, `${n} is trampled by the dinosaurs!`, `The herd runs right over ${n}!`] };
+    say("rex", pick("h_" + kind, L[kind]), kind === "wreck" || kind === "windmill" || kind === "trex" || kind === "herd" ? 3 : 1);
+    if (kind === "herd" && chance(.7)) say("pri", pick("hh", ["That's what happens when you're at the back.", "Rule one of a dinosaur stampede: don't be last."]), 1);
     if (kind === "wreck" && chance(.7)) say("pri", pick("hw", ["Bad timing. Very bad timing.", "A tonne of steel against one race car. No contest."]), 1);
     if (kind === "windmill" && chance(.7)) say("pri", pick("hm", ["You have to wait for the gap between the blades.", "Like crazy golf, but at a hundred kilometres an hour."]), 1);
     if (kind === "trex" && chance(.8)) say("pri", pick("ht", ["The dinosaur seems fine. The car, not so much.", "Sixty-six million years of evolution, and it still doesn't look both ways."]), 1); },
+  shower() { say("rex", pick("sh", ["Here comes the rain! Halfway down, the heavens have opened!", "It's raining! The track is suddenly wet!"]), 3);
+    say("pri", pick("sh2", ["Wet road means less grip. It's going to get slippery.", "Less grip from here to the bottom. This could shake up the order."]), 2); },
+  stampede() { say("rex", pick("st", ["Stampede! A herd of dinosaurs is coming down the mountain behind them!", "Dinosaurs! A whole herd is chasing the cars down the hill!"]), 3);
+    say("pri", pick("st2", ["Don't be last. Whatever you do, don't be last.", "If you stop, they will run right over you."]), 2); },
+  donuts(c) { say("rex", pick("do", [`${sur(c)} is doing donuts on the run-off! What a celebration!`, `Look at ${sur(c)} spinning it round and round past the line!`]), 2);
+    say("pri", "And fireworks from the sign on the hill. Lovely.", 1); },
+  record(txt) { say("pri", `That's a new all-time record. ${txt}`, 2); },
   dino() { say("rex", pick("dn", ["Is that... a dinosaur by the track?", "There's a T-rex next to the course! Nobody told me about this!", "Look at that! A T-rex is watching the race!"]), 2);
     say("pri", pick("dn2", ["Nobody told the dinosaurs there was a race today.", "It's roaring at the cars. I don't think it's a fan.", "Keep your arms inside the car, everyone."]), 1); },
   update() { // a regular, plain-English update on the race
@@ -1551,9 +1620,37 @@ function renderSeason() {
     r.querySelector(".ps").textContent = i + 1; r.querySelector(".cd").textContent = d.code; const w = SEASON.wins[d.code] || 0;
     r.querySelector(".wn").textContent = w ? `${w} win${w > 1 ? "s" : ""}` : ""; r.querySelector(".pt").textContent = SEASON.pts[d.code] || 0; list.append(r); });
 }
+let RECORDS = store.get("f1bezerk.records", {});
+const REC_ROWS = [["win50", "Fastest win · 50° drop", v => `${v.toFixed(3)} s`], ["win72", "Fastest win · 72° drop", v => `${v.toFixed(3)} s`], ["win88", "Fastest win · 88° drop", v => `${v.toFixed(3)} s`],
+  ["speed", "Top speed", v => `${v} km/h`], ["air", "Biggest air", v => `${v.toFixed(1)} s`], ["margin", "Closest finish", v => `${v.toFixed(3)} s`],
+  ["hit", "Hardest hit", v => `${v} km/h`], ["crashes", "Most crashes in one race", v => `${v}`]];
+function condTags() { return [opts.turbo && "turbo", opts.rain && "rain", opts.showers && !opts.rain && "showers", opts.moon && "moon", opts.giant && "giant", opts.reverse && "backwards", opts.stampede && "stampede", opts.chaos && "chaos"].filter(Boolean).join(", "); }
+function updateRecords(fin) { // all-time bests, kept in this browser
+  const R = RECORDS, when = new Date().toLocaleDateString(), cond = condTags(), broke = [];
+  const consider = (key, v, more, who) => { if (v == null || !isFinite(v)) return; const cur = R[key];
+    if (!cur || (more ? v > cur.v : v < cur.v)) { R[key] = { v, who, when, cond }; broke.push(key); } };
+  let air = null, top = null; for (const c of cars) { if (c.airMax > (air ? air.airMax : .5)) air = c; if (c.top > (top ? top.top : 0)) top = c; }
+  if (air) consider("air", +air.airMax.toFixed(2), true, air.d.name);
+  if (top) consider("speed", Math.round(top.top*3.6), true, top.d.name);
+  if (fin[1]) consider("margin", +(fin[1].finT - fin[0].finT).toFixed(3), false, `${fin[0].d.name} beat ${fin[1].d.name}`);
+  if (race.maxHit) consider("hit", Math.round(race.maxHit.v*3.6), true, race.maxHit.c.d.name);
+  if (fin[0]) consider("win" + opts.deg, +fin[0].finT.toFixed(3), false, fin[0].d.name);
+  const crashes = cars.filter(c => c.status === "out" && c.out !== "DNF").length; if (crashes) consider("crashes", crashes, true, null);
+  R.races = (R.races || 0) + 1; store.set("f1bezerk.records", R); RECORDS.fresh = broke; renderRecords(); delete RECORDS.fresh;
+  if (broke.length && R.races > 1) { const rows = broke.map(k => REC_ROWS.find(r => r[0] === k)).filter(Boolean);
+    setTimeout(() => showBanner("NEW RECORD", rows.map(r => `${r[1]}: ${r[2](R[r[0]].v)}`).join(" · ")), 400);
+    const r = rows[0]; C.record(`${r[1]}: ${r[2](R[r[0]].v).replace("km/h", "kilometres an hour").replace(/ s$/, " seconds")}.`); }
+}
+function renderRecords() {
+  const box = $("#recList"); if (!box) return; const R = RECORDS, fresh = R.fresh || [];
+  $("#recNote").textContent = R.races ? `All-time bests from ${R.races} race${R.races > 1 ? "s" : ""}, saved in this browser only.` : "No races yet. Records are set as you race, and saved in this browser only.";
+  box.replaceChildren(...REC_ROWS.map(([k, label, fmt]) => { const r = el("div", "rec" + (fresh.includes(k) ? " new" : "")), x = R[k];
+    r.append(el("b", null, label), el("span", null, x ? fmt(x.v) : "—"), el("small", null, x ? [x.who, x.when, x.cond].filter(Boolean).join(" · ") : "No record yet")); return r; }));
+}
 function settleRace() {
   if (race.settled) return; race.settled = true;
   const fin = cars.filter(c => c.status === "fin").sort((a, b) => a.finT - b.finT);
+  try { updateRecords(fin); } catch (e) {}
   SEASON.races++; fin.slice(0, 10).forEach((c, i) => SEASON.pts[c.d.code] = (SEASON.pts[c.d.code] || 0) + PTS[i]);
   if (fin[0]) SEASON.wins[fin[0].d.code] = (SEASON.wins[fin[0].d.code] || 0) + 1; saveSeason(); renderSeason();
   race.betResults = [];
@@ -1593,9 +1690,9 @@ function limb(parent, x, y, z, len, thick, c, foot) { // hangs from a hip or sho
   const g = new THREE.Group(); g.position.set(x, y, z); const L = []; cp(L, CYL, c, 0, -len/2, 0, thick, len, thick);
   if (foot) cp(L, SPH, foot, thick*.35, -len, 0, thick*1.5, thick*.6, thick*1.25); g.add(cmesh(L)); parent.add(g); return g; }
 function stick(L, geo, c, x0, y0, x1, y1, r) { const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy); cp(L, geo, c, (x0 + x1)/2, (y0 + y1)/2, 0, r, len, r, 0, 0, -Math.atan2(dx, dy)); }
-function makeTrex() {
+function makeTrex(G = "#4f8a3a", D = "#355f27", B = "#b9c77a") { // the same build makes a raptor in other colours
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-  const G = "#4f8a3a", D = "#355f27", B = "#b9c77a", L = [];
+  const L = [];
   cp(L, SPH, G, 0, 4.3, 0, 2.6, 1.6, 1.35, 0, 0, .22); cp(L, SPH, B, .5, 3.9, 0, 2.1, 1.1, 1.1, 0, 0, .22);
   cp(L, CONE, G, -3.7, 3.7, 0, 1.15, 5.2, 1.15, 0, 0, Math.PI/2 + .14);
   stick(L, CYL, G, 1.8, 4.9, 2.8, 5.9, .75);
@@ -1690,6 +1787,40 @@ function animateCreatures(dt, t) {
       const open = a.roarT > 2.2 ? Math.min(1, (4 - a.roarT)*2) : a.roarT > 0 ? Math.max(0, (a.roarT - 1.4)) : 0;
       a.jaw.rotation.z = -.65*open; a.head.rotation.z = .25*open; }
   }
+}
+
+/* ---------- STAMPEDE: a herd of dinosaurs chases the field down the mountain ---------- */
+function xAtS(s) { // the inverse of progressS
+  const P = track.P; if (s <= 0) return P[0].x0;
+  let lo = 0, hi = P.length - 1; while (lo < hi) { const m = (lo + hi) >> 1; if (P[m].s1 < s) lo = m + 1; else hi = m; }
+  const p = P[lo], f = Math.min(1, Math.max(0, (s - p.s0)/Math.max(1e-6, p.s1 - p.s0))); return p.x0 + f*(p.x1 - p.x0);
+}
+function buildHerd() {
+  const H = { s: 0, v: 0, on: false, lastT: 0 }, list = [];
+  [{ dz: -4.4, ds: 0, rap: [-3.4] }, { dz: 4.4, ds: -3, rap: [3.4] }, { dz: 0, ds: -10, rap: [-3.2, 3.2] }].forEach((mb, i) => {
+    const A = makeTrex(); A.root.scale.setScalar(.9); A.ph = i*1.3;
+    const raps = mb.rap.map(z => { const R = makeTrex("#a8743a", "#6b4422", "#e6cf98"); R.root.scale.setScalar(.5); R.root.position.set(3.5, 0, z/.9); R.ph = Math.random()*6; A.root.add(R.root); return R; });
+    const b = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: pm.prop });
+    b.addShape(new CANNON.Box(new CANNON.Vec3(2.2, 1.3, 1.2)), new CANNON.Vec3(.3, 3.9, 0)); b.addShape(new CANNON.Box(new CANNON.Vec3(.6, 1.7, 1.1)), new CANNON.Vec3(.2, 1.7, 0));
+    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(-400 - i*30, -400, 0); b.kind = "herd"; b.prop = true;
+    world.addBody(b); trackGroup.add(A.root); A.root.visible = false;
+    const q = { b, m: A.root, pp: b.position.clone(), pq: b.quaternion.clone(),
+      update(t) {
+        if (i === 0) { const dt = Math.max(0, t - H.lastT); H.lastT = t;
+          const r = cars.filter(c => c.status === "race"), minS = r.length ? Math.min(...r.map(c => c.s || 0)) : track.length;
+          if (!H.on && t > 2.5 && race.phase === "race") { H.on = true; H.s = Math.max(0, minS - 35); event("STAMPEDE", "A herd of dinosaurs is chasing the field", "#4f8a3a"); C.stampede(); }
+          if (H.on) { const tgt = r.length ? minS - 5 : track.length - 30; H.v = Math.max(0, Math.min(46, (tgt - H.s)*1.3)); H.s = Math.min(track.length - 30, H.s + H.v*dt); } }
+        if (!H.on) return;
+        const x = xAtS(Math.max(0, H.s + mb.ds)), th = pieceAt(x).th, v = H.v;
+        b.position.set(x, surfaceY(x), mb.dz); b.velocity.set(Math.cos(th)*v, -Math.sin(th)*v, 0);
+        b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), -Math.min(th, .6)); },
+      after() { A.root.visible = H.on; if (!H.on) return; const k = .04 + H.v*.0055; A.ph += k;
+        A.legs.forEach((l, j) => l.rotation.z = Math.sin(A.ph + A.gait[j])*A.stride); A.body.position.y = Math.abs(Math.sin(A.ph))*A.bob;
+        const roar = Math.max(0, Math.sin(A.ph*.13)); A.jaw.rotation.z = -.6*roar; A.head.rotation.z = .2*roar;
+        for (const R of raps) { R.ph += k*1.5; R.legs.forEach((l, j) => l.rotation.z = Math.sin(R.ph + R.gait[j])*R.stride*1.2); R.body.position.y = Math.abs(Math.sin(R.ph))*R.bob; } } };
+    list.push(q);
+  });
+  return list;
 }
 
 /* ---------- grid ---------- */
@@ -1819,12 +1950,43 @@ function setFrozen(b, on) {
 }
 
 /* ---------- world (re)build ---------- */
+class TrackBroadphase extends CANNON.Broadphase { // fixed track pieces sorted once along the course; each step only cars and props look up the pieces near them
+  constructor() { super(); this.n = -1; this.fixed = []; this.wide = []; this.maxW = 0; this.mov = []; this.set = new Set(); }
+  refresh(world) {
+    const B = world.bodies; if (this.n === B.length) return; this.n = B.length;
+    this.fixed = []; this.wide = []; this.maxW = 0; this.set = new Set(); this.mov = B.filter(b => !(b.type === CANNON.Body.STATIC && !b.car && !b.prop)); // cars and props stay movers even while frozen
+    for (const b of B) if (b.type === CANNON.Body.STATIC && !b.car && !b.prop) { if (b.aabbNeedsUpdate) b.updateAABB(); this.set.add(b);
+      const w = b.aabb.upperBound.x - b.aabb.lowerBound.x; if (w > 150) this.wide.push(b); else { this.fixed.push(b); if (w > this.maxW) this.maxW = w; } }
+    this.fixed.sort((a, b) => a.aabb.lowerBound.x - b.aabb.lowerBound.x);
+  }
+  near(lo, hi, fn) { const F = this.fixed, t = lo - this.maxW; let a = 0, z = F.length;
+    while (a < z) { const m = (a + z) >> 1; if (F[m].aabb.lowerBound.x < t) a = m + 1; else z = m; }
+    for (let i = a; i < F.length && F[i].aabb.lowerBound.x <= hi; i++) fn(F[i]); for (const w of this.wide) fn(w); }
+  movers() { const M = this.mov; for (let i = 0; i < M.length; i++) if (M[i].aabbNeedsUpdate) M[i].updateAABB(); return M; }
+  collisionPairs(world, p1, p2) {
+    this.refresh(world); const M = this.movers();
+    for (let i = 0; i < M.length; i++) { const bi = M[i];
+      for (let j = i + 1; j < M.length; j++) if (this.needBroadphaseCollision(bi, M[j])) this.intersectionTest(bi, M[j], p1, p2);
+      if (bi.type !== CANNON.Body.STATIC) this.near(bi.aabb.lowerBound.x, bi.aabb.upperBound.x, s => { if (this.needBroadphaseCollision(bi, s)) this.intersectionTest(bi, s, p1, p2); }); }
+  }
+  aabbQuery(world, aabb, result = []) {
+    this.refresh(world); for (const b of this.movers()) if (b.aabb.overlaps(aabb)) result.push(b);
+    this.near(aabb.lowerBound.x, aabb.upperBound.x, s => { if (s.aabb.overlaps(aabb)) result.push(s); }); return result;
+  }
+}
+function startShower() { // the heavens open: less grip for everyone from here
+  WEATHER.wet = true; setTimeOfDay(opts.tod);
+  for (const c of cars) c.vehicle.wheelInfos.forEach(w => w.frictionSlip = .9);
+  event("RAIN", "Halfway down, the rain arrives", "#3fd8ff"); showBanner("RAIN!", "The track is wet from here to the bottom"); C.shower();
+}
 function buildWorld() {
+  if (WEATHER.wet) { WEATHER.wet = false; setTimeOfDay(opts.tod); }
   if (trackGroup) { scene.remove(trackGroup); disposeGroup(trackGroup); }
   if (carGroup) { scene.remove(carGroup); disposeGroup(carGroup); PAINT.length = 0; }
   G = opts.moon ? 1.62 : 9.81;
   world = new CANNON.World({ gravity: new CANNON.Vec3(0, -G, 0) });
-  world.broadphase = new CANNON.SAPBroadphase(world);
+  world.broadphase = new TrackBroadphase(); // checks moving things against nearby track pieces only (the stock one compared every fixed piece with every other, every step)
+  world.collisionMatrix = new CANNON.ObjectCollisionMatrix(); world.collisionMatrixPrevious = new CANNON.ObjectCollisionMatrix(); // sparse: the stock one cleared a ~900×900 table every step
   world.solver.iterations = 12;
   world.allowSleep = false;
   pm.track = new CANNON.Material("track"); pm.car = new CANNON.Material("car"); pm.wall = new CANNON.Material("wall");
@@ -1882,7 +2044,7 @@ function stepCars(h, racing) {
     if (sp > .05) {
       const tb = opts.turbo ? .35 : 1; // turbo: far less air drag and rolling resistance
       let f = (opts.moon ? 0 : .5*1.2*c.cda*tb*(1 - c.draft)*sp*sp) + (grounded ? c.crr*(opts.turbo ? .5 : 1)*c.body.mass*G : 0) + (c.touch && c.wc < 2 ? .45*c.body.mass*G : 0); // scraping on its floor or roof
-      if (c.status === "fin" || (c.status === "out" && c.out !== "OFF TRACK")) f += c.body.mass*(grounded || c.touch ? 5.5 : 0);
+      if ((c.status === "fin" && !c.donutOn) || (c.status === "out" && c.out !== "OFF TRACK")) f += c.body.mass*(grounded || c.touch ? 5.5 : 0);
       tmpF.copy(v); tmpF.scale(-Math.min(f, c.body.mass*sp/h*.9)/sp, tmpF); c.body.applyForce(tmpF);
     }
     const wc = c.wc;
@@ -1899,6 +2061,12 @@ function stepCars(h, racing) {
         if (race.simT > (c.swerveEnd || 0) && Math.random() < h*.05) { c.swerveEnd = race.simT + .25 + Math.random()*.3; c.swerveDir = Math.random() < .5 ? -1 : 1; }
         if (race.simT < (c.swerveEnd || 0)) steer = c.swerveDir*.075;
       }
+    }
+    if (c.donutOn) { // the winner celebrates: donuts on the run-off
+      c.body.quaternion.vmult(fwdLocal, tmpFw); const hz = Math.hypot(tmpFw.x, tmpFw.z) || 1, fx = tmpFw.x/hz, fz = tmpFw.z/hz, d = c.donutDir, k = Math.min(1, h*3);
+      const av = c.body.angularVelocity; av.y += (2.6*d - av.y)*Math.min(1, h*5);
+      const a = -.9*d, tx = (fx*Math.cos(a) - fz*Math.sin(a))*7 - (c.body.position.x - c.donutX)*.5, tz = (fx*Math.sin(a) + fz*Math.cos(a))*7 - c.body.position.z*.6;
+      v.x += (tx - v.x)*k; v.z += (tz - v.z)*k; steer = .4*d;
     }
     // in reverse the rear wheels lead, so the drivers steer with those (steering the trailing wheels at speed is unstable)
     const sf = opts.reverse ? 0 : steer, sr = opts.reverse ? steer : 0;
@@ -1927,9 +2095,11 @@ function pickLane(c) { // pull out when the car ahead is slower or stopped
 }
 function releaseCars() { for (const c of cars) { c.relT = race.simT + c.release; } }
 
+let LASTRAW = 1/60;
 function simulate(dt) {
-  race.acc = (race.acc || 0) + dt; let n = 0;
+  race.acc = (race.acc || 0) + dt; let n = 0; const t0 = performance.now(), budget = Math.min(28, Math.max(9, LASTRAW*600)); // physics may use about 60% of a frame
   while (race.acc >= STEP && n < 26) {
+    if (n >= 2 && performance.now() - t0 > budget) { race.acc = Math.min(race.acc, STEP*.99); break; } // over budget: let this frame show rather than stall it (the race runs a touch slower instead of stuttering)
     race.acc -= STEP; n++; race.simT += STEP;
     const racing = race.phase === "race" || race.phase === "done";
     if (racing) for (const c of cars) if (c.status === "grid" && race.simT >= c.relT) {
@@ -1953,7 +2123,13 @@ function postStep(h) {
   for (const c of cars) {
     const b = c.body, v = b.velocity, sp = v.length();
     c.spd = sp; c.s = progressS(b.position.x);
-    if (c.status === "fin" && !c.parked) { c.restT = sp < .4 ? (c.restT || 0) + h : 0; if (c.restT > 1) { c.parked = true; setFrozen(b, true); } } // stopped after the line: no more physics
+    if (c === race.winner && c.status === "fin" && !c.donutDone) {
+      if (!c.donutOn && b.position.x > track.finX + 45 && sp < 16) { c.donutOn = true; c.donutT = 0; c.donutX = b.position.x; c.donutDir = Math.random() < .5 ? -1 : 1;
+        c.vehicle.wheelInfos.forEach(w => w.frictionSlip = .25); if (!race.said.donut) { race.said.donut = 1; C.donuts(c); } }
+      if (c.donutOn) { c.donutT += h; if (Math.random() < h*40) { b.quaternion.vmult(fwdLocal, tmpFw); FX.smoke({ x: b.position.x - tmpFw.x*2, y: b.position.y, z: b.position.z - tmpFw.z*2 }); }
+        if (c.donutT > 10) { c.donutOn = false; c.donutDone = true; c.vehicle.wheelInfos.forEach(w => w.frictionSlip = opts.rain || WEATHER.wet ? .9 : 1.5); } }
+    }
+    if (c.status === "fin" && !c.parked && !c.donutOn) { c.restT = sp < .4 ? (c.restT || 0) + h : 0; if (c.restT > 1) { c.parked = true; setFrozen(b, true); } } // stopped after the line: no more physics
     if (c.status === "out") { // marshals lift the wreck clear after a few seconds
       c.outT = (c.outT || 0) + h;
       const lim = c.out === "OFF TRACK" ? 8 : 3.5;
@@ -1976,6 +2152,7 @@ function postStep(h) {
     if (!race.said.kick && track.kickLipX && b.position.x > track.kickLipX + 3 && air) { race.said.kick = 1; C.kicker(c); }
     if (!race.said.plunge && b.position.x > track.crest2X + 8) { race.said.plunge = 1; C.plunge(c); }
     if (!race.said.roll && b.position.x > track.rollX + 15) { race.said.roll = 1; C.rollers(c); }
+    if (opts.showers && !opts.rain && !WEATHER.wet && race.phase === "race" && c.status === "race" && c.s > track.length*.5) startShower();
     if (track.trap && c.lastX < track.trap.x && b.position.x >= track.trap.x) track.trap.hit(c, sp);
     c.lastX = b.position.x;
     if (c.touch && c.wc < 2 && sp > 5 && Math.random() < .5) { b.quaternion.vmult(upLocal, tmpUp); FX.sparks({ x: b.position.x - tmpUp.x*.4, y: b.position.y - tmpUp.y*.4, z: b.position.z - tmpUp.z*.4 }, v, 2); }
@@ -2024,12 +2201,14 @@ function out(c, why, quiet) { c.status = "out"; c.out = why; if (quiet) return; 
   event("OUT", `${c.d.code} ${why === "OFF TRACK" ? "goes over the fence and off the mountain" : why === "FLIPPED" ? "ends up upside down" : "comes to a stop"}`, "#ff2f45", c); }
 function onCollide(car, e) {
   if (!race || race.phase !== "race") return;
+  if (car.status === "fin" && (!e.body.car || e.body.car.status === "fin")) return; // bumps on the run-off after the line don't count
   const iv = Math.abs(e.contact.getImpactVelocityAlongNormal());
+  if (car.status === "race" && iv > (race.maxHit ? race.maxHit.v : 6)) race.maxHit = { v: iv, c: car };
   const other = e.body, now = race.simT;
   if (iv > 3) { const k = e.contact, p = k.bi.position.vadd(k.ri); FX.sparks(p, car.body.velocity, Math.min(40, Math.round(iv*3)));
     if (car === focusCar()) shake = Math.min(1.2, shake + iv*.04); }
   if (other.prop) {
-    const k = other.kind; if (k === "wreck" || k === "windmill" || k === "tyre" || k === "trex") FX.sparks(car.body.position, car.body.velocity, 26);
+    const k = other.kind; if (k === "wreck" || k === "windmill" || k === "tyre" || k === "trex" || k === "herd") FX.sparks(car.body.position, car.body.velocity, 26);
     if (iv > 1.5 && (!car.lastHit[k] || now - car.lastHit[k] > 2.5)) { car.lastHit[k] = now;
       if (k === "ball") { event("BEACH BALL", `${car.d.code} hits a beach ball`, "#ffd23f", car); C.ball(car); }
       else if (k === "pin") { if (!race.said.pins) { race.said.pins = 1; event("BOWLING", `${car.d.code} goes bowling`, "#ffd23f", car); C.pins(car); setTimeout(() => checkStrike(car), 2500); } }
@@ -2038,6 +2217,7 @@ function onCollide(car, e) {
       else if (k === "wreck") { event("WRECKING BALL", `${car.d.code} is hit by the wrecking ball`, "#ff2f45", car); C.hit("wreck", car); incident("obst", car, `WRECKING BALL · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
       else if (k === "windmill") { event("WINDMILL", `${car.d.code} gets whacked by the windmill`, "#ff2f45", car); C.hit("windmill", car); incident("obst", car, `WINDMILL · ${car.d.code}`, 3); }
       else if (k === "trex") { event("T-REX", `${car.d.code} runs into the T-rex`, "#4f8a3a", car); C.hit("trex", car); incident("obst", car, `T-REX · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
+      else if (k === "herd") { event("STAMPEDE", `${car.d.code} is caught by the stampede`, "#4f8a3a", car); C.hit("herd", car); incident("obst", car, `STAMPEDE · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .9); }
       else if (k === "tyre") { event("TYRE", `${car.d.code} hits a runaway tyre`, "#ff8a3d", car); C.hit("tyre", car); incident("obst", car, `RUNAWAY TYRE · ${car.d.code}`, 2); } }
     return;
   }
@@ -2052,7 +2232,8 @@ function onCollide(car, e) {
 /* ---------- start sequence ---------- */
 function startRace() {
   if (!race || race.phase !== "grid") return;
-  race.phase = "lights"; $("#startBtn").disabled = true; setFlag("LIGHTS", ""); C.intro(); if (POOL.on) poolLock(); renderBets();
+  race.phase = "lights"; $("#startBtn").disabled = true; setFlag("LIGHTS", ""); C.intro();
+  if (opts.showers && !opts.rain) say("pri", "The forecast says rain later. It could arrive in the middle of the race.", 1); if (POOL.on) poolLock(); renderBets();
   const L = $("#lights"); L.hidden = false; const bulbs = [...L.querySelectorAll(".pod")];
   bulbs.forEach(p => p.querySelectorAll(".bulb").forEach(b => b.classList.remove("on")));
   setGantry(0);
@@ -2312,13 +2493,13 @@ function renderPip() { // a small window with the selected driver's own view, dr
   renderer.setScissorTest(false); renderer.setViewport(0, 0, cr.width, cr.height); renderer.shadowMap.autoUpdate = true; c.label.visible = lv;
 }
 function frame(now) {
-  const raw = Math.min(.25, (now - last)/1000), dt = Math.min(.05, raw); last = now; adaptQuality(raw);
+  const raw = Math.min(.25, (now - last)/1000), dt = Math.min(.05, raw); last = now; LASTRAW = Math.min(.05, raw); adaptQuality(raw);
   if (RP.active) { /* the race waits while the replay plays */ }
   else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1)*opts.speed); // SPEED fast-forwards the race; replays keep their own pace
   else if (race) simulate(dt);
   const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
   FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position);
-  if (opts.rain && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
+  if ((opts.rain || WEATHER.wet) && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
   if (race) {
     if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
     hudT += dt; if (hudT > .12) { hudT = 0; updateTower(); updateCard();
@@ -2344,7 +2525,7 @@ $("#slowTog").addEventListener("click", () => toggleSlow());
 document.querySelectorAll("[data-tod]").forEach(b => b.addEventListener("click", () => setTimeOfDay(b.dataset.tod)));
 document.querySelectorAll("[data-speed]").forEach(b => b.addEventListener("click", () => { opts.speed = +b.dataset.speed;
   document.querySelectorAll("[data-speed]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }));
-for (const [id, key] of [["rainTog", "rain"], ["moonTog", "moon"], ["giantTog", "giant"], ["turboTog", "turbo"]]) $("#" + id).addEventListener("click", () => {
+for (const [id, key] of [["rainTog", "rain"], ["moonTog", "moon"], ["giantTog", "giant"], ["turboTog", "turbo"], ["showerTog", "showers"], ["stampTog", "stampede"]]) $("#" + id).addEventListener("click", () => {
   opts[key] = !opts[key]; $("#" + id).setAttribute("aria-pressed", String(opts[key])); if (key === "rain") setTimeOfDay(opts.tod); rebuild(); });
 $("#revTog").addEventListener("click", () => { opts.reverse = !opts.reverse; $("#revTog").setAttribute("aria-pressed", String(opts.reverse)); rebuild(); });
 $("#chaosTog").addEventListener("click", () => { opts.chaos = !opts.chaos; $("#chaosTog").setAttribute("aria-pressed", String(opts.chaos)); rebuild(); });
@@ -2352,13 +2533,14 @@ function toggleComm() { opts.comm = !opts.comm; $("#commTog").setAttribute("aria
 $("#commTog").addEventListener("click", toggleComm);
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", String(x === t)));
-  $("#pnOrder").hidden = t.dataset.tab !== "order"; $("#pnBets").hidden = t.dataset.tab !== "bets"; $("#pnSeason").hidden = t.dataset.tab !== "season";
-  if (t.dataset.tab === "bets") renderBets(); if (t.dataset.tab === "season") renderSeason(); }));
+  $("#pnOrder").hidden = t.dataset.tab !== "order"; $("#pnBets").hidden = t.dataset.tab !== "bets"; $("#pnSeason").hidden = t.dataset.tab !== "season"; $("#pnRecords").hidden = t.dataset.tab !== "records";
+  if (t.dataset.tab === "bets") renderBets(); if (t.dataset.tab === "season") renderSeason(); if (t.dataset.tab === "records") renderRecords(); }));
 $("#betForm").addEventListener("submit", e => { e.preventDefault(); const name = $("#betName").value.trim().slice(0, 16);
   if (!name) return; if (BETS.players.some(p => p.name.toLowerCase() === name.toLowerCase())) { $("#betName").select(); return; }
   BETS.players.push({ name, total: 0, pick: "", last: null }); $("#betName").value = ""; saveBets(); renderBets(); });
 $("#betDip").addEventListener("click", () => { if (betsLocked()) return; for (const p of BETS.players) if (!p.pick) p.pick = DRIVERS[Math.floor(Math.random()*DRIVERS.length)].code; saveBets(); renderBets(); });
 confirmButton($("#betReset"), "NEW SESSION", () => { for (const p of BETS.players) { p.total = 0; p.last = null; p.pick = ""; } BETS.races = 0; saveBets(); renderBets(); });
+confirmButton($("#recReset"), "RESET RECORDS", () => { RECORDS = {}; store.set("f1bezerk.records", RECORDS); renderRecords(); });
 confirmButton($("#seasonReset"), "RESET SEASON", () => { SEASON = { races: 0, pts: {}, wins: {} }; saveSeason(); renderSeason(); });
 function toggleReplays() { opts.replays = !opts.replays; $("#replayTog").setAttribute("aria-pressed", String(opts.replays)); if (!opts.replays) { RP.pending = null; if (RP.active) stopReplay(); } }
 $("#replayTog").addEventListener("click", toggleReplays);
@@ -2402,6 +2584,8 @@ addEventListener("keydown", e => {
   else if (e.key === "p" || e.key === "P") toggleReplays();
   else if (e.key === "v" || e.key === "V") $("#revTog").click();
   else if (e.key === "w" || e.key === "W") $("#rainTog").click();
+  else if (e.key === "h" || e.key === "H") $("#showerTog").click();
+  else if (e.key === "k" || e.key === "K") $("#stampTog").click();
   else if (e.key === "t" || e.key === "T") $("#turboTog").click();
   else if (e.key === "m" || e.key === "M") $("#moonTog").click();
   else if (e.key === "g" || e.key === "G") $("#giantTog").click();
