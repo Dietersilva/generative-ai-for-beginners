@@ -2,15 +2,17 @@
 # Usage:  powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
+function Check($what) { if ($LASTEXITCODE -ne 0) { throw "$what failed (exit $LASTEXITCODE)" } }
 
-python -m venv .build-venv
-& .\.build-venv\Scripts\python.exe -m pip install --quiet --upgrade pip
-& .\.build-venv\Scripts\python.exe -m pip install --quiet "pyinstaller==6.11.1"
-& .\.build-venv\Scripts\python.exe -m unittest discover -s tests
+python -m venv .build-venv; Check "venv"
+& .\.build-venv\Scripts\python.exe -m pip install --quiet --upgrade pip; Check "pip"
+& .\.build-venv\Scripts\python.exe -m pip install --quiet "pyinstaller==6.11.1"; Check "install PyInstaller"
+& .\.build-venv\Scripts\python.exe -m unittest discover -s tests; Check "tests"
 & .\.build-venv\Scripts\pyinstaller.exe --noconfirm --clean --onefile --windowed `
     --name AI-Meter --icon ai-meter.ico `
     --add-data "aimeter\web;aimeter\web" `
     run_aimeter.py
+Check "PyInstaller"
 
 $out = Join-Path $PSScriptRoot 'dist\AI-Meter-package'
 New-Item -ItemType Directory -Force -Path $out | Out-Null
