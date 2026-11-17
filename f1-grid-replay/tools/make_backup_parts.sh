@@ -2,7 +2,7 @@
 # Backup in parts small enough to download (each under ~80 MB). Unzip all parts into one folder.
 set -e
 cd "$(dirname "$0")/.."
-B=backup/Grid-Replay-Backup; rm -rf backup; mkdir -p $B/online $B/tools $B/commentary-scripts backup/parts
+B=backup/Grid-Replay-Backup; rm -rf $B backup/parts; mkdir -p $B/online $B/tools $B/commentary-scripts backup/parts
 cp -r pub/* $B/online/
 for y in 2025 2024 2023; do mkdir -p $B/online/$y/comm && cp comm/$y/*.mp3 comm/${y}q/*.mp3 $B/online/$y/comm/; done
 for y in 2026 2025 2024 2023; do mkdir -p $B/commentary-scripts/$y $B/commentary-scripts/$y-qualifying && cp comm/$y/*.json $B/commentary-scripts/$y/ && cp comm/${y}q/*.json $B/commentary-scripts/$y-qualifying/; done
