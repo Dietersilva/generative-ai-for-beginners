@@ -1346,6 +1346,7 @@ async function loadQuali(r){
   try {
     const u8 = await fetchBytes(r.file); if (id !== st.loadingId) return;
     const Q = prepQuali(JSON.parse(new TextDecoder().decode(u8)));
+    setTimeout(() => commInitQ(r, id), 0);
     st.R = null; st.Q = Q; st.qSel = null; st.t = 0; st.radio = null; st.sel = null;
     $("#app").classList.add("qmode"); $("#stage").classList.add("qmode"); $("#stage").classList.remove("lin", "side", "notrack"); $("#app").classList.remove("lin");
     $("#qBtns").hidden = false; if (st.prevSpeed == null) st.prevSpeed = st.speed; st.speed = 1; syncSpeeds();
@@ -2083,6 +2084,53 @@ async function commSpeak(x, force){
   u.onend = u.onerror = done; speechSynthesis.speak(u);
 }
 function commCross(t0, t1){ const R = st.R; if (!R || st.rec || !R.comm) return; for (const x of R.comm) if (t0 < x.t && x.t <= t1) commQueue(x); }
+/* ---- qualifying commentary: written for the ~90-second ghost lap (everyone's fastest lap at once) ---- */
+function buildQualiComm(Q, meta){
+  const q = Q.q, rnd = commRng((q.session_key || 9) * 2246822519), L = [], pick = a => a[Math.floor(rnd() * a.length)];
+  const add = (t, pri, who, e, text) => { if (text) L.push({t: Math.round(t * 10) / 10, pri, who, e, text}); };
+  const prev = meta && meta.kind === "preview", sq = q.kind === "squali" || (meta && meta.kind === "squali");
+  const name = (meta && meta.name) || q.name || "the Grand Prix", sess = sq ? "sprint qualifying" : "qualifying";
+  const D = Q.drivers.filter(d => d.time > 0), byPos = D.filter(d => Number.isInteger(d.pos)).sort((a, b) => a.pos - b.pos);
+  const P = byPos[0] || Q.pole; if (!P || !P.sectors || !P.sectors[0]) return L;
+  const sn = d => surname(d), full = d => `${d.first} ${surname(d)}`;
+  const gapW = g => g < 0.1 ? `${Math.max(1, Math.round(g * 1000))} thousandths` : `${g.toFixed(2)} seconds`;
+  const lapW = v => { const m = Math.floor(v / 60), s = v - m * 60, ss = Math.floor(s), ms = String(Math.round((s - ss) * 1000)).padStart(3, "0"); return `${m} ${ss < 10 ? "oh " + ss : ss} point ${ms.split("").join(" ")}`; };
+  const names = arr => arr.length > 1 ? arr.slice(0, -1).join(", ") + " and " + arr[arr.length - 1] : arr[0] || "";
+  const s1 = P.sectors[0], s2 = P.sectors[0] + (P.sectors[1] || 0), n = Math.max(q.drivers.length, byPos.length);
+
+  add(0.2, 2, "L", 1, prev ? pick([`A look ahead to the ${name}. Here's how qualifying went at this track last year, every driver's best lap at once.`, `Preview time for the ${name}. These are last year's qualifying laps here, all together.`])
+    : pick([`Welcome to ${sess} for the ${name}. Every driver's best lap, all at once. Let's see who's quickest.`, `${sess.charAt(0).toUpperCase() + sess.slice(1)} for the ${name}. Here come the fastest laps of the session, side by side.`]));
+  const comps = new Set(D.map(d => d.compound).filter(Boolean)), odd = D.filter(d => d.compound && d.compound !== "SOFT" && d.pos && d.pos <= 10);
+  add(1.6, 1, "A", 0, comps.size === 1 && comps.has("SOFT") ? pick(["Everyone on the soft tyres for these laps, as you'd expect.", "Soft tyres all round. This is as fast as these cars go."])
+    : comps.has("INTERMEDIATE") || comps.has("WET") ? "A wet session, so a mix of tyres out there." : odd.length ? `Interesting: ${names(odd.slice(0, 3).map(sn))} set ${odd.length > 1 ? "their" : "his"} best lap on the ${(TYRE[odd[0].compound] || odd[0].compound.toLowerCase())}.` : "");
+
+  // the knockouts (5 out per round with 20 cars, 6 with 22)
+  if (!prev && n >= 16) { const field = (st.year || 0) >= 2026 || n >= 22 ? 22 : 20, adv = field === 22 ? 16 : 15, q1 = byPos.filter(d => d.pos > adv), q2 = byPos.filter(d => d.pos > 10 && d.pos <= adv);
+    add(s1 * 0.4, 1, "A", 0, `Out in the first part of qualifying: ${names(q1.map(sn))}.`);
+    if (q2.length) add(s1 + (s2 - s1) * 0.45, 1, "A", 0, `And knocked out in the second part: ${names(q2.map(sn))}.`); }
+
+  // sector call-outs, from the cars' own sector times
+  const lead1 = D.slice().sort((a, b) => a.sectors[0] - b.sectors[0]), lead2 = D.filter(d => d.sectors[1]).sort((a, b) => (a.sectors[0] + a.sectors[1]) - (b.sectors[0] + b.sectors[1]));
+  if (lead1[1]) add(s1 + 0.3, 2, "L", 1, pick([`First sector: ${sn(lead1[0])} is quickest, ${gapW(lead1[1].sectors[0] - lead1[0].sectors[0])} up on ${sn(lead1[1])}.`, `${sn(lead1[0])} fastest through sector one.`]));
+  if (lead2[1]) { const a = lead2[0], g = (lead2[1].sectors[0] + lead2[1].sectors[1]) - (a.sectors[0] + a.sectors[1]);
+    add(s2 + 0.3, 2, "L", a === lead1[0] ? 1 : 2, a === lead1[0] ? `${sn(a)} still leads after sector two, ${gapW(g)} clear.` : pick([`${sn(a)} takes over in sector two!`, `Now it's ${sn(a)} in front through sector two!`])); }
+
+  // the finish
+  const p2 = byPos[1], p3 = byPos[2], m = p2 ? p2.time - P.time : 0;
+  add(P.time + 0.4, 3, "L", 2, prev ? `${full(P)} was fastest here last year, a ${lapW(P.time)}.`
+    : pick([`And it's pole position for ${full(P)}! A ${lapW(P.time)}${p2 && m > 0 ? `, ${gapW(m)} ahead of ${sn(p2)}` : ""}.`, `Pole for ${full(P)}!${p2 && m > 0 ? ` ${gapW(m)} faster than ${sn(p2)}.` : ""}`]));
+  if (p2 && p3) { const spread = p3.time - P.time, mate = byPos.find(d => d !== P && d.team === P.team);
+    const extra = spread > 0 && spread < 0.1 ? ` Just ${gapW(spread)} covering the top three. Incredible.` : mate && mate !== p2 && mate.time > P.time ? ` And ${sn(P)} beat teammate ${sn(mate)} by ${gapW(mate.time - P.time)}.` : "";
+    add(P.time + 4, 1, "A", 0, prev ? `${sn(p2)} and ${sn(p3)} were next. We'll see if the order changes this year.` : `${sn(p2)} lines up second, ${sn(p3)} third.${extra}`); }
+  return L.sort((a, b) => a.t - b.t);
+}
+async function commInitQ(r, id){
+  const Q = st.Q; COMM.pack = null; commTitle();
+  if (r.comm_file) try { const u8 = await fetchBytes(r.comm_file); if (id !== st.loadingId) return; const {header, body} = splitPack(u8); COMM.pack = {body}; Q.comm = header; Q.commKey = r.session_key; commTitle(); return; } catch (e) { console.warn("comm pack", e); }
+  try { Q.comm = buildQualiComm(Q, r); } catch (e) { console.warn("quali comm", e); Q.comm = []; }
+  Q.commKey = r.session_key;
+}
+function commCrossQ(t0, t1){ const Q = st.Q; if (!Q || !Q.comm || !st.commOn) return; for (const x of Q.comm) if (t0 < x.t && x.t <= t1) commQueue(x); }
 async function commInit(r, id){
   const R = st.R; COMM.pack = null; commTitle();
   if (r.comm_file) try { const u8 = await fetchBytes(r.comm_file); if (id !== st.loadingId) return; const {header, body} = splitPack(u8); COMM.pack = {body}; R.comm = header; commTitle(); return; } catch (e) { console.warn("comm pack", e); }
@@ -2318,9 +2366,9 @@ function syncSpeeds(){ $("#speeds").querySelectorAll("button").forEach(b => b.se
 $("#speeds").innerHTML = SPEEDS.map(s => `<button data-s="${s}" aria-pressed="false">${s}×</button>`).join("");
 $("#speeds").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; endDirector(); st.speed = +b.dataset.s; syncSpeeds(); save(); });
 syncSpeeds();
-function setPlaying(p){ st.playing = p && !!(st.R || st.Q); $("#play").setAttribute("aria-label", st.playing ? "Pause" : "Play");
+function setPlaying(p, keepComm){ st.playing = p && !!(st.R || st.Q); $("#play").setAttribute("aria-label", st.playing ? "Pause" : "Play");
   $("#playIco").innerHTML = st.playing ? `<rect x="3" y="2" width="3.6" height="12" rx="1" fill="currentColor"/><rect x="9.4" y="2" width="3.6" height="12" rx="1" fill="currentColor"/>` : `<path d="M3 1.5v13l11-6.5z" fill="currentColor"/>`;
-  if (st.playing) { ensureAudio(); $("#podium").hidden = true; const S = st.R || st.Q; if (S && st.t >= S.T - 0.5) setTime(0); } else { stopRadio(); commStop(); } }
+  if (st.playing) { ensureAudio(); $("#podium").hidden = true; const S = st.R || st.Q; if (S && st.t >= S.T - 0.5) setTime(0); } else { stopRadio(); if (!keepComm) commStop(); } }
 $("#play").addEventListener("click", () => setPlaying(!st.playing));
 function setCam(c){ st.cam = c; $("#stage").classList.toggle("lin", c === "linear"); $("#app").classList.toggle("lin", c === "linear"); document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cam === c)));
   save();
@@ -2486,7 +2534,7 @@ let last = performance.now(), hudAcc = 0, anaAcc = 0;
 function frame(now){
   const wdt = Math.min(0.1, (now - last)/1000); last = now;
   const R = st.R;
-  if (st.Q && st.playing) { st.t = Math.min(st.Q.T, st.t + wdt * st.speed); if (st.t >= st.Q.T) setPlaying(false); }
+  if (st.Q && st.playing) { const q0 = st.t; st.t = Math.min(st.Q.T, st.t + wdt * st.speed); commCrossQ(q0, st.t); if (st.t >= st.Q.T) setPlaying(false, true); }
   if (st.Q) updateQualiHUD();
   if (R && st.playing) {
     const t0 = st.t; st.t = Math.min(R.T, st.t + wdt * st.speed);

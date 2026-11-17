@@ -13,7 +13,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 
 | What | Where |
 | --- | --- |
-| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 30) |
+| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 31) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
 | Offline version | `Grid-Replay.html` + `Grid-Replay-2023/2024/2025/2026.zip` (unzip into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
@@ -27,7 +27,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 | 2024 | 24 | 6 | 30 | 1,792 | Natural offline; device voice online |
 | 2023 | 22 | 6 | 28 (incl. sprint shootouts) | 1,778 | Natural offline; device voice online |
 
-Commentary: 10,572 lines, about 9.4 hours of audio, across 114 races and sprints.
+Commentary: 10,572 race lines (9.4 hours, 114 races and sprints) plus 912 qualifying lines (1.3 hours, 116 sessions).
 
 2022 is not possible: OpenF1 starts in 2023, and F1's own live-timing archive now requires a login
 (it answers 401 Unauthorized). An "estimated" 2022 from lap times only (Jolpica/Ergast) was offered and
@@ -50,6 +50,9 @@ put on hold.
   championship picture. Faster playback speaks only the bigger moments; big moments cut in.
 - **Analysis panel:** Head to head, Incidents, Positions, Lap times, Battles, Weather, Season (bar race).
 - **Qualifying:** every driver's fastest lap as ghost cars, live gap to pole, Q1/Q2/Q3 order, tyres.
+  Qualifying commentary (about 8 lines per session, timed to the ghost lap): intro, tyres, Q1/Q2
+  knockouts, sector leaders, pole call with lap time and margin, front row and teammate/spread notes.
+  Previews describe last year's laps. 116 sessions, 912 lines, every pole call checked against the data.
 - **Weather overlay:** air/track temperature, wind, rain effect.
 - **Video export:** REC button (WebM/MP4 via the browser; commentary audio is not captured).
 - **Seasons:** year picker (2026, 2025, 2024, 2023); links like `#2025-round-12`, `#2024-s-<session>`.
@@ -157,7 +160,6 @@ every radio and commentary clip in Chromium, and spot checks of standings and sc
 ## 10. Known limitations
 
 - Commentary audio cannot be captured in video export (browser restriction).
-- Qualifying has no commentary yet.
 - Online past seasons (2023–2025) use the device voice (size limit); offline has natural voices.
 - Very large single files (over ~250 MB) failed to download in the Claude app; everything is split
   into files under 80 MB.

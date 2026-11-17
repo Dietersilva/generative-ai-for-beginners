@@ -22,6 +22,10 @@ if cd:
         f = f"{cd}/{r['session_key']}.mp3"
         if _os2.path.exists(f):
             r["comm_file"] = f"{pre}comm/{r['session_key']}.mp3"; emb[r["comm_file"]] = _b64.b64encode(open(f, "rb").read()).decode()
+    for q in idx.get("quali", []) + idx.get("previews", []):   # qualifying commentary packs live in <COMM_DIR>q/
+        f = f"{cd}q/{q['session_key']}.mp3"
+        if _os2.path.exists(f):
+            q["comm_file"] = f"{pre}comm/{q['session_key']}.mp3"; emb[q["comm_file"]] = _b64.b64encode(open(f, "rb").read()).decode()
     emb[pre + "index.json"] = json.dumps(idx, separators=(',', ':'))
 for q in idx.get("quali", []) + idx.get("previews", []):
     emb[q["file"]] = _b64.b64encode(open(f"{base}/{q['file']}", "rb").read()).decode()
