@@ -4,8 +4,9 @@ set -e
 cd "$(dirname "$0")/.."
 B=backup/Grid-Replay-Backup; rm -rf backup; mkdir -p $B/online $B/tools $B/commentary-scripts backup/parts
 cp -r pub/* $B/online/
-for y in 2025 2024 2023; do mkdir -p $B/online/$y/comm && cp comm/$y/*.mp3 $B/online/$y/comm/; done
-for y in 2026 2025 2024 2023; do mkdir -p $B/commentary-scripts/$y && cp comm/$y/*.json $B/commentary-scripts/$y/; done
+for y in 2025 2024 2023; do mkdir -p $B/online/$y/comm && cp comm/$y/*.mp3 comm/${y}q/*.mp3 $B/online/$y/comm/; done
+for y in 2026 2025 2024 2023; do mkdir -p $B/commentary-scripts/$y $B/commentary-scripts/$y-qualifying && cp comm/$y/*.json $B/commentary-scripts/$y/ && cp comm/${y}q/*.json $B/commentary-scripts/$y-qualifying/; done
+cp PROJECT-GUIDE.md $B/
 cp tools/*.py tools/*.sh tools/*.js $B/tools/ 2>/dev/null || true
 cat > $B/README.txt <<'TXT'
 GRID REPLAY - full backup (2023, 2024, 2025, 2026)
@@ -22,9 +23,10 @@ online/   The multi-file version, exactly as published on claude.ai (2026 at the
           then open http://localhost:8000 in your browser.
           data/*.mp3 = race replays (gzip packs served under an audio extension because the host
           only serves media types - not audio). radio/*.mp3 = team radio packs.
-          comm/*.mp3 = commentary packs (natural voices). For 2023-2025 these are included here but
-          not listed in online/<year>/index.json (the online page had no room for them).
-commentary-scripts/  The commentary text for every race (JSON), as generated.
+          comm/*.mp3 = commentary packs (natural voices) for races and qualifying. For 2023-2025 these
+          are included here but not listed in online/<year>/index.json (no room online).
+commentary-scripts/  The commentary text for every race and qualifying session (JSON).
+PROJECT-GUIDE.md     Everything about the project in one document.
 tools/    The scripts that download data from OpenF1 and build everything (build_race.py,
           update_new.py, build_radio.py, transcribe.py, build_comm.py, commscript_all.js,
           standalone.py, launcher.py, ...).
@@ -44,7 +46,7 @@ folder f1-grid-replay/. Data: OpenF1 (openf1.org), unofficial. Timing data and t
 to Formula 1. Private fan project for personal use - please don't publish it.
 TXT
 cd $B
-zip -qr -9 ../parts/Grid-Replay-backup-1-tools-scripts-readme.zip README.txt tools commentary-scripts
+zip -qr -9 ../parts/Grid-Replay-backup-1-tools-scripts-readme.zip README.txt PROJECT-GUIDE.md tools commentary-scripts
 zip -qr -9 ../parts/Grid-Replay-backup-2-online-2026.zip online/index.html online/index.json online/season.json online/data online/radio online/quali online/comm
 zip -qr -9 ../parts/Grid-Replay-backup-3-online-2025.zip online/2025
 zip -qr -9 ../parts/Grid-Replay-backup-4-online-2024.zip online/2024
