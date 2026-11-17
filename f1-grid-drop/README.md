@@ -52,7 +52,7 @@ A typical race takes 30 to 40 seconds.
 
 ## Controls
 
-Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · Esc deselect. Click a car, or its row in the running order, to follow it.
+Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 

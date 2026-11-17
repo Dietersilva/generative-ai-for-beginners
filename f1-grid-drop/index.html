@@ -119,6 +119,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .caption{top:60px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:10px;max-width:min(560px,calc(100% - 32px));width:max-content;padding:8px 14px 8px 8px;
   background:color-mix(in srgb,var(--panel) 90%,transparent);border:1px solid var(--line-2);border-radius:12px;backdrop-filter:blur(8px);transition:opacity .3s}
 .caption.fade{opacity:0}
+.fsbtn{display:grid;place-items:center;padding:5px 9px}
+.fsbtn svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.stage:fullscreen{border-radius:0;border:0;width:100vw;height:100vh}
+.stage.expanded{position:fixed;inset:0;z-index:50;border-radius:0;border:0;height:auto;min-height:0}
+.fs-start{display:none;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) skewX(-8deg);pointer-events:auto}
+.stage:fullscreen .fs-start,.stage.expanded .fs-start{display:block}
 .caption b{flex:0 0 auto;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.14em;padding:3px 8px;border-radius:5px;background:var(--hc);color:#05070d}
 .caption span{font-size:14px;line-height:1.35;color:var(--text)}
 
@@ -191,6 +197,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <button class="seg" data-cam="tv" aria-pressed="true">TV</button>
       <button class="seg" data-cam="side" aria-pressed="false">SIDE</button>
       <button class="seg" data-cam="onboard" aria-pressed="false">CHASE</button>
+      <button class="seg fsbtn" id="fsBtn" aria-pressed="false" aria-label="Full screen" title="Full screen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="fsIcon" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </div>
     <div class="hud ticker" id="ticker"></div>
     <div class="hud caption fade" id="caption" aria-live="polite"><b id="capWho">REX</b><span id="capTxt"></span></div>
@@ -204,6 +211,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     <div class="hud banner" id="banner" hidden><div class="big" id="bannerBig"></div><div class="small" id="bannerSmall"></div></div>
     <div class="hud dcard" id="dcard" hidden></div>
     <div class="hud results" id="results" hidden></div>
+    <button class="hud cta fs-start" id="fsStart">START</button>
     <div class="hud loading" id="loading"><div class="in"><div class="spin"></div><div id="loadMsg">BUILDING THE MOUNTAIN</div></div></div>
   </main>
 
@@ -234,7 +242,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     <button class="tog" id="slowTog" aria-pressed="false"><i></i>SLOW-MO</button>
     <button class="tog" id="chaosTog" aria-pressed="true"><i></i>CHAOS</button>
     <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
-    <span class="keys">Space start · R reset · 1 2 3 camera · S slow-mo · D day/night · X chaos · C commentary</span>
+    <span class="keys">Space start · R reset · 1 2 3 camera · S slow-mo · D day/night · X chaos · C commentary · F full screen</span>
   </section>
 
   <aside class="tower" aria-label="Running order">
@@ -1445,6 +1453,20 @@ document.querySelectorAll("[data-tod]").forEach(b => b.addEventListener("click",
 $("#chaosTog").addEventListener("click", () => { opts.chaos = !opts.chaos; $("#chaosTog").setAttribute("aria-pressed", String(opts.chaos)); rebuild(); });
 function toggleComm() { opts.comm = !opts.comm; $("#commTog").setAttribute("aria-pressed", String(opts.comm)); if (!opts.comm) commStop(); else say("pri", "Commentary back on. Did we miss anything?", 2); }
 $("#commTog").addEventListener("click", toggleComm);
+/* full screen: the real Fullscreen API where the browser allows it, otherwise the stage fills the window */
+function isFs() { return document.fullscreenElement === stageEl || stageEl.classList.contains("expanded"); }
+function syncFs() { const on = isFs(); $("#fsBtn").setAttribute("aria-pressed", String(on)); $("#fsBtn").setAttribute("aria-label", on ? "Exit full screen" : "Full screen");
+  $("#fsIcon").setAttribute("d", on ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"); resize(); }
+async function toggleFs() {
+  if (document.fullscreenElement) { try { await document.exitFullscreen(); } catch (e) {} return; }
+  if (stageEl.classList.contains("expanded")) { stageEl.classList.remove("expanded"); syncFs(); return; }
+  try { if (!stageEl.requestFullscreen) throw 0; await stageEl.requestFullscreen({ navigationUI: "hide" }); }
+  catch (e) { stageEl.classList.add("expanded"); syncFs(); }
+}
+$("#fsBtn").addEventListener("click", toggleFs);
+document.addEventListener("fullscreenchange", syncFs);
+$("#fsStart").addEventListener("click", () => $("#startBtn").click());
+new MutationObserver(() => { const s = $("#startBtn"), f = $("#fsStart"); f.textContent = s.textContent; f.disabled = s.disabled; }).observe($("#startBtn"), { childList: true, characterData: true, subtree: true, attributes: true });
 function toggleSlow() { opts.slow = !opts.slow; $("#slowTog").setAttribute("aria-pressed", String(opts.slow)); const f = $("#flag"); setFlag(f.dataset.txt, f.dataset.cls); }
 $("#startBtn").addEventListener("click", () => { if (race.phase === "grid") startRace(); else if (race.phase === "done") buildWorld(); });
 $("#resetBtn").addEventListener("click", rebuild);
@@ -1457,7 +1479,8 @@ addEventListener("keydown", e => {
   else if (e.key === "d" || e.key === "D") setTimeOfDay(opts.tod === "day" ? "night" : "day");
   else if (e.key === "x" || e.key === "X") $("#chaosTog").click();
   else if (e.key === "c" || e.key === "C") toggleComm();
-  else if (e.key === "Escape") selectCar(null);
+  else if (e.key === "f" || e.key === "F") toggleFs();
+  else if (e.key === "Escape") { if (stageEl.classList.contains("expanded")) toggleFs(); else selectCar(null); }
 });
 // click a car in the 3D view to follow it
 { const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); let down = null;
