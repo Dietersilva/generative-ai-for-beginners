@@ -1,6 +1,6 @@
-# Grid Drop 2026
+# F1 Bezerk
 
-A private, fan-made 3D soapbox race. The 22 cars of the 2026 F1 grid roll down a far-too-steep ramp with no engines, and real-time physics decides the result. It is a companion to Grid Replay, the replay page on the `claude/optimistic-dirac-orjjnb` branch.
+A private, fan-made 3D soapbox race. The 22 cars of the 2026 F1 grid race down a mountain course of about 0.9 km with no engines. Two fictional hosts call the race live, and real-time physics decides the result. It is a companion to Grid Replay, the replay page on the `claude/optimistic-dirac-orjjnb` branch.
 
 **Every race is a new simulation.** It does not replay real results. Real data used:
 
@@ -9,28 +9,56 @@ A private, fan-made 3D soapbox race. The 22 cars of the 2026 F1 grid roll down a
 
 Fan-made and not affiliated with Formula 1.
 
+## The course, top to bottom
+
+1. The grid, on a 12° slope.
+2. The big drop: 50°, 72° or 88°, falling 64 m.
+3. The long fast downhill, with an optional kicker jump and a ski-jump landing hill.
+4. A beach-ball zone (chaos mode).
+5. The second drop: 22°, over a wide crest.
+6. Four rollers.
+7. The run to the finish, with giant bowling pins 60 m before the line (chaos mode).
+8. Grandstands, the finish line and a jumbotron.
+
+A typical race takes 30 to 40 seconds.
+
 ## What decides the race
 
-- A random push start for each car (0.6 to 3.0 m/s) and a random reaction delay of up to 0.22 s.
-- Small random differences in drag (±12%) and rolling resistance between cars.
-- Slipstream: a car up to 25 m behind another has up to 45% less drag.
-- Drivers steer straight, keep off the walls and pull out to overtake when blocked.
-- Crashes, airtime, the kicker jump and collisions between cars.
+- A random push start, reaction time and small setup differences in drag and rolling resistance.
+- Slipstream: up to 45% less drag up to 25 m behind another car.
+- Drivers steer, keep off the walls and pull out to overtake.
+- **Chaos mode** (on by default) adds:
+  - Driver mistakes.
+  - Messy launches off the drops.
+  - Bouncier contact between cars.
+  - Beach balls and bowling pins.
+
+  In testing, about 12 of 22 cars finished with chaos on and about 18 with it off.
+- Marshals lift crashed cars clear after a few seconds.
+
+## Commentary
+
+- **The hosts:** Rex Holloway (play-by-play) and Priya Vance (analyst) are fictional. They call the start, the drops, jumps, crashes, lead changes, the speed trap, bowling strikes and the finish, with on-screen captions.
+- **The voices:** the speech uses voices built into your device, so they sound different on Windows, Mac, Android and iPhone.
+- **If speech isn't available,** the captions still show.
+
+## Scenery and effects
+
+- **Day:** sky, clouds, mountains and about 1,000 trees.
+- **Night:** floodlights, stars and fireworks.
+- **Landmarks:** a lake with a giant rubber duck, a hillside "F1 BEZERK" sign, wind turbines, hot-air balloons, a blimp and a TV helicopter that follows the leader.
+- **At the finish:** a speed trap board, a jumbotron with a live chase camera, and a crowd that jumps as cars pass.
+- **Effects:** sparks, dust, confetti and camera shake.
 
 ## Controls
 
-| Control | What it does |
-| --- | --- |
-| Ramp | Steep 50°, Too steep 72° or Cliff 88°. The drop is 64 m in every case |
-| Grid | Championship order, reverse order or random |
-| Time | Day (sky, clouds, hills, trees, crowd) or night (floodlights, stars, fireworks) |
-| Kicker jump | Adds a 14° jump 72 m after the drop |
-| Slow-mo | Runs the race at 30% speed |
-| Camera | TV, side or chase. Click a car or a row in the running order to follow it |
-| Keys | Space start · R reset · 1 2 3 camera · S slow-mo · D day/night · Esc deselect |
+Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · Esc deselect. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 
 - One HTML file.
 - three.js 0.160.0 for 3D graphics and cannon-es 0.20.0 for physics, both pinned and loaded from jsDelivr.
+- **Smooth motion:**
+  - Cars are drawn between physics steps.
+  - Sharpness lowers automatically on slow devices and rises again when there's headroom.
 - No data is collected. The only thing stored is your day/night choice, in your own browser.
