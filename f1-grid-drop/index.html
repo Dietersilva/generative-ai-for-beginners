@@ -170,6 +170,14 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .bs-status.open{background:#13301f;color:var(--gain)} .bs-status.locked{background:var(--sc);color:#1b1200} .bs-status.done{background:#fff;color:#05070d}
 .bs-you{display:flex;gap:6px} .bs-you input,.bs-you select{flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--ink);color:var(--text);font:inherit;font-size:16px}
 .bs-mine{margin:0;font-size:13px;color:var(--text)}
+.bs-cond{display:flex;flex-direction:column;gap:6px}
+.bs-chips{display:flex;flex-wrap:wrap;gap:5px}
+.bs-chip{font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.1em;padding:3px 8px;border-radius:6px;border:1px solid var(--line-2);color:var(--muted)}
+.bs-chip.rain{background:color-mix(in srgb,var(--cyan) 22%,var(--panel-2));border-color:var(--cyan);color:var(--text)}
+.bs-chip.moon{background:color-mix(in srgb,var(--purple) 26%,var(--panel-2));border-color:var(--purple);color:var(--text)}
+.bs-say{display:flex;align-items:flex-start;gap:8px;padding:7px 10px;border-radius:10px;background:var(--panel-2);font-size:13.5px;line-height:1.35}
+.bs-say b{flex:0 0 auto;font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.14em;padding:2px 7px;border-radius:4px;color:#05070d}
+.bs-say.rex b{background:var(--red)} .bs-say.pri b{background:var(--cyan)}
 .bs-h{margin:4px 0 0;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.16em;color:var(--dim)}
 .bs-list{display:flex;flex-direction:column;gap:4px}
 .bs-row{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:8px;background:var(--panel-2);font-size:13px}
@@ -443,8 +451,9 @@ async function poolNames(keys, nicks) {
 async function poolOpen() { // race screen: open betting for the race on the grid
   if (!POOL.host || !POOL.ready || typeof cars === "undefined" || !cars.length) { POOL.pendingOpen = true; return; }
   POOL.pendingOpen = false; const st = POOL.state || {}, grid = cars.map(c => c.d.code);
-  if (st.phase === "open" && JSON.stringify(st.grid) === JSON.stringify(grid)) return;
-  const next = { session: st.session || 1, raceNo: st.phase === "open" ? st.raceNo : (st.raceNo || 0) + 1, phase: "open", grid, picks: {}, result: st.result || null };
+  const cond = { rain: !!opts.rain, moon: !!opts.moon, giant: !!opts.giant, reverse: !!opts.reverse, chaos: !!opts.chaos, deg: opts.deg, night: opts.tod === "night" };
+  if (st.phase === "open" && JSON.stringify(st.grid) === JSON.stringify(grid) && JSON.stringify(st.cond) === JSON.stringify(cond)) return;
+  const next = { session: st.session || 1, raceNo: st.phase === "open" ? st.raceNo : (st.raceNo || 0) + 1, phase: "open", grid, cond, picks: {}, result: st.result || null };
   try { await POOL.db.doc("pool/state").set(next); } catch (e) {}
 }
 async function poolLock() { if (!POOL.host || !POOL.state || POOL.state.phase !== "open") return; try { await POOL.db.doc("pool/state").update({ phase: "locked", picks: livePicks() }); } catch (e) {} }
@@ -463,6 +472,29 @@ async function poolSettle(fin) {
 }
 async function poolReset() { const s = ((POOL.state && POOL.state.session) || 1) + 1;
   try { await POOL.db.doc("pool/scores").set({ players: {}, session: s }); if (POOL.state) await POOL.db.doc("pool/state").update({ session: s, result: null }); } catch (e) {} }
+// race conditions and what the hosts make of them, shown on the betting slip
+const COND_LINES = {
+  rain: [["rex", "It's a wet one! Rain on the mountain today."], ["pri", "Less grip, more spray. Long shots love the rain."],
+         ["rex", "The heavens have opened over the grid!"], ["pri", "Expect cars going sideways. Pick someone brave."]],
+  moon: [["rex", "Moon gravity! One sixth of normal!"], ["pri", "And no air, so no slipstream. Slow, floaty and anyone's race."],
+         ["rex", "We've switched gravity to the Moon. Hold on to your hats."], ["pri", "Jumps last forever up there. Big air guaranteed."]],
+  both: [["rex", "Rain AND moon gravity. Nobody has tried this before."], ["pri", "Raindrops falling in slow motion. Honestly, just pick your favourite."]],
+};
+function condCard(cond, raceNo) {
+  const wrap = el("div", "bs-cond");
+  if (!cond) return wrap;
+  const chips = el("div", "bs-chips");
+  const add = (txt, cls) => chips.append(el("span", "bs-chip" + (cls ? " " + cls : ""), txt));
+  add(`${cond.deg}° DROP`); if (cond.rain) add("🌧 RAIN", "rain"); if (cond.moon) add("🌙 MOON GRAVITY", "moon");
+  if (cond.night) add("NIGHT"); if (cond.giant) add("GIANT CAR"); if (cond.reverse) add("BACKWARDS"); if (cond.chaos) add("CHAOS");
+  wrap.append(chips);
+  const key = cond.rain && cond.moon ? "both" : cond.rain ? "rain" : cond.moon ? "moon" : null;
+  if (key) { // same pair of lines for the whole race, so the slip doesn't flicker on each update
+    const L = COND_LINES[key], i = ((raceNo || 1) * 2) % L.length;
+    for (const [who, text] of [L[i], L[(i + 1) % L.length]]) { const line = el("div", "bs-say " + who); line.append(el("b", null, who === "rex" ? "REX" : "PRIYA"), el("span", null, text)); wrap.append(line); }
+  }
+  return wrap;
+}
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 async function renderShared(box, phone) {
   const st = POOL.state, sc = (POOL.scores && POOL.scores.players) || {}, open = !!(st && st.phase === "open");
@@ -474,6 +506,7 @@ async function renderShared(box, phone) {
   const status = el("div", "bs-status " + (st ? st.phase : "wait"));
   status.textContent = !POOL.ready ? "Connecting…" : !st ? "Waiting for the race screen to open betting" : `RACE ${st.raceNo} · ${open ? "BETTING OPEN" : st.phase === "locked" ? "LOCKED · RACE ON" : "RESULTS"}`;
   frag.append(status);
+  if (st && st.cond) frag.append(condCard(st.cond, st.raceNo));
   if (st && st.phase === "done" && st.result && st.result.winner) {
     const d = DBY[st.result.winner], r = el("p", "pn-note");
     r.textContent = `${d ? d.name : st.result.winner} won race ${st.raceNo}.` + (me && st.result.pts && me in st.result.pts ? ` You scored +${st.result.pts[me]}.` : "");
