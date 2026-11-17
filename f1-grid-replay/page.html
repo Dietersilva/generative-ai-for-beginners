@@ -1319,6 +1319,14 @@ $("#pipClose").addEventListener("click", () => { if (st.sel != null) { st.sel = 
 const qPanelW = () => W > 760 ? 330 : 0;
 function interp(xs, ys, x){ const n = xs.length; if (!n) return 0; if (x <= xs[0]) return ys[0]; if (x >= xs[n-1]) return ys[n-1];
   const i = ub(xs, x) - 1; const u = (x - xs[i]) / (xs[i+1] - xs[i] || 1); return ys[i] + (ys[i+1] - ys[i]) * u; }
+// qualifying file: plain JSON, or a binary pack (header JSON + int32 deltas of each driver's [t*100, x, y] points)
+function parseQualiFile(u8){
+  if (u8[0] === 0x7b) return JSON.parse(new TextDecoder().decode(u8));
+  const {header: q, body} = splitPack(u8), v = new Int32Array(body.buffer, body.byteOffset, body.byteLength >> 2); let k = 0;
+  for (const d of q.drivers) { const pts = []; let t = 0, x = 0, y = 0;
+    for (let i = 0; i < d.np; i++) { t += v[k++]; x += v[k++]; y += v[k++]; pts.push([t / 100, x, y]); } d.pts = pts; }
+  return q;
+}
 function prepQuali(q){
   const Q = {q, drivers: [], T: 0};
   for (const d of q.drivers) {
@@ -1345,7 +1353,7 @@ async function loadQuali(r){
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + (r.kind === "squali" ? "SPRINT QUALIFYING" : "QUALIFYING");
   try {
     const u8 = await fetchBytes(r.file); if (id !== st.loadingId) return;
-    const Q = prepQuali(JSON.parse(new TextDecoder().decode(u8)));
+    const Q = prepQuali(parseQualiFile(u8));
     setTimeout(() => commInitQ(r, id), 0);
     st.R = null; st.Q = Q; st.qSel = null; st.t = 0; st.radio = null; st.sel = null;
     $("#app").classList.add("qmode"); $("#stage").classList.add("qmode"); $("#stage").classList.remove("lin", "side", "notrack"); $("#app").classList.remove("lin");

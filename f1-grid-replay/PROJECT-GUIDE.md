@@ -13,7 +13,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 
 | What | Where |
 | --- | --- |
-| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 31) |
+| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 33) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
 | Offline version | `Grid-Replay.html` + `Grid-Replay-2023/2024/2025/2026.zip` (unzip into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
@@ -23,9 +23,9 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 | Season | Races | Sprints | Qualifying | Team radio clips | Commentary voice |
 | --- | --- | --- | --- | --- | --- |
 | 2026 | 20 (+3 to come) | 6 | 26 + 3 previews | 446 | Natural (Piper), online and offline |
-| 2025 | 24 | 6 | 29 | 737 | Natural offline; device voice online |
-| 2024 | 24 | 6 | 30 | 1,792 | Natural offline; device voice online |
-| 2023 | 22 | 6 | 28 (incl. sprint shootouts) | 1,778 | Natural offline; device voice online |
+| 2025 | 24 | 6 | 29 | 737 | Natural offline; online natural for qualifying, device voice for races |
+| 2024 | 24 | 6 | 30 | 1,792 | Natural offline; online natural for qualifying, device voice for races |
+| 2023 | 22 | 6 | 28 (incl. sprint shootouts) | 1,778 | Natural offline; online natural for qualifying, device voice for races |
 
 Commentary: 10,572 race lines (9.4 hours, 114 races and sprints) plus 912 qualifying lines (1.3 hours, 116 sessions).
 
@@ -73,6 +73,10 @@ Published online as `.mp3` *named* files (the host only serves media types; they
 **Radio pack** (`radio/<sk>.mp3`): `u32 header_len | JSON [{t,num,off,len,text}] | concatenated MP3 clips`.
 Past seasons and 2026 re-encoded to 24 kbps mono (originals kept separately, see section 12).
 
+**Qualifying file** (`quali/<sk>.mp3`): gzip of `u32 header_len | JSON (drivers without points) | int32 deltas of
+each driver's [t*100, x, y] lap points` (`tools/qpack.py`); the page also still reads plain `quali/<sk>.json`
+(what the weekend updater writes).
+
 **Commentary pack** (`comm/<sk>.mp3`): same layout, entries `{t,pri,who,e,text,radio?,off,len}`;
 `who` L = lead, A = analyst; `e` energy 0–2; `pri` 1–3 controls what is spoken at higher speeds.
 
@@ -115,7 +119,7 @@ The lines are original; no real commentator's voice or catchphrases are imitated
 
 ## 7. Size budget (online)
 
-The artifact allows 256 MB per version. Current total ≈ 239 MB (2026 data + radio + commentary,
+The artifact allows 256 MB per version. Current total ≈ 246 MB (after packing qualifying files) (2026 data + radio + commentary,
 2023–2025 data + radio). That is why race data is binary, radio is 24 kbps, and past-season commentary
 audio is offline only. The three remaining 2026 races add ~6 MB plus ~2 MB of commentary. A 2027
 season would need room to be made (e.g. moving a past season to a second artifact).
@@ -160,7 +164,7 @@ every radio and commentary clip in Chromium, and spot checks of standings and sc
 ## 10. Known limitations
 
 - Commentary audio cannot be captured in video export (browser restriction).
-- Online past seasons (2023–2025) use the device voice (size limit); offline has natural voices.
+- Online past-season races (2023–2025) use the device voice (size limit); qualifying and everything offline has natural voices.
 - Very large single files (over ~250 MB) failed to download in the Claude app; everything is split
   into files under 80 MB.
 - Google Drive upload from here is limited to 10 MB per file.
