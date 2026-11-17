@@ -63,6 +63,14 @@ A typical race takes 30 to 40 seconds.
 
 ## Watching
 
+- **Five cameras** (keys 1–5):
+  - **TV** frames the leading group from the side; on a drop it moves down-range and looks back up the face.
+  - **SIDE** fits the whole pack (every car within 90 m of the leader) from above and to the side.
+  - **CHASE** follows a car from behind.
+  - **CROW** flies behind and above the leader like a bird, gently swaying.
+  - **DRONE** looks straight down on the pack, with the race running left to right, zooming out as the field spreads.
+  - Every camera zooms with the mouse wheel, a pinch, or − / +.
+
 - **Driver view:** pick a car (click it, or its row) to open a picture-in-picture window from that driver's cockpit. Close it with ✕.
 - **Full screen:** shows a compact live top-12 running order on the right.
 - **Colour:** a vibrance pass makes colours more vivid.
@@ -95,7 +103,7 @@ A typical race takes 30 to 40 seconds.
 
 ## Controls
 
-Space start · R reset · 1 2 3 camera (TV, side, chase) · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
+Space start · R reset · 1–5 camera (TV, side, chase, crow, drone) · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · + − zoom (or mouse wheel or pinch; each camera remembers its zoom) · F full screen · Esc deselect. The full-screen button sits next to the camera buttons; a START button stays on screen while in full screen. Click a car, or its row in the running order, to follow it.
 
 ## Tech
 
