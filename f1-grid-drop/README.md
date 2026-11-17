@@ -37,7 +37,16 @@ A typical race takes 30 to 40 seconds.
 - Marshals lift crashed cars clear after a few seconds.
 - Like F1, the race closes 15 seconds after the winner finishes. Cars still running are listed as DNF.
 
-## Betting pool and season
+## Shared betting from phones
+
+- **The race screen** (the owner's computer or TV) is the host. It opens betting for each race, locks picks at lights out, scores the race and keeps the leaderboard in the page's shared database. Only the owner or an Editor can write there.
+- **Friends** open the page's link with `#bet` added to the end. That loads a light betting slip without the 3D race. They tap a driver, and the pick travels through the page's live room. They can change it until lights out.
+- **Everyone sees** the live picks, the locked picks, the latest result and the leaderboard.
+- **Totals** carry over between races until the host presses NEW SESSION.
+- **Requirements:** each friend needs a claude.ai account and an invitation to the page from the owner (Share menu, invite by email), and must be signed in. People arriving by a public link can't join the live room.
+- **Fallback:** when the shared features aren't available, for example a downloaded copy of the page, the BETS tab falls back to pass-and-play on one screen.
+
+## Betting pool (one screen) and season
 
 - **BETS tab (pass-and-play):** add any number of players. Each picks a winner before the start; picks lock at lights out.
 - **Scoring:** winner 10 points, podium (2nd or 3rd) 3 points, and double for a long shot (a driver who started 11th or lower).

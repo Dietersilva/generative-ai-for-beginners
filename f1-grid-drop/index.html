@@ -165,6 +165,24 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
 .panel{flex:1;overflow-y:auto;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .pn-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.panel-in,.bs{display:flex;flex-direction:column;gap:10px}
+.bs-status{font-family:var(--f-display);font-weight:800;font-size:14px;letter-spacing:.12em;padding:6px 10px;border-radius:8px;background:var(--panel-2);color:var(--muted);align-self:flex-start}
+.bs-status.open{background:#13301f;color:var(--gain)} .bs-status.locked{background:var(--sc);color:#1b1200} .bs-status.done{background:#fff;color:#05070d}
+.bs-you{display:flex;gap:6px} .bs-you input,.bs-you select{flex:1;min-width:0;padding:8px 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--ink);color:var(--text);font:inherit;font-size:16px}
+.bs-mine{margin:0;font-size:13px;color:var(--text)}
+.bs-h{margin:4px 0 0;font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.16em;color:var(--dim)}
+.bs-list{display:flex;flex-direction:column;gap:4px}
+.bs-row{display:flex;justify-content:space-between;gap:10px;padding:6px 10px;border-radius:8px;background:var(--panel-2);font-size:13px}
+.bs-row b{font-family:var(--f-display);letter-spacing:.03em;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.bs-row span{font-family:var(--f-mono);white-space:nowrap} .bs-row.me{box-shadow:inset 0 0 0 1px var(--cyan)}
+.bs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.bs-drv{display:grid;grid-template-columns:5px 34px minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px 10px 10px 0;border-radius:10px;border:1px solid var(--line-2);background:var(--panel-2);text-align:left;overflow:hidden}
+.bs-drv i{align-self:stretch;background:var(--tc)} .bs-drv b{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.bs-drv span{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.04em} .bs-drv small{font-family:var(--f-mono);font-size:10px;color:#ffd23f}
+.bs-drv.on{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 22%,var(--panel-2))} .bs-drv:disabled{opacity:.55;cursor:default}
+.bt{min-height:100%;box-sizing:border-box;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 32px;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.bt-hd{display:flex;align-items:center;gap:10px}
+.bt-body{display:flex;flex-direction:column;gap:10px}
 .pn-note b{color:var(--text)}
 .betadd{display:flex;gap:6px}
 .betadd input{flex:1;min-width:0;padding:7px 10px;border-radius:9px;border:1px solid var(--line-2);background:var(--ink);color:var(--text);font:inherit;font-size:13px}
@@ -236,6 +254,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 }
 </style>
 
+<div id="betApp" class="bt" hidden><header class="bt-hd"><div class="mark" aria-hidden="true"></div><div><h1 class="brand-name">F1 BEZERK</h1><div class="brand-sub">Betting slip</div></div></header><div id="btBody" class="bt-body"><p class="pn-note">Connecting…</p></div></div>
 <div class="app">
   <header class="top">
     <div class="brand">
@@ -327,12 +346,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       <button class="tab" role="tab" data-tab="order" aria-selected="true">ORDER</button><button class="tab" role="tab" data-tab="bets" aria-selected="false">BETS</button><button class="tab" role="tab" data-tab="season" aria-selected="false">SEASON</button>
     </div><span id="towerSub">22 cars</span></div>
     <div class="rows" id="pnOrder"><div class="rows-in" id="rows"></div></div>
-    <div class="panel" id="pnBets" hidden>
+    <div class="panel" id="pnBets" hidden><div id="betShared" class="bs" hidden></div><div id="betLocal" class="panel-in">
       <p class="pn-note">Everyone picks a winner before the start. Picks lock at lights out.<br>Winner <b>10</b> · podium <b>3</b> · long shot (started P11 or lower) <b>×2</b></p>
       <form id="betForm" class="betadd"><input id="betName" maxlength="16" placeholder="Add a player" autocomplete="off" aria-label="Player name"><button class="ghost" type="submit">ADD</button></form>
       <div id="betList" class="betlist"></div>
       <div class="pn-actions"><button class="ghost" id="betDip" title="Random picks for anyone who hasn't chosen">LUCKY DIP</button><button class="ghost danger" id="betReset" title="Zero everyone's points and start a new session">NEW SESSION</button></div>
-    </div>
+    </div></div>
     <div class="panel" id="pnSeason" hidden>
       <p class="pn-note" id="seasonNote"></p>
       <div id="seasonList" class="seasonlist"></div>
@@ -346,8 +365,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 <script type="module">
 const $ = s => document.querySelector(s);
 const loadMsg = $("#loadMsg");
+const BET_ONLY = location.hash === "#bet"; // phones open the link with #bet for a light betting slip
 let THREE, CANNON;
-try {
+if (!BET_ONLY) try {
   [THREE, CANNON] = await Promise.all([
     import("three"),
     import("https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"),
@@ -358,7 +378,7 @@ try {
   throw e;
 }
 const ADD = {}; // optional extras: physical sky and glow. The page still works without them.
-try {
+if (!BET_ONLY) try {
   const [sky, ec, rp, ub, op, sp] = await Promise.all(["objects/Sky.js", "postprocessing/EffectComposer.js", "postprocessing/RenderPass.js", "postprocessing/UnrealBloomPass.js", "postprocessing/OutputPass.js", "postprocessing/ShaderPass.js"].map(f => import("three/addons/" + f)));
   Object.assign(ADD, { Sky: sky.Sky, EffectComposer: ec.EffectComposer, RenderPass: rp.RenderPass, UnrealBloomPass: ub.UnrealBloomPass, OutputPass: op.OutputPass, ShaderPass: sp.ShaderPass });
 } catch (e) { console.warn("Extras did not load; using the basic look.", e); }
@@ -388,6 +408,122 @@ const DRIVERS = [
   ["STR","Lance Stroll","Aston Martin","#229971",0],
   ["BOT","Valtteri Bottas","Cadillac","#909090",0],
 ].map(([code,name,team,colour,pts]) => ({code,name,team,colour,pts}));
+
+/* ---------- shared betting: phones send picks through the page's live room; the race screen keeps score in the shared database ---------- */
+const POOL = { on: false, db: null, room: null, user: null, host: false, myId: null, state: null, scores: { players: {} }, ready: false, pendingOpen: false, myPick: "", nick: "", rt: 0, tok: 0 };
+try { POOL.nick = (localStorage.getItem("f1bezerk.nick") || "").slice(0, 16); } catch (e) {}
+const CODES = new Set(DRIVERS.map(d => d.code)), DBY = Object.fromEntries(DRIVERS.map(d => [d.code, d]));
+async function initPool(onChange) {
+  if (!window.claude || !window.claude.use) return false;
+  const get = n => Promise.resolve(window.claude.use(n)).catch(() => null);
+  const [db, room, user] = await Promise.all([get("db"), get("room"), get("user")]);
+  if (!db || !room || !user) return false;
+  Object.assign(POOL, { db, room, user }); POOL.host = await user.canEdit(); POOL.myId = await user.id();
+  db.doc("pool/state").onSnapshot(sn => { const prev = POOL.state; POOL.state = sn.exists ? sn.data() : null; POOL.ready = true;
+      if (POOL.state && (!prev || prev.raceNo !== POOL.state.raceNo)) { POOL.myPick = ""; room.presence({ pick: null }).catch(() => {}); }
+      if (POOL.host && POOL.pendingOpen) poolOpen(); onChange(); }, () => { POOL.ready = true; onChange(); });
+  db.doc("pool/scores").onSnapshot(sn => { POOL.scores = sn.exists ? sn.data() : { players: {} }; onChange(); }, () => {});
+  room.onPeers(() => { clearTimeout(POOL.rt); POOL.rt = setTimeout(onChange, 250); }, () => {});
+  if (POOL.nick) room.presence({ nick: POOL.nick }).catch(() => {});
+  setTimeout(() => { if (!POOL.ready) { POOL.ready = true; onChange(); } }, 10000);
+  return true;
+}
+function livePicks() { // what everyone in the room has picked for the current race
+  const out = {}, st = POOL.state; if (!st) return out;
+  for (const p of POOL.room.peers()) { const pr = p.presence || {}; if (pr.race !== st.raceNo || !CODES.has(pr.pick)) continue;
+    const key = p.by || "tab-" + p.peer; if (out[key] && out[key].at > p.updatedAt) continue;
+    out[key] = { pick: pr.pick, nick: typeof pr.nick === "string" ? pr.nick.slice(0, 16) : "", at: p.updatedAt }; }
+  for (const k in out) delete out[k].at; return out;
+}
+async function poolNames(keys, nicks) {
+  const ids = keys.filter(k => !k.startsWith("tab-")); let ps = {};
+  try { ps = ids.length ? await POOL.user.profiles(ids) : {}; } catch (e) {}
+  const out = {}; for (const k of keys) out[k] = (nicks && nicks[k]) || (ps[k] && ps[k].name) || "Someone"; return out;
+}
+async function poolOpen() { // race screen: open betting for the race on the grid
+  if (!POOL.host || !POOL.ready || typeof cars === "undefined" || !cars.length) { POOL.pendingOpen = true; return; }
+  POOL.pendingOpen = false; const st = POOL.state || {}, grid = cars.map(c => c.d.code);
+  if (st.phase === "open" && JSON.stringify(st.grid) === JSON.stringify(grid)) return;
+  const next = { session: st.session || 1, raceNo: st.phase === "open" ? st.raceNo : (st.raceNo || 0) + 1, phase: "open", grid, picks: {}, result: st.result || null };
+  try { await POOL.db.doc("pool/state").set(next); } catch (e) {}
+}
+async function poolLock() { if (!POOL.host || !POOL.state || POOL.state.phase !== "open") return; try { await POOL.db.doc("pool/state").update({ phase: "locked", picks: livePicks() }); } catch (e) {} }
+async function poolSettle(fin) {
+  const st = POOL.state; if (!POOL.host || !st || st.phase !== "locked") return [];
+  const players = { ...((POOL.scores && POOL.scores.players) || {}) }, pts = {}, res = [];
+  for (const [k, v] of Object.entries(st.picks || {})) {
+    const c = cars.find(x => x.d.code === v.pick), pos = c ? fin.indexOf(c) : -1;
+    let p = pos === 0 ? 10 : pos === 1 || pos === 2 ? 3 : 0; if (p && c.gridPos >= 11) p *= 2; pts[k] = p;
+    const old = players[k] || {}; players[k] = { total: (old.total || 0) + p, last: p, lastPick: v.pick, races: (old.races || 0) + 1, nick: v.nick || old.nick || "" };
+    res.push({ key: k, pick: v.pick, pts: p, total: players[k].total, nick: players[k].nick });
+  }
+  try { await POOL.db.doc("pool/scores").set({ players, session: st.session || 1 });
+    await POOL.db.doc("pool/state").update({ phase: "done", result: { winner: fin[0] ? fin[0].d.code : null, podium: fin.slice(0, 3).map(c => c.d.code), pts } }); } catch (e) {}
+  return res;
+}
+async function poolReset() { const s = ((POOL.state && POOL.state.session) || 1) + 1;
+  try { await POOL.db.doc("pool/scores").set({ players: {}, session: s }); if (POOL.state) await POOL.db.doc("pool/state").update({ session: s, result: null }); } catch (e) {} }
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+async function renderShared(box, phone) {
+  const st = POOL.state, sc = (POOL.scores && POOL.scores.players) || {}, open = !!(st && st.phase === "open");
+  const picks = st && st.phase !== "open" ? (st.picks || {}) : livePicks();
+  const keys = [...new Set([...Object.keys(sc), ...Object.keys(picks)])], nicks = {};
+  for (const k of keys) nicks[k] = (picks[k] && picks[k].nick) || (sc[k] && sc[k].nick) || "";
+  const tok = ++POOL.tok, names = await poolNames(keys, nicks); if (tok !== POOL.tok) return;
+  const me = POOL.myId, frag = document.createDocumentFragment();
+  const status = el("div", "bs-status " + (st ? st.phase : "wait"));
+  status.textContent = !POOL.ready ? "Connecting…" : !st ? "Waiting for the race screen to open betting" : `RACE ${st.raceNo} · ${open ? "BETTING OPEN" : st.phase === "locked" ? "LOCKED · RACE ON" : "RESULTS"}`;
+  frag.append(status);
+  if (st && st.phase === "done" && st.result && st.result.winner) {
+    const d = DBY[st.result.winner], r = el("p", "pn-note");
+    r.textContent = `${d ? d.name : st.result.winner} won race ${st.raceNo}.` + (me && st.result.pts && me in st.result.pts ? ` You scored +${st.result.pts[me]}.` : "");
+    frag.append(r);
+  }
+  const you = el("div", "bs-you");
+  const nk = el("input"); nk.id = phone ? "bsNick" : "bsNickP"; nk.maxLength = 16; nk.placeholder = "Your name (optional)"; nk.value = POOL.nick; nk.setAttribute("aria-label", "Your name");
+  nk.onchange = () => { POOL.nick = nk.value.trim().slice(0, 16); try { localStorage.setItem("f1bezerk.nick", POOL.nick); } catch (e) {} POOL.room.presence({ nick: POOL.nick || null }).catch(() => {}); };
+  you.append(nk); frag.append(you);
+  const lockedMine = st && !open && me && picks[me] ? picks[me].pick : "", mine = open ? POOL.myPick : lockedMine;
+  const mp = el("p", "bs-mine"); mp.textContent = !st ? "" : open ? (mine ? `Your pick: ${DBY[mine].name}. Change it any time before lights out.` : "Tap a driver to place your bet.") : (lockedMine ? `Locked in: ${DBY[lockedMine].name}` : "No pick this race.");
+  frag.append(mp);
+  const grid = (st && Array.isArray(st.grid) ? st.grid : DRIVERS.map(d => d.code)).filter(c => CODES.has(c));
+  const choose = code => { if (!POOL.state || POOL.state.phase !== "open" || !CODES.has(code)) return; POOL.myPick = code;
+    POOL.room.presence({ pick: code, race: POOL.state.raceNo, nick: POOL.nick || null }).catch(() => {}); renderShared(box, phone); };
+  if (phone) {
+    const g = el("div", "bs-grid");
+    grid.forEach((code, i) => { const d = DBY[code], b = el("button", "bs-drv" + (mine === code ? " on" : "")); b.type = "button"; b.disabled = !open; b.style.setProperty("--tc", d.colour);
+      b.append(el("i"), el("b", null, `P${i + 1}`), el("span", null, d.code), el("small", null, i >= 10 ? "×2" : "")); b.setAttribute("aria-label", `${d.name}, starts P${i + 1}`); b.onclick = () => choose(code); g.append(b); });
+    frag.append(g);
+  } else {
+    const sel = el("select"); sel.disabled = !open; sel.setAttribute("aria-label", "Your pick"); const o0 = el("option", null, "Pick a winner…"); o0.value = ""; sel.append(o0);
+    grid.forEach((code, i) => { const o = el("option", null, `P${i + 1} · ${code} · ${DBY[code].name}${i >= 10 ? " · long shot ×2" : ""}`); o.value = code; sel.append(o); });
+    sel.value = mine || ""; sel.onchange = () => choose(sel.value); const w = el("div", "bs-you"); w.append(sel); frag.append(w);
+  }
+  const pk = Object.keys(picks);
+  if (st && pk.length) { frag.append(el("h4", "bs-h", open ? "PICKS SO FAR" : "LOCKED PICKS"));
+    const l = el("div", "bs-list"); pk.forEach(k => { const r = el("div", "bs-row"); r.append(el("b", null, names[k] + (k === me ? " (you)" : "")), el("span", null, picks[k].pick)); l.append(r); }); frag.append(l); }
+  const lb = Object.keys(sc).sort((a, b) => (sc[b].total || 0) - (sc[a].total || 0));
+  frag.append(el("h4", "bs-h", "LEADERBOARD"));
+  if (!lb.length) frag.append(el("p", "pn-note", "No points yet. Totals build up race by race until the race screen starts a new session."));
+  else { const l = el("div", "bs-list"); const top = sc[lb[0]].total || 0;
+    lb.forEach((k, i) => { const r = el("div", "bs-row" + (k === me ? " me" : "")); const p = sc[k];
+      r.append(el("b", null, `${i + 1}. ${(top > 0 && p.total === top ? "♛ " : "")}${names[k]}${k === me ? " (you)" : ""}`), el("span", null, `${p.total || 0} pts` + (p.last != null ? ` · +${p.last}` : ""))); l.append(r); });
+    frag.append(l); }
+  frag.append(el("p", "pn-note", "Winner 10 · podium 3 · long shot (started P11 or lower) ×2."));
+  if (!phone) {
+    frag.append(el("p", "pn-note", POOL.host ? "Friends bet from their phones: share this page with them (Share menu, invite by email), then they open the link with #bet added to the end." : "You can pick here, or open this page's link with #bet at the end on your phone."));
+    if (POOL.host) { const rs = el("button", "ghost danger", "NEW SESSION"); rs.type = "button"; const a = el("div", "pn-actions"); a.append(rs); frag.append(a); confirmButton(rs, "NEW SESSION", poolReset); }
+  }
+  box.replaceChildren(frag);
+}
+async function betApp() { // the phone betting slip
+  document.querySelector(".app").hidden = true; document.body.style.overflow = "auto";
+  const box = $("#betApp"); box.hidden = false;
+  const ok = await initPool(() => renderShared($("#btBody"), true));
+  if (!ok) { $("#btBody").replaceChildren(el("p", "pn-note", "Shared betting works when this page is opened from claude.ai while signed in, after the page's owner has shared it with you. Ask the host to invite you, then open the link again with #bet at the end.")); return; }
+  renderShared($("#btBody"), true);
+}
+if (BET_ONLY) { betApp(); await new Promise(() => {}); } // phones stop here: no 3D race
 
 /* ---------- constants ---------- */
 const D2R = Math.PI/180, H = 64, W = 18, T = 0.5; let G = 9.81;       // drop height, track width, half slab thickness
@@ -1277,6 +1413,7 @@ if (!SEASON.pts) SEASON = { races: 0, pts: {}, wins: {} };
 const saveBets = () => store.set("f1bezerk.bets", BETS), saveSeason = () => store.set("f1bezerk.season", SEASON);
 const betsLocked = () => race && race.phase !== "grid";
 function renderBets() {
+  if (POOL.on) { $("#betLocal").hidden = true; $("#betShared").hidden = false; renderShared($("#betShared"), false); return; }
   const box = $("#betList"); box.innerHTML = "";
   const top = Math.max(0, ...BETS.players.map(p => p.total));
   if (!BETS.players.length) { const e = document.createElement("p"); e.className = "pn-note"; e.textContent = "No players yet. Add a name above, then everyone picks a driver."; box.append(e); }
@@ -1312,6 +1449,15 @@ function settleRace() {
   SEASON.races++; fin.slice(0, 10).forEach((c, i) => SEASON.pts[c.d.code] = (SEASON.pts[c.d.code] || 0) + PTS[i]);
   if (fin[0]) SEASON.wins[fin[0].d.code] = (SEASON.wins[fin[0].d.code] || 0) + 1; saveSeason(); renderSeason();
   race.betResults = [];
+  if (POOL.on) { // shared pool: the race screen scores everyone who bet from their phone
+    if (POOL.host) poolSettle(fin).then(async res => {
+      if (!res.length) return; const names = await poolNames(res.map(r => r.key), Object.fromEntries(res.map(r => [r.key, r.nick])));
+      race.betResults = res.map(r => ({ name: names[r.key], pick: r.pick, pts: r.pts, total: r.total }));
+      const winners = race.betResults.filter(r => r.pts >= 10);
+      if (fin[0]) say("pri", winners.length ? `On the betting slip, ${winners.map(r => r.name).join(" and ")} backed ${sur(fin[0])}. ${winners[0].pts} points!` : "Nobody on the betting slip picked the winner. The bookies are delighted.", 2);
+    });
+    return;
+  }
   if (BETS.players.length) {
     BETS.races++;
     for (const p of BETS.players) {
@@ -1470,7 +1616,7 @@ function buildWorld() {
   selected = null; $("#dcard").hidden = true; $("#results").hidden = true; $("#banner").hidden = true;
   $("#ticker").innerHTML = ""; setFlag("ON THE GRID", ""); $("#clock").textContent = "0.000";
   $("#startBtn").textContent = "START"; $("#startBtn").disabled = false;
-  buildRows(); syncVisuals(); snapCamera(); renderBets(); renderSeason();
+  buildRows(); syncVisuals(); snapCamera(); if (POOL.on) poolOpen(); renderBets(); renderSeason();
 }
 function disposeGroup(g) {
   g.traverse(o => { if (o.userData.keep) return; if (o.isInstancedMesh) o.dispose(); if (o.material && o.material.map) o.material.map.dispose(); if (o.isSprite) o.material.dispose(); });
@@ -1666,7 +1812,7 @@ function onCollide(car, e) {
 /* ---------- start sequence ---------- */
 function startRace() {
   if (!race || race.phase !== "grid") return;
-  race.phase = "lights"; $("#startBtn").disabled = true; setFlag("LIGHTS", ""); C.intro(); renderBets();
+  race.phase = "lights"; $("#startBtn").disabled = true; setFlag("LIGHTS", ""); C.intro(); if (POOL.on) poolLock(); renderBets();
   const L = $("#lights"); L.hidden = false; const bulbs = [...L.querySelectorAll(".pod")];
   bulbs.forEach(p => p.querySelectorAll(".bulb").forEach(b => b.classList.remove("on")));
   setGantry(0);
@@ -2009,6 +2155,7 @@ buildScenery();
 animAirships = airships();
 { let tod = "day"; try { tod = localStorage.getItem("gridDrop.tod") || "day"; } catch (e) {} setTimeOfDay(tod === "night" ? "night" : "day"); }
 buildWorld();
+initPool(() => { if (race) renderBets(); }).then(ok => { POOL.on = ok; if (ok) { poolOpen(); renderBets(); } });
 $("#loading").hidden = true;
 requestAnimationFrame(frame);
 </script>
