@@ -1344,14 +1344,16 @@ function stepCars(h, racing) {
       pickLane(c);
       const want = Math.max(-.18, Math.min(.18, (c.lane - z)*.06));
       const err = tmpFw.x < 0 ? (fz >= 0 ? 1 : -1) : fz - want;
-      steer = Math.max(-.14, Math.min(.14, 1.1*err + (opts.reverse ? .2 : -.2)*c.body.angularVelocity.y + c.steer*Math.sin(race.simT*1.7 + c.idx)));
+      steer = Math.max(-.14, Math.min(.14, 1.1*err - .2*c.body.angularVelocity.y + c.steer*Math.sin(race.simT*1.7 + c.idx)));
       const nearKick = track.kickLipX && c.body.position.x > track.kickLipX - 45 && c.body.position.x < track.kickLipX + 100;
       if (opts.chaos && wc >= 2 && sp > 12 && !nearKick) { // driver mistakes: a twitch of the wheel
         if (race.simT > (c.swerveEnd || 0) && Math.random() < h*.05) { c.swerveEnd = race.simT + .25 + Math.random()*.3; c.swerveDir = Math.random() < .5 ? -1 : 1; }
         if (race.simT < (c.swerveEnd || 0)) steer = c.swerveDir*.075;
       }
     }
-    c.vehicle.setSteeringValue(steer, 0); c.vehicle.setSteeringValue(steer, 1);
+    // in reverse the rear wheels lead, so the drivers steer with those (steering the trailing wheels at speed is unstable)
+    const sf = opts.reverse ? 0 : steer, sr = opts.reverse ? steer : 0;
+    c.vehicle.setSteeringValue(sf, 0); c.vehicle.setSteeringValue(sf, 1); c.vehicle.setSteeringValue(sr, 2); c.vehicle.setSteeringValue(sr, 3);
     if (sp > 6 && wc === 0) { // rear-wing stability in the air: the car turns to point where it is going, like an arrow's fletching
       c.body.quaternion.vmult(fwdLocal, tmpFw); if (opts.reverse) tmpFw.scale(-1, tmpFw);
       const k = Math.min(30*sp*sp, 40000)/sp*(opts.chaos ? .8 : 1), vx = v.x*k, vy = v.y*k, vz = v.z*k, tq = c.body.torque;
