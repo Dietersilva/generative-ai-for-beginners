@@ -12,6 +12,6 @@ out = head + page[:cut] + "</head><body>" + page[cut:] + "</body></html>"
 if len(sys.argv) > 3:   # optional brand name for the offline page, e.g. "F1 Unleashed" (zips then named F1_Unleashed-YYYY.zip)
     b = sys.argv[3]; z = b.replace(" ", "_").upper()
     out = (out.replace("<title>Grid Replay 2026</title>", f"<title>{b}</title>").replace('class="brand-name">GRID REPLAY<', f'class="brand-name">{b.upper()}<')
-              .replace("Grid Replay ${", f"{b} ${{").replace("GRID-REPLAY-${S.y}.ZIP", f"{z}-${{S.y}}.ZIP"))
+              .replace("Grid Replay ${", f"{b} ${{").replace("GRID-REPLAY-${S.y} ZIP", f"{z}-${{S.y}} ZIP"))
 open(sys.argv[2], "w").write(out)
 print(sys.argv[2])

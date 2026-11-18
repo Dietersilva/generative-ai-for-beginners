@@ -9,13 +9,21 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 
 ---
 
+## 0. Standing rules from the owner
+
+- **Every file sent to the owner must be 25 MB or smaller.** Larger downloads fail in the Claude app
+  ("artifact is too large to download"). Split seasons into pieces (`SPLIT_MB=32` in standalone.py gives
+  ~20 MB zips) and split backups into parts of at most ~24 MB.
+- The offline version is called **F1 Unleashed**: `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip`
+  (built with `tools/launcher.py <page> F1_Unleashed.html "F1 Unleashed"`).
+
 ## 1. Where everything is
 
 | What | Where |
 | --- | --- |
 | Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 33) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
-| Offline version | `Grid-Replay.html` + `Grid-Replay-2023/2024/2025/2026.zip` (unzip into one folder, double-click the HTML) |
+| Offline version | `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip` (unzip all into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
 
 ## 2. What's in it

@@ -32,8 +32,21 @@ for q in idx.get("quali", []) + idx.get("previews", []):
 import os as _os
 if _os.path.exists(f"{sbase}/season.json"): emb[pre + "season.json"] = _b64.b64encode(open(f"{sbase}/season.json", "rb").read()).decode()
 if _os.environ.get("SPLIT_JS"):   # split offline mode: write only this season's data, as a script the launcher page loads
-    open(out, "w").write("window.__EMBED = Object.assign(window.__EMBED || {}, " + json.dumps(emb) + ");\n")
-    print(out, _os.path.getsize(out) // 1024, "KB"); sys.exit(0)
+    lim = int(float(_os.environ.get("SPLIT_MB", "0")) * 1e6)
+    if not lim:
+        open(out, "w").write("window.__EMBED = Object.assign(window.__EMBED || {}, " + json.dumps(emb) + ");\n")
+        print(out, _os.path.getsize(out) // 1024, "KB"); sys.exit(0)
+    # several pieces of at most SPLIT_MB each: out "grid-replay-2025.js" -> grid-replay-2025-1.js, -2.js, ...; index.json goes in the last piece
+    keys = [k for k in emb if not k.endswith("index.json")] + [k for k in emb if k.endswith("index.json")]
+    parts, cur, size = [], {}, 0
+    for k in keys:
+        z = len(emb[k]) + len(k) + 8
+        if cur and size + z > lim: parts.append(cur); cur, size = {}, 0
+        cur[k] = emb[k]; size += z
+    parts.append(cur); base_out = out[:-3]
+    for i, p in enumerate(parts, 1):
+        f = f"{base_out}-{i}.js"; open(f, "w").write("window.__EMBED = Object.assign(window.__EMBED || {}, " + json.dumps(p) + ");\n"); print(f, _os.path.getsize(f) // 1024, "KB")
+    sys.exit(0)
 embed = "<script>window.__EMBED = " + json.dumps(emb) + ";</script>\n"
 i = page.index("<script>\n(() => {")
 page = page[:i] + embed + page[i:]

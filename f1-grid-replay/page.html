@@ -2655,7 +2655,14 @@ function showPodium(){
 /* ---------------- seasons ---------------- */
 const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}, {y: 2023, p: "2023/"}].filter(s => window.__SPLIT || !window.__EMBED || window.__EMBED[s.p + "index.json"]);
 // split offline mode: Grid-Replay.html plus one grid-replay-YYYY.js per season in the same folder, loaded when picked
-function loadSeasonScript(y){ return new Promise((ok, bad) => { const el = document.createElement("script"); el.src = `grid-replay-${y}.js`; el.onload = ok; el.onerror = () => { el.remove(); const e = new Error("missing season file"); e.missingSeason = y; bad(e); }; document.head.appendChild(el); }); }
+function loadScriptFile(src){ return new Promise(ok => { const el = document.createElement("script"); el.src = src; el.onload = () => ok(true); el.onerror = () => { el.remove(); ok(false); }; document.head.appendChild(el); }); }
+// a season is one file (grid-replay-YYYY.js) or several pieces (grid-replay-YYYY-1.js, -2.js, ...) so each download stays small
+async function loadSeasonScript(y){
+  if (await loadScriptFile(`grid-replay-${y}.js`)) return;
+  let n = 0; while (await loadScriptFile(`grid-replay-${y}-${n + 1}.js`)) { n++; $("#loadMsg").textContent = `LOADING THE ${y} SEASON · PART ${n}`; }
+  const key = (SEASONS.find(s => s.y === y) || {p: ""}).p + "index.json";
+  if (!n || !(window.__EMBED && window.__EMBED[key])) { const e = new Error("missing season file"); e.missingSeason = y; throw e; }
+}
 st.year = null; st.prefix = "";
 $("#seasonSel").innerHTML = SEASONS.map(s => `<option value="${s.y}">${s.y}</option>`).join("");
 if (SEASONS.length < 2) $("#seasonSel").hidden = true;
@@ -2674,7 +2681,7 @@ async function loadSeason(y){
     if (e.missingSeason) { (window.__miss = window.__miss || new Set()).add(S.y);
       const nxt = !/^#\d{4}/.test(location.hash) && SEASONS.find(s => !window.__miss.has(s.y));
       if (nxt) { st.year = null; return loadSeason(nxt.y); }
-      $("#loadMsg").textContent = `THE ${S.y} SEASON FILE IS NOT IN THIS FOLDER. UNZIP GRID-REPLAY-${S.y}.ZIP NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
+      $("#loadMsg").textContent = `THE ${S.y} SEASON IS NOT COMPLETE IN THIS FOLDER. UNZIP ALL GRID-REPLAY-${S.y} ZIP PARTS NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
     $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 }
 function routeFromHash(){

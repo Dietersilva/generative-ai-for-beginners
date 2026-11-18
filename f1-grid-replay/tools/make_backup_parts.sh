@@ -46,9 +46,27 @@ folder f1-grid-replay/. Data: OpenF1 (openf1.org), unofficial. Timing data and t
 to Formula 1. Private fan project for personal use - please don't publish it.
 TXT
 cd $B
-zip -qr -9 ../parts/Grid-Replay-backup-1-tools-scripts-readme.zip README.txt PROJECT-GUIDE.md tools commentary-scripts
-zip -qr -9 ../parts/Grid-Replay-backup-2-online-2026.zip online/index.html online/index.json online/season.json online/data online/radio online/quali online/comm
-zip -qr -9 ../parts/Grid-Replay-backup-3-online-2025.zip online/2025
-zip -qr -9 ../parts/Grid-Replay-backup-4-online-2024.zip online/2024
-zip -qr -9 ../parts/Grid-Replay-backup-5-online-2023.zip online/2023
+# parts of at most ~24 MB each (larger downloads fail in the Claude app)
+python3 - <<'PY'
+import os, zipfile
+LIM = 24e6; groups = [("1-tools-scripts-readme", ["README.txt", "PROJECT-GUIDE.md", "tools", "commentary-scripts"])]
+files = []
+for top in ["online"]:
+    for d, _, fs in os.walk(top):
+        for f in sorted(fs): files.append(os.path.join(d, f))
+def zipit(name, paths):
+    with zipfile.ZipFile(f"../parts/Grid-Replay-backup-{name}.zip", "w", zipfile.ZIP_DEFLATED, compresslevel=9) as Z:
+        for p in paths:
+            if os.path.isdir(p):
+                for d, _, fs in os.walk(p):
+                    for f in fs: Z.write(os.path.join(d, f))
+            elif os.path.exists(p): Z.write(p)
+zipit(*groups[0])
+n, cur, size = 2, [], 0
+for f in sorted(files):
+    z = os.path.getsize(f) * (0.8 if f.endswith((".json", ".html")) else 1.0)
+    if cur and size + z > LIM: zipit(f"{n:02d}-online", cur); n += 1; cur, size = [], 0
+    cur.append(f); size += z
+if cur: zipit(f"{n:02d}-online", cur)
+PY
 cd ../parts && for f in *.zip; do unzip -tq "$f" >/dev/null && echo "ok $f"; done && ls -la
