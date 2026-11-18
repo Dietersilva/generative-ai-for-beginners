@@ -21,7 +21,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 
 | What | Where |
 | --- | --- |
-| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 33) |
+| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 35) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
 | Offline version | `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip` (unzip all into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
@@ -64,6 +64,17 @@ put on hold.
 - **Weather overlay:** air/track temperature, wind, rain effect.
 - **Video export:** REC button (WebM/MP4 via the browser; commentary audio is not captured).
 - **Seasons:** year picker (2026, 2025, 2024, 2023); links like `#2025-round-12`, `#2024-s-<session>`.
+
+## 3b. Added 18 November 2026
+
+- **HIGHLIGHTS** (button or key H): only the key moments back to back, about 5–6 minutes a race.
+- **STRATEGY tab:** tyre stints per driver, pit stops with stationary times, SC/VSC/red-flag bands,
+  undercut/overcut verdicts, fastest stops.
+- **Qualifying TELEMETRY tab:** OpenF1 car_data (about 4 samples a second) for every driver's fastest
+  qualifying lap in all 113 sessions: speed, time gap along the lap, throttle, brake, gear, numbered braking
+  zones, sector and top-speed table, braking-point comparison (only differences of 5–35 m are shown; more is
+  treated as measurement error). Qualifying commentary now calls the speed trap and braking points
+  (1,110 qualifying lines). Data: `tools/fetch_qtele.py` → `tele/<sk>.json` → `tools/merge_tele.py`.
 
 ## 4. How it is built (architecture)
 

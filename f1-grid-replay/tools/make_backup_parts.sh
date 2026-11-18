@@ -7,6 +7,7 @@ cp -r pub/* $B/online/
 for y in 2025 2024 2023; do mkdir -p $B/online/$y/comm && cp comm/$y/*.mp3 comm/${y}q/*.mp3 $B/online/$y/comm/; done
 for y in 2026 2025 2024 2023; do mkdir -p $B/commentary-scripts/$y $B/commentary-scripts/$y-qualifying && cp comm/$y/*.json $B/commentary-scripts/$y/ && cp comm/${y}q/*.json $B/commentary-scripts/$y-qualifying/; done
 cp PROJECT-GUIDE.md $B/
+mkdir -p $B/telemetry && cp tele/*.json $B/telemetry/
 cp tools/*.py tools/*.sh tools/*.js $B/tools/ 2>/dev/null || true
 cat > $B/README.txt <<'TXT'
 GRID REPLAY - full backup (2023, 2024, 2025, 2026)
@@ -26,6 +27,7 @@ online/   The multi-file version, exactly as published on claude.ai (2026 at the
           comm/*.mp3 = commentary packs (natural voices) for races and qualifying. For 2023-2025 these
           are included here but not listed in online/<year>/index.json (no room online).
 commentary-scripts/  The commentary text for every race and qualifying session (JSON).
+telemetry/  Raw qualifying telemetry downloads (OpenF1 car_data), one JSON per session.
 PROJECT-GUIDE.md     Everything about the project in one document.
 tools/    The scripts that download data from OpenF1 and build everything (build_race.py,
           update_new.py, build_radio.py, transcribe.py, build_comm.py, commscript_all.js,
@@ -49,7 +51,7 @@ cd $B
 # parts of at most ~24 MB each (larger downloads fail in the Claude app)
 python3 - <<'PY'
 import os, zipfile
-LIM = 24e6; groups = [("1-tools-scripts-readme", ["README.txt", "PROJECT-GUIDE.md", "tools", "commentary-scripts"])]
+LIM = 24e6; groups = [("1-tools-scripts-readme", ["README.txt", "PROJECT-GUIDE.md", "tools", "commentary-scripts", "telemetry"])]
 files = []
 for top in ["online"]:
     for d, _, fs in os.walk(top):

@@ -2282,14 +2282,14 @@ function renderQualiTele(ctl, info){
   for (const z of C.zones) { x.fillStyle = "#8590a8"; x.fillText("B" + z.n, X(z.d) - 6, 10); x.fillStyle = "rgba(255,255,255,.08)"; x.fillRect(X(z.d), 14, 1, h - 20); }
   const tNow = Math.min(st.t, A.time), dNow = (() => { const i = clamp(ub(a.t, tNow) - 1, 0, a.t.length - 2), f = clamp((tNow - a.t[i]) / ((a.t[i+1] - a.t[i]) || 1), 0, 1); return a.dist[i] + (a.dist[i+1] - a.dist[i]) * f; })();
   if (st.t > 0) nowLine(x, X, 14, h, 6, dNow);
-  const late = C.zones.filter(z => Math.abs(z.diff) >= 5).sort((p, q) => Math.abs(q.diff) - Math.abs(p.diff)).slice(0, 4);
+  const late = C.zones.filter(z => Math.abs(z.diff) >= 5 && Math.abs(z.diff) <= 35).sort((p, q) => Math.abs(q.diff) - Math.abs(p.diff)).slice(0, 4);
   const sec = (A.sectors || []).map((s, i) => B.sectors && B.sectors[i] ? `<td>${(B.sectors[i] - s >= 0 ? "+" : "") + (B.sectors[i] - s).toFixed(3)}</td>` : "<td>–</td>").join("");
   info.innerHTML = `<table class="h2h"><tr><th></th><th>Lap</th><th>S1</th><th>S2</th><th>S3</th><th>Top speed</th></tr>
     <tr><td style="color:${A.css}"><b>${esc(A.code)}</b></td><td>${fmtLap(A.time)}</td>${(A.sectors || []).map(s => `<td>${s ? s.toFixed(3) : "–"}</td>`).join("")}<td>${C.topA} km/h</td></tr>
     <tr><td style="color:${B.css}"><b>${esc(B.code)}</b></td><td>${fmtLap(B.time)}</td>${(B.sectors || []).map(s => `<td>${s ? s.toFixed(3) : "–"}</td>`).join("")}<td>${C.topB} km/h</td></tr>
     <tr><td>gap</td><td>${(B.time - A.time >= 0 ? "+" : "") + (B.time - A.time).toFixed(3)}</td>${sec}<td>${C.topB - C.topA >= 0 ? "+" : ""}${C.topB - C.topA}</td></tr></table>` +
     (late.length ? `<h4 style="margin:10px 0 4px;font-size:12px;letter-spacing:.08em;color:var(--muted)">BRAKING POINTS</h4>` + late.map(z => `<div class="srow">Zone B${z.n} (from ${Math.round(z.v)} km/h): <b style="color:${(z.diff > 0 ? B : A).css}">${esc((z.diff > 0 ? B : A).code)}</b> brakes ${Math.round(Math.abs(z.diff))} m later</div>`).join("") : "") +
-    `<p class="anote">Each driver's fastest lap, lined up by distance. GAP shows time between them along the lap (line above the middle = ${esc(A.code)} ahead). Telemetry from OpenF1 at about 4 samples a second, so braking points are accurate to roughly ±15 m.</p>`;
+    `<p class="anote">Each driver's fastest lap, lined up by distance. GAP shows time between them along the lap (line above the middle = ${esc(A.code)} ahead). Telemetry from OpenF1 at about 4 samples a second, so braking points are accurate to roughly ±15 m; differences over 35 m are left out as likely measurement error.</p>`;
 }
 
 /* ---------------- stewards ---------------- */
