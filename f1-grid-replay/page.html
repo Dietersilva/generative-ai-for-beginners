@@ -62,6 +62,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .flag.red{background:var(--red);color:#fff;animation:pulse .8s ease-in-out infinite}
 .flag.chq{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/10px 10px;color:#000;text-shadow:0 0 4px #fff,0 0 8px #fff}
 .flag.grid{background:var(--panel-2);color:var(--muted)}
+.hlbar{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#05070d;background:#ffd23f;padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:auto;max-width:46vw;overflow:hidden}
+.hlbar span{overflow:hidden;text-overflow:ellipsis}.hlbar button{color:#05070d;font-weight:800;padding:0 3px}
+.tl .band.hl{background:rgba(255,210,63,.35);top:0;bottom:0;height:auto;border-left:1px solid #ffd23f}
+.sleg-row{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 8px}.sleg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}.sleg i{display:inline-block;width:14px;height:9px;border-radius:2px}.sleg i.used{background:transparent;border:1px dashed #c9d1e3}
+.scols{display:grid;grid-template-columns:1fr 1fr;gap:16px}.scols h4{margin:4px 0;font-size:12px;letter-spacing:.08em;color:var(--muted)}.srow{font-size:12px;padding:2px 0}.srow .ok{color:#38e383}.srow .no{color:#ff8a3d}
+@media (max-width:700px){.scols{grid-template-columns:1fr}}
 .est{font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.12em;color:var(--sc);border:1px dashed var(--sc);padding:3px 8px;border-radius:4px;white-space:nowrap;pointer-events:auto}
 .clock{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 @keyframes pulse{50%{filter:brightness(1.35)}}
@@ -432,6 +438,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <div class="lapbox"><span class="lbl">LAP</span><span class="cur" id="lapCur">–</span><span class="tot" id="lapTot">/ –</span></div>
       <div class="flag grid" id="flag">GRID</div>
       <div class="clock" id="clock">–</div>
+      <div class="hlbar" id="hlBar" hidden><button id="hlPrev" aria-label="Previous highlight">◀</button><span id="hlTx">HIGHLIGHTS</span><button id="hlNext" aria-label="Next highlight">▶</button><button id="hlX" aria-label="Exit highlights">✕</button></div>
       <div class="est" id="estPill" hidden title="Car positions for this part of the race were not published. They are estimated from each car's lap and sector times.">ESTIMATED POSITIONS</div>
     </div>
     <div class="hud hud-tr qbtns" id="qBtns" role="group" aria-label="Drivers shown" hidden>
@@ -500,6 +507,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
     </div>
     <div class="speeds" id="speeds" role="group" aria-label="Playback speed"></div>
     <div class="toggles">
+      <button class="tg" id="tgHl" aria-pressed="false" title="Highlights: watch just the key moments (start, lead changes, crashes, safety cars, podium passes, penalties, finish). Key: H">HIGHLIGHTS</button>
       <button class="tg" id="tgCrash" aria-pressed="true" title="Automatic slow motion and a pop-up when a car crashes or stops">CRASH CAM</button>
       <button class="tg rad" id="tgSound" aria-pressed="true" title="Engine sound, start lights and impacts">SOUND</button>
       <button class="tg rad" id="tgComm" aria-pressed="false" title="Spoken race commentary: start, overtakes, incidents, safety cars, pit stops and the finish, read by a British voice built into your device">COMMENTARY</button>
@@ -1325,6 +1333,9 @@ function parseQualiFile(u8){
   const {header: q, body} = splitPack(u8), v = new Int32Array(body.buffer, body.byteOffset, body.byteLength >> 2); let k = 0;
   for (const d of q.drivers) { const pts = []; let t = 0, x = 0, y = 0;
     for (let i = 0; i < d.np; i++) { t += v[k++]; x += v[k++]; y += v[k++]; pts.push([t / 100, x, y]); } d.pts = pts; }
+  if (q.tele_order) { const v16 = new Int16Array(body.buffer.slice(body.byteOffset + k * 4, body.byteOffset + body.byteLength)); let j = 0; q.tele = {};
+    q.tele_order.forEach((num, i) => { const n = q.tele_n[i], col = () => { const a = new Array(n); let c = 0; for (let m = 0; m < n; m++) { c += v16[j++]; a[m] = c; } return a; };
+      const tt = col(), sp = col(), thr = col(), br = col(), gear = col(), drs = col(); q.tele[num] = {t: tt.map(z => z / 10), sp, thr, br, gear, drs}; }); }
   return q;
 }
 function prepQuali(q){
@@ -1335,17 +1346,18 @@ function prepQuali(q){
     const Dc = [0]; for (let i = 1; i < T.length; i++) Dc.push(Dc[i-1] + Math.hypot(X[i]-X[i-1], Y[i]-Y[i-1]));
     const d0 = interp(T, Dc, 0), len = interp(T, Dc, d.time) - d0;
     const F = Dc.map(v => (v - d0) / len);
-    Q.drivers.push({...d, T, X, Y, F, col: vivid(d.colour), css: `rgb(${vivid(d.colour).join(",")})`, hex: d.colour, tcam: "#111", ang: 0});
+    Q.drivers.push({...d, tele: q.tele && q.tele[d.num], T, X, Y, F, col: vivid(d.colour), css: `rgb(${vivid(d.colour).join(",")})`, hex: d.colour, tcam: "#111", ang: 0});
     Q.T = Math.max(Q.T, d.time + 3);
   }
   const seen = {}; for (const d of Q.drivers.slice().sort((a, b) => a.num - b.num)) { d.tcam = seen[d.team] ? "#ffd400" : "#111"; seen[d.team] = 1; }
-  Q.pole = Q.drivers[0];
+  Q.pole = Q.drivers[0]; Q.hasTele = Q.drivers.filter(d => d.tele).length >= 2;
   const P = Q.pole; Q.outline = []; for (let i = 0; i < P.T.length; i++) if (P.T[i] >= 0 && P.T[i] <= P.time) Q.outline.push([P.X[i], P.Y[i]]);
   return Q;
 }
 function qXY(d, e, o){ o[0] = interp(d.T, d.X, e); o[1] = interp(d.T, d.Y, e); return o; }
 function qShown(){ const Q = st.Q; if (st.qAll) return Q.drivers; const top = Q.drivers.filter(d => d.pos && d.pos <= 10); return top.length ? top : Q.drivers.slice(0, 10); }
 async function loadQuali(r){
+  stopHighlights(); $("#tgHl").hidden = true;
   closeAnalysis();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
@@ -1363,11 +1375,11 @@ async function loadQuali(r){
     const P = Q.pole, pct = t => (t / Q.T * 100) + "%";
     $("#tlLabels").innerHTML = `<span style="left:0%;transform:none">GO</span>` + (P.sectors[0] ? `<span style="left:${pct(P.sectors[0])}">S1</span>` : "") + (P.sectors[0] && P.sectors[1] ? `<span style="left:${pct(P.sectors[0] + P.sectors[1])}">S2</span>` : "") + `<span style="left:${pct(P.time)}">POLE LAP</span>`;
     $("#prevCard").hidden = r.kind !== "preview"; st.preview = r.kind === "preview" ? r : null;
-    $("#anaBtn").hidden = !Q.q.all;
+    $("#anaBtn").hidden = !Q.q.all && !Q.hasTele;
     $("#loading").hidden = true;
   } catch (e) { console.error(e); $("#loadMsg").textContent = "COULDN'T LOAD THIS SESSION. " + (e.message || ""); }
 }
-function leaveQuali(){ if (!st.Q) return; st.Q = null; st.preview = null; $("#prevCard").hidden = true; $("#app").classList.remove("qmode"); $("#stage").classList.remove("qmode"); $("#qBtns").hidden = true;
+function leaveQuali(){ $("#tgHl").hidden = false; if (!st.Q) return; st.Q = null; st.preview = null; $("#prevCard").hidden = true; $("#app").classList.remove("qmode"); $("#stage").classList.remove("qmode"); $("#qBtns").hidden = true;
   document.querySelector(".lapbox .lbl").textContent = "LAP"; $("#flag").dataset.k = "";
   if (st.prevSpeed != null) { st.speed = st.prevSpeed; st.prevSpeed = null; syncSpeeds(); } }
 document.querySelectorAll("[data-q]").forEach(b => b.addEventListener("click", () => { st.qAll = b.dataset.q === "all"; document.querySelectorAll("[data-q]").forEach(x => x.setAttribute("aria-pressed", String(x === b))); }));
@@ -1496,12 +1508,12 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["season", "SEASON"]];
 st.anaTab = "h2h";
-function openAnalysis(){ if (!st.R && !(st.Q && st.Q.q.all)) return; if (st.Q && !["pos", "laps"].includes(st.anaTab)) st.anaTab = "pos"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
+function openAnalysis(){ if (!st.R && !(st.Q && (st.Q.q.all || st.Q.hasTele))) return; if (st.Q && !["pos", "laps", "tele"].includes(st.anaTab)) st.anaTab = st.Q.q.all ? "pos" : "tele"; if (st.Q && st.anaTab === "tele" && !st.Q.hasTele) st.anaTab = "pos"; if (st.R && st.anaTab === "tele") st.anaTab = "h2h"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
 function buildAnaTabs(){
-  $("#anaTabs").innerHTML = ANA_TABS.filter(([k]) => !st.Q || k === "pos" || k === "laps").map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
+  $("#anaTabs").innerHTML = ANA_TABS.filter(([k]) => st.Q ? ((k === "pos" || k === "laps") && st.Q.q.all) || (k === "tele" && st.Q.hasTele) : k !== "tele").map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
 }
 $("#anaBtn").addEventListener("click", () => $("#ana").hidden ? openAnalysis() : closeAnalysis());
 $("#anaClose").addEventListener("click", closeAnalysis);
@@ -1591,6 +1603,8 @@ function renderAna(){
     nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
     const best = Math.min(...lt.map(l => l.dur));
     info.innerHTML = `<p class="anote"><b>${esc(D.first + " " + D.last)}</b> · fastest lap ${fmtLap(best)}. Dots are coloured by tyre (${Object.entries(COMP).map(([k, v]) => `<span style="color:${v[1]}">${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join(", ")}). Slow laps behind the safety car or through the pits are shown as ▲ at the top; shaded areas are safety-car periods.</p>`;
+  } else if (st.anaTab === "strat") {
+    renderStrategy(info);
   } else if (st.anaTab === "bt") {
     renderBattles(info);
   } else if (st.anaTab === "wx") {
@@ -1661,6 +1675,7 @@ function qOrderSeries(Q){
 }
 function renderQualiAna(){
   const Q = st.Q, q = Q.q, ctl = $("#anaCtl"), info = $("#anaInfo"); ctl.innerHTML = ""; info.innerHTML = ""; $("#anaCv").hidden = false;
+  if (st.anaTab === "tele") return renderQualiTele(ctl, info);
   const ph = q.phases || [], all = q.all || [], tMax = (all.length ? all[all.length - 1][2] : 3600) / 60 + 1, t0 = Math.max(0, (all.length ? all[0][2] - all[0][3] : 0) / 60 - 2);   // start at the first timed lap
   const shade = (x, X, T, h, B) => ph.forEach((p, i) => { const a = X(Math.max(t0, p[1] / 60)), b = X(ph[i + 1] ? ph[i + 1][1] / 60 : tMax); x.fillStyle = i % 2 ? "rgba(140,160,210,.05)" : "rgba(140,160,210,.09)"; x.fillRect(a, T, b - a, h - T - B);
     x.fillStyle = "#8590a8"; x.font = '700 12px "Saira Condensed", sans-serif'; x.fillText((q.session === "Sprint Qualifying" ? "SQ" : "Q") + p[0], a + 6, T + 14); });
@@ -2123,13 +2138,25 @@ function buildQualiComm(Q, meta){
   if (lead2[1]) { const a = lead2[0], g = (lead2[1].sectors[0] + lead2[1].sectors[1]) - (a.sectors[0] + a.sectors[1]);
     add(s2 + 0.3, 2, "L", a === lead1[0] ? 1 : 2, a === lead1[0] ? `${sn(a)} still leads after sector two, ${gapW(g)} clear.` : pick([`${sn(a)} takes over in sector two!`, `Now it's ${sn(a)} in front through sector two!`])); }
 
+  // telemetry: where the lap was won (braking) and the speed trap
+  if (!prev && byPos[1] && typeof teleCompare === "function") { const C = teleCompare(P, byPos[1]);
+    if (C) { const z = C.zones.filter(z => Math.abs(z.diff) >= 8 && Math.abs(z.diff) <= 35).sort((p, q) => Math.abs(q.diff) - Math.abs(p.diff))[0];
+      if (z) { const late = z.diff > 0 ? byPos[1] : P, early = late === P ? byPos[1] : P, ti = C.a.t[clamp(ub(C.a.dist, z.d) - 1, 0, C.a.t.length - 1)];
+        if (ti > 4 && ti < P.time - 3) add(ti + 1.2, 1, "A", 1, pick([`Look at the braking here. ${sn(late)} goes ${Math.round(Math.abs(z.diff))} metres deeper than ${sn(early)}.`, `Watch this braking zone: ${sn(late)} brakes ${Math.round(Math.abs(z.diff))} metres later than ${sn(early)}.`])); }
+      const tops = D.map(d => ({d, v: d.tele && teleOf(d) ? Math.max(...d.tele.sp) : 0})).filter(x => x.v > 0).sort((p, q) => q.v - p.v);
+      if (tops.length > 3) { const i = C.a.sp.indexOf(Math.max(...C.a.sp)), ti = C.a.t[i];
+        if (ti > 3 && ti < P.time - 3) add(ti, 1, "A", 0, tops[0].d === P ? `${sn(P)} is quickest through the speed trap too, ${tops[0].v} kilometres an hour.` : `Fastest through the speed trap: ${sn(tops[0].d)}, ${tops[0].v} kilometres an hour. ${sn(P)} manages ${C.topA}.`); } } }
+
   // the finish
   const p2 = byPos[1], p3 = byPos[2], m = p2 ? p2.time - P.time : 0;
   add(P.time + 0.4, 3, "L", 2, prev ? `${full(P)} was fastest here last year, a ${lapW(P.time)}.`
     : pick([`And it's pole position for ${full(P)}! A ${lapW(P.time)}${p2 && m > 0 ? `, ${gapW(m)} ahead of ${sn(p2)}` : ""}.`, `Pole for ${full(P)}!${p2 && m > 0 ? ` ${gapW(m)} faster than ${sn(p2)}.` : ""}`]));
   if (p2 && p3) { const spread = p3.time - P.time, mate = byPos.find(d => d !== P && d.team === P.team);
-    const extra = spread > 0 && spread < 0.1 ? ` Just ${gapW(spread)} covering the top three. Incredible.` : mate && mate !== p2 && mate.time > P.time ? ` And ${sn(P)} beat teammate ${sn(mate)} by ${gapW(mate.time - P.time)}.` : "";
+    const extra = spread > 0 && spread < 0.1 ? ` Just ${gapW(spread)} covering the top three. Incredible.` : mate && mate !== p2 && mate.time > P.time && mate.pos && mate.pos <= 10 && mate.time - P.time < 1 ? ` And ${sn(P)} beat teammate ${sn(mate)} by ${gapW(mate.time - P.time)}.` : "";
     add(P.time + 4, 1, "A", 0, prev ? `${sn(p2)} and ${sn(p3)} were next. We'll see if the order changes this year.` : `${sn(p2)} lines up second, ${sn(p3)} third.${extra}`); }
+  L.sort((a, b) => a.t - b.t);
+  for (let i = 1; i < L.length; i++) if (L[i].pri === 1 && L[i].who === "A" && L[i].t < L[i-1].t + 3) { L[i].t = L[i-1].t + 3; L.sort((a, b) => a.t - b.t); }   // keep analyst lines from piling up
+  for (let i = 0; i + 1 < L.length; i++) if (L[i].pri === 1 && L[i].who === "A" && L[i+1].t - L[i].t < 3 && L[i+1].pri >= 2) { L[i].t = L[i+1].t + 3; L.sort((a, b) => a.t - b.t); i = -1; }
   return L.sort((a, b) => a.t - b.t);
 }
 async function commInitQ(r, id){
@@ -2143,6 +2170,126 @@ async function commInit(r, id){
   const R = st.R; COMM.pack = null; commTitle();
   if (r.comm_file) try { const u8 = await fetchBytes(r.comm_file); if (id !== st.loadingId) return; const {header, body} = splitPack(u8); COMM.pack = {body}; R.comm = header; commTitle(); return; } catch (e) { console.warn("comm pack", e); }
   try { await (st.radioLoading || Promise.resolve()); if (id !== st.loadingId) return; R.comm = await buildCommScript(R, r); } catch (e) { console.warn("comm script", e); R.comm = []; }
+}
+
+/* ---------------- strategy tab: every driver's tyre stints, stops and undercuts ---------------- */
+function stintRows(R, D){
+  const lastLap = Math.max(1, (D.res && D.res.number_of_laps) || (D.lapN.length ? D.lapN[D.lapN.length - 1] : R.total));
+  return D.stints.map((s, i) => ({from: Math.max(1, s[1] || 1), to: Math.min(lastLap, s[2] || (D.stints[i + 1] ? D.stints[i + 1][1] - 1 : lastLap)), comp: s[3] || "UNKNOWN", age: s[4] || 0})).filter(s => s.to >= s.from);
+}
+function undercutCalls(R){
+  const out = [];
+  for (const D of R.drivers) for (const p of D.pits) { if (p[0] < R.lightsOut + 30) continue;
+    const tIn = p[0] - (p[4] || 22) * .5; if (R.segs.some(s => tIn >= s.a && tIn <= s.b)) continue;
+    const pos = posAt(D, tIn - 15); if (pos > 12) continue;
+    const B = R.drivers.find(x => x !== D && posAt(x, tIn - 15) === pos - 1); if (!B) continue;
+    const gi = gapOf(D, tIn - 15)[1], bp = B.pits.find(q => q[2] > p[2] && q[2] <= p[2] + 5);
+    if (!bp || typeof gi !== "number" || gi <= 0 || gi > 4) continue;
+    const tc = bp[0] + 25; out.push({D, B, lap: p[2], ok: posAt(D, tc) < posAt(B, tc), gap: gi}); }
+  return out.sort((a, b) => a.lap - b.lap);
+}
+function renderStrategy(info){
+  const R = st.R, rows = R.drivers.slice().sort((a, b) => ((a.res && a.res.position) || 99) - ((b.res && b.res.position) || 99) || ((b.res && b.res.number_of_laps) || 0) - ((a.res && a.res.number_of_laps) || 0));
+  const rh = 20, top = 24, bot = 26, Lp = 64, Rp = 14, H = top + rows.length * rh + bot, {x, w, h} = anaCanvas(H);
+  const X = l => Lp + (l - 1) / Math.max(1, R.total) * (w - Lp - Rp);
+  for (const s of R.segs) { const a = leaderLapF(R, s.a) + 1, b = leaderLapF(R, s.b) + 1; x.fillStyle = s.k === "RED" ? "rgba(255,47,69,.16)" : "rgba(255,182,28,.13)"; x.fillRect(X(a), top - 4, Math.max(2, X(b) - X(a)), rows.length * rh + 4);
+    x.fillStyle = s.k === "RED" ? "#ff2f45" : "#ffb61c"; x.font = '700 9px "JetBrains Mono", monospace'; x.fillText(s.k, X(a) + 2, top - 8); }
+  x.font = '600 10px "JetBrains Mono", monospace'; x.fillStyle = "#8590a8"; const every = R.total > 40 ? 10 : 5;
+  for (let l = every; l <= R.total; l += every) { x.fillText("L" + l, X(l) - 8, h - 8); x.fillStyle = "rgba(255,255,255,.06)"; x.fillRect(X(l), top - 4, 1, rows.length * rh + 4); x.fillStyle = "#8590a8"; }
+  rows.forEach((D, i) => { const y = top + i * rh;
+    x.font = '700 12px "Saira Condensed", sans-serif'; x.fillStyle = D.css; x.fillText(((D.res && D.res.position) ? "P" + D.res.position + " " : "    ") + D.code, 6, y + 14);
+    for (const s of stintRows(R, D)) { const c = (COMP[s.comp] || ["?", "#8590a8"])[1], a = X(s.from), b = X(s.to + 1);
+      x.fillStyle = c; x.globalAlpha = .85; x.fillRect(a + 1, y + 4, Math.max(2, b - a - 2), rh - 8); x.globalAlpha = 1;
+      if (s.age > 0) { x.strokeStyle = "rgba(0,0,0,.5)"; x.setLineDash([3, 3]); x.strokeRect(a + 1.5, y + 4.5, Math.max(1, b - a - 3), rh - 9); x.setLineDash([]); }
+      if (b - a > 26) { x.fillStyle = "#05070d"; x.font = '700 10px "JetBrains Mono", monospace'; x.fillText((COMP[s.comp] || ["?"])[0] + (s.age > 0 ? "u" : "") + " " + (s.to - s.from + 1), a + 4, y + 13); } }
+    for (const p of D.pits) { if (p[0] < R.lightsOut) continue; const px = X(p[2] + 1); x.fillStyle = "#fff"; x.fillRect(px - 1, y + 2, 2, rh - 4);
+      if (typeof p[3] === "number" && p[3] > 1.5 && p[3] < 60) { x.font = '600 9px "JetBrains Mono", monospace'; x.fillStyle = p[3] <= 2.5 ? "#38e383" : p[3] >= 5 ? "#ff8a3d" : "#c9d1e3"; x.fillText(p[3].toFixed(1), px + 3, y + 3 + 6); } }
+    if (D.res && D.res.dnf) { x.font = '700 9px "JetBrains Mono", monospace'; x.fillStyle = "#ff2f45"; const sr = stintRows(R, D); const end = sr.length ? sr[sr.length - 1].to : 1; x.fillText("DNF", X(end + 1) + 4, y + 13); }
+  });
+  nowLine(x, X, top - 4, h, bot - 4, leaderLapF(R, st.t) + 1);
+  const uc = undercutCalls(R), stops = [];
+  for (const D of R.drivers) for (const p of D.pits) if (typeof p[3] === "number" && p[3] > 1.5 && p[3] < 15 && p[0] > R.lightsOut) stops.push({D, s: p[3], lap: p[2]});
+  stops.sort((a, b) => a.s - b.s);
+  const leg = Object.entries(COMP).map(([k, [l, c]]) => `<span class="sleg"><i style="background:${c}"></i>${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join("");
+  info.innerHTML = `<div class="sleg-row">${leg}<span class="sleg"><i class="used"></i>Used set (u)</span><span class="sleg"><i style="background:#fff;width:2px"></i>Pit stop (stationary time)</span></div>` +
+    `<div class="scols"><div><h4>Undercut / overcut attempts</h4>${uc.length ? uc.map(u => `<div class="srow"><b style="color:${u.D.css}">${esc(u.D.code)}</b> vs <b style="color:${u.B.css}">${esc(u.B.code)}</b> · lap ${u.lap} · ${u.ok ? '<span class="ok">worked</span>' : '<span class="no">failed</span>'}</div>`).join("") : '<p class="anote">None in the top 12 (a car pitting from within 4 s behind, with the car ahead stopping in the next five laps).</p>'}</div>` +
+    `<div><h4>Fastest pit stops</h4>${stops.slice(0, 5).map(s => `<div class="srow"><b style="color:${s.D.css}">${esc(s.D.code)}</b> ${s.s.toFixed(1)} s · lap ${s.lap}</div>`).join("") || '<p class="anote">No stop times published for this race.</p>'}</div></div>` +
+    `<p class="anote">Bars show each tyre stint, lap by lap, ordered by finishing position. Shaded columns are safety car / VSC / red flag periods. Undercut verdicts compare positions 25 s after the second car's stop.</p>`;
+}
+
+/* ---------------- highlights mode: just the key moments, back to back ---------------- */
+function buildHighlights(R){
+  const M = [], add = (t, label, k, pre = 6, post = 10, pri = 1) => { if (t >= 0 && t <= R.T) M.push({a: Math.max(0, t - pre), b: Math.min(R.T, t + post), labels: [label], k, pri}); };
+  add(R.lightsOut, "Lights out", "GO", 4, 24, 5);
+  for (const s of R.segs) add(s.a, s.k === "SC" ? "Safety car" : s.k === "VSC" ? "Virtual safety car" : "Red flag", s.k, 8, 10, 4);
+  for (const x of R.incidents) add(x.t, x.kind === "crash" ? `Crash: ${x.d.code}` : x.kind === "stopped" ? `${x.d.code} stops on track` : `Contact: ${x.d.code} and ${x.d2.code}`, "INC", 7, 10, 4);
+  for (const o of R.overtakes || []) if (o.pos <= 5) add(o.t, o.pos === 1 ? `${o.a.code} takes the lead` : `${o.a.code} passes ${o.b.code} for P${o.pos}`, o.pos === 1 ? "LEAD" : "OV", 7, 8, o.pos === 1 ? 5 : o.pos <= 3 ? 2 : 1);
+  for (const D of R.drivers) for (const p of D.pits) { if (p[0] < R.lightsOut + 30) continue; const tIn = p[0] - (p[4] || 22) * .5, pos = posAt(D, tIn - 10); if (R.segs.some(g => g.k === "RED" && tIn >= g.a - 30 && tIn <= g.b + 60)) continue; if (pos <= 3) add(tIn, `${D.code} pits from P${pos}`, "PIT", 5, 12, pos === 1 ? 3 : 2); }
+  for (const bt of R.battles || []) if (bt.pos <= 3) { const t3 = R.lapStarts[Math.min(R.lapStarts.length - 1, bt.fromLap + 1)] + 5; add(t3, `${bt.a.code} chasing ${bt.b.code} for P${bt.pos}`, "BT", 4, 12, 1); }
+  for (const e of R.stew || []) if (e[2] === "PEN" && e[0] > R.lightsOut) add(e[0], `Penalty: ${e[1].map(n => R.byNum[n] ? R.byNum[n].code : "#" + n).join(" / ")}`, "PEN", 3, 7, 2);
+  if (R.lapStarts[R.total - 1]) add(R.lapStarts[R.total - 1], "Final lap", "LAST", 2, 8, 3);
+  add(R.chq, "Chequered flag", "CHQ", 12, 16, 5);
+  let list = M.sort((p, q) => q.pri - p.pri).slice(0, 22).sort((p, q) => p.a - q.a);
+  const merged = []; for (const m of list) { const l = merged[merged.length - 1]; if (l && m.a <= l.b + 3) { l.b = Math.max(l.b, m.b); l.labels.push(...m.labels); l.pri = Math.max(l.pri, m.pri); } else merged.push({...m, labels: m.labels.slice()}); }
+  return merged;
+}
+function hlLabel(){ const h = st.hl; if (!h) return; const w = h.list[h.i]; $("#hlTx").textContent = `HIGHLIGHTS ${h.i + 1}/${h.list.length} · ${w ? w.labels.slice(0, 2).join(" · ") : ""}`; }
+function hlGo(i){ const h = st.hl; if (!h) return; h.i = clamp(i, 0, h.list.length - 1); const w = h.list[h.i]; endDirector(); st.t = w.a; $("#podium").hidden = true; computeOrder(); hlLabel(); if (!st.playing) setPlaying(true); }
+function startHighlights(){
+  const R = st.R; if (!R) return; const list = buildHighlights(R); if (!list.length) return;
+  st.hl = {list, i: 0, prevSpeed: st.speed}; st.speed = 1; syncSpeeds();
+  $("#hlBar").hidden = false; $("#tgHl").setAttribute("aria-pressed", "true");
+  const tl = $("#tl"); for (const w of list) { const b = document.createElement("div"); b.className = "band hl"; b.style.left = (w.a / R.T * 100) + "%"; b.style.width = Math.max(0.4, (w.b - w.a) / R.T * 100) + "%"; b.title = w.labels.join(" · "); tl.appendChild(b); }
+  commStop(); hlGo(0);
+}
+function stopHighlights(){ if (!st.hl) return; st.speed = st.hl.prevSpeed || st.speed; syncSpeeds(); st.hl = null; $("#hlBar").hidden = true; $("#tgHl").setAttribute("aria-pressed", "false"); $("#tl").querySelectorAll(".band.hl").forEach(e => e.remove()); }
+function stepHighlights(){
+  const h = st.hl, R = st.R; if (!h || !R) return; const w = h.list[h.i];
+  if (st.t < w.a - 2 || st.t > w.b + 30) { const j = h.list.findIndex(x => x.b > st.t); if (j < 0) { stopHighlights(); return; } h.i = j; if (st.t < h.list[j].a) st.t = h.list[j].a; hlLabel(); return; }   // user moved the playhead
+  if (st.t >= w.b) { if (h.i + 1 >= h.list.length) { setPlaying(false, true); stopHighlights(); showPodium(); } else hlGo(h.i + 1); }
+}
+
+/* ---------------- qualifying telemetry (speed, throttle, brake, gear, DRS on each driver's fastest lap) ---------------- */
+function teleOf(d){ const T = d.tele; if (!T || T.t.length < 20) return null; if (T.dist) return T;
+  const dist = [0]; for (let i = 1; i < T.t.length; i++) dist.push(dist[i-1] + (T.sp[i-1] + T.sp[i]) / 2 / 3.6 * (T.t[i] - T.t[i-1])); T.dist = dist; T.len = dist[dist.length - 1]; return T; }
+function teleBrakes(T){ const z = []; for (let i = 1; i < T.t.length; i++) if (T.br[i] > 0 && !(T.br[i-1] > 0)) { let vmax = 0; for (let j = Math.max(0, i - 8); j < i; j++) vmax = Math.max(vmax, T.sp[j]); if (vmax > 180) z.push({i, d: T.dist[i], v: vmax}); } return z; }
+function teleCompare(A, B){
+  const a = teleOf(A), b = teleOf(B); if (!a || !b) return null; const k = a.len / b.len, za = teleBrakes(a), zb = teleBrakes(b), zones = [];
+  za.forEach((z, n) => { const m = zb.reduce((best, y) => Math.abs(y.d * k - z.d) < Math.abs((best ? best.d * k : 1e9) - z.d) ? y : best, null); if (m && Math.abs(m.d * k - z.d) < 120) zones.push({n: n + 1, d: z.d, diff: m.d * k - z.d, v: z.v}); });
+  return {a, b, k, zones, topA: Math.max(...a.sp), topB: Math.max(...b.sp)};
+}
+function renderQualiTele(ctl, info){
+  const Q = st.Q, drv = Q.drivers.filter(d => teleOf(d)).sort((p, q) => (p.pos || 99) - (q.pos || 99));
+  if (drv.length < 2) { info.innerHTML = '<p class="anote">No car telemetry was published for this session.</p>'; $("#anaCv").hidden = true; return; }
+  st.qtA = drv.some(d => d.num === st.qtA) ? st.qtA : drv[0].num; st.qtB = drv.some(d => d.num === st.qtB) && st.qtB !== st.qtA ? st.qtB : drv[1].num;
+  const opt = sel => drv.map(d => `<option value="${d.num}" ${d.num === sel ? "selected" : ""}>${d.pos ? "P" + d.pos + " " : ""}${esc(d.code)} · ${esc(d.first + " " + d.last)}</option>`).join("");
+  ctl.innerHTML = `<label>Driver A <select id="qtA">${opt(st.qtA)}</select></label><label>Driver B <select id="qtB">${opt(st.qtB)}</select></label>`;
+  $("#qtA").onchange = e => { st.qtA = +e.target.value; renderAna(); }; $("#qtB").onchange = e => { st.qtB = +e.target.value; renderAna(); };
+  const A = drv.find(d => d.num === st.qtA), B = drv.find(d => d.num === st.qtB), C = teleCompare(A, B); if (!C) return;
+  const {a, b, k} = C, L = 48, Rr = 12, panels = [["SPEED km/h", 170, "sp", 0, 360], ["GAP s", 70, "delta"], ["THROTTLE %", 54, "thr", 0, 100], ["BRAKE", 30, "br", 0, 1], ["GEAR", 58, "gear", 1, 8]];
+  const H = panels.reduce((s, p) => s + p[1] + 16, 22), {x, w, h} = anaCanvas(H), X = dd => L + dd / a.len * (w - L - Rr);
+  const at = (T, arr, d) => { let i = ub(T.dist, d) - 1; i = clamp(i, 0, T.dist.length - 2); const f = clamp((d - T.dist[i]) / ((T.dist[i+1] - T.dist[i]) || 1), 0, 1); return arr[i] + (arr[i+1] - arr[i]) * f; };
+  let y0 = 14; x.font = '600 10px "JetBrains Mono", monospace';
+  for (const [lab, ph, key, lo, hi] of panels) {
+    x.fillStyle = "rgba(140,160,210,.06)"; x.fillRect(L, y0, w - L - Rr, ph); x.fillStyle = "#8590a8"; x.fillText(lab, L + 4, y0 + 11);
+    if (key === "delta") { const pts = []; for (let d = 0; d <= a.len; d += a.len / 300) pts.push([d, at(b, b.t, d / k) - at(a, a.t, d)]); const m = Math.max(0.05, ...pts.map(p => Math.abs(p[1]))) * 1.15, Y = v => y0 + ph / 2 - v / m * ph / 2;
+      x.strokeStyle = "rgba(255,255,255,.25)"; x.beginPath(); x.moveTo(L, Y(0)); x.lineTo(w - Rr, Y(0)); x.stroke(); x.lineWidth = 2; x.beginPath(); pts.forEach((p, i) => i ? x.lineTo(X(p[0]), Y(p[1])) : x.moveTo(X(p[0]), Y(p[1]))); x.strokeStyle = "#e8ecf4"; x.stroke(); x.lineWidth = 1;
+      x.fillStyle = A.css; x.fillText(`${A.code} AHEAD ↑`, w - Rr - 92, y0 + 11); x.fillStyle = B.css; x.fillText(`${B.code} AHEAD ↓`, w - Rr - 92, y0 + ph - 4); }
+    else for (const [T, D, kk] of [[b, B, k], [a, A, 1]]) { const Y = v => y0 + ph - 2 - (clamp(v, lo, hi) - lo) / (hi - lo) * (ph - 14); x.beginPath();
+      for (let i = 0; i < T.t.length; i++) { const v = key === "br" ? (T.br[i] > 0 ? 1 : 0) : T[key][i], px = X(T.dist[i] * kk); i ? x.lineTo(px, Y(v)) : x.moveTo(px, Y(v)); }
+      x.strokeStyle = D.css; x.lineWidth = T === a ? 2 : 1.5; x.globalAlpha = T === a ? 1 : .8; x.stroke(); x.globalAlpha = 1; x.lineWidth = 1; }
+    y0 += ph + 16; }
+  for (const z of C.zones) { x.fillStyle = "#8590a8"; x.fillText("B" + z.n, X(z.d) - 6, 10); x.fillStyle = "rgba(255,255,255,.08)"; x.fillRect(X(z.d), 14, 1, h - 20); }
+  const tNow = Math.min(st.t, A.time), dNow = (() => { const i = clamp(ub(a.t, tNow) - 1, 0, a.t.length - 2), f = clamp((tNow - a.t[i]) / ((a.t[i+1] - a.t[i]) || 1), 0, 1); return a.dist[i] + (a.dist[i+1] - a.dist[i]) * f; })();
+  if (st.t > 0) nowLine(x, X, 14, h, 6, dNow);
+  const late = C.zones.filter(z => Math.abs(z.diff) >= 5).sort((p, q) => Math.abs(q.diff) - Math.abs(p.diff)).slice(0, 4);
+  const sec = (A.sectors || []).map((s, i) => B.sectors && B.sectors[i] ? `<td>${(B.sectors[i] - s >= 0 ? "+" : "") + (B.sectors[i] - s).toFixed(3)}</td>` : "<td>–</td>").join("");
+  info.innerHTML = `<table class="h2h"><tr><th></th><th>Lap</th><th>S1</th><th>S2</th><th>S3</th><th>Top speed</th></tr>
+    <tr><td style="color:${A.css}"><b>${esc(A.code)}</b></td><td>${fmtLap(A.time)}</td>${(A.sectors || []).map(s => `<td>${s ? s.toFixed(3) : "–"}</td>`).join("")}<td>${C.topA} km/h</td></tr>
+    <tr><td style="color:${B.css}"><b>${esc(B.code)}</b></td><td>${fmtLap(B.time)}</td>${(B.sectors || []).map(s => `<td>${s ? s.toFixed(3) : "–"}</td>`).join("")}<td>${C.topB} km/h</td></tr>
+    <tr><td>gap</td><td>${(B.time - A.time >= 0 ? "+" : "") + (B.time - A.time).toFixed(3)}</td>${sec}<td>${C.topB - C.topA >= 0 ? "+" : ""}${C.topB - C.topA}</td></tr></table>` +
+    (late.length ? `<h4 style="margin:10px 0 4px;font-size:12px;letter-spacing:.08em;color:var(--muted)">BRAKING POINTS</h4>` + late.map(z => `<div class="srow">Zone B${z.n} (from ${Math.round(z.v)} km/h): <b style="color:${(z.diff > 0 ? B : A).css}">${esc((z.diff > 0 ? B : A).code)}</b> brakes ${Math.round(Math.abs(z.diff))} m later</div>`).join("") : "") +
+    `<p class="anote">Each driver's fastest lap, lined up by distance. GAP shows time between them along the lap (line above the middle = ${esc(A.code)} ahead). Telemetry from OpenF1 at about 4 samples a second, so braking points are accurate to roughly ±15 m.</p>`;
 }
 
 /* ---------------- stewards ---------------- */
@@ -2387,6 +2534,8 @@ function selectDriver(num, toggleCam){
   st.sel = num;
 }
 function setToggle(id, key){ const b = $(id); b.setAttribute("aria-pressed", String(st[key])); b.addEventListener("click", () => { st[key] = !st[key]; b.setAttribute("aria-pressed", String(st[key])); if (key === "radioOn" && !st.radioOn) stopRadio(); if (key === "crashCam" && !st.crashCam) endDirector(); save(); }); }
+$("#tgHl").addEventListener("click", () => st.hl ? stopHighlights() : startHighlights());
+$("#hlPrev").addEventListener("click", () => st.hl && hlGo(st.hl.i - 1)); $("#hlNext").addEventListener("click", () => st.hl && hlGo(st.hl.i + 1)); $("#hlX").addEventListener("click", stopHighlights);
 setToggle("#tgComm", "commOn"); $("#tgComm").addEventListener("click", () => { if (st.commOn) commHello(); else commStop(); });
 setToggle("#tgCrash", "crashCam"); setToggle("#tgRadio", "radioOn"); setToggle("#tgSound", "soundOn");
 $("#fsBtn").addEventListener("click", () => { const el = $("#app");
@@ -2422,6 +2571,7 @@ document.addEventListener("keydown", e => {
   else if (/^[1-5]$/.test(e.key)) { endDirector(); st.speed = SPEEDS[+e.key - 1]; syncSpeeds(); save(); }
   else if (R.noTrack && /^[ofcOFC]$/.test(e.key)) return;
   else if (e.key === "o" || e.key === "O") setCam("overview");
+  else if (e.key === "h" || e.key === "H") { st.hl ? stopHighlights() : startHighlights(); }
   else if (e.key === "l" || e.key === "L") setCam("linear");
   else if (e.key === "f" || e.key === "F") setCam("follow");
   else if (e.key === "c" || e.key === "C") setCam("chase");
@@ -2464,6 +2614,7 @@ $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[d
 
 /* ---------------- race loading ---------------- */
 async function loadRace(r){
+  stopHighlights();
   commStop();
   if (st.rec) endRecreate(); closeAnalysis(); $("#anaBtn").hidden = false;
   if (r.kind === "quali" || r.kind === "squali" || r.kind === "preview") return loadQuali(r);
@@ -2547,7 +2698,8 @@ function frame(now){
   if (R && st.playing) {
     const t0 = st.t; st.t = Math.min(R.T, st.t + wdt * st.speed);
     crossEvents(t0, st.t);
-    if (st.t >= R.T) { setPlaying(false); showPodium(); }
+    if (st.hl) stepHighlights();
+    if (st.t >= R.T) { if (st.hl) stopHighlights(); setPlaying(false); showPodium(); }
   }
   if (R) { stepCam(wdt); stepFx(wdt); }
   hudAcc += wdt;
