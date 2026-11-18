@@ -103,7 +103,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .cta:disabled{opacity:.4;cursor:not-allowed;filter:none}
 
 /* controls */
-.ctl{grid-area:ctl;display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap;padding:10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.ctl{grid-area:ctl;display:flex;flex-direction:column;gap:10px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.ctl-main{display:flex;align-items:center;gap:10px 14px;flex-wrap:wrap}
+.ctl-sep{width:1px;height:28px;background:var(--line-2)}
+.ctl-now{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--line)}
+.now-lb{font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.14em;color:var(--muted)}
+.now-chips{display:flex;gap:6px;flex-wrap:wrap}
+.now-chip{font-family:var(--f-display);font-weight:800;font-size:12.5px;letter-spacing:.06em;padding:3px 9px;border-radius:999px;border:1px solid var(--line-2);background:var(--panel-2);color:var(--text)}
+.now-chip.hot{border-color:var(--gold,#ffd23f);color:var(--gold,#ffd23f)}
+.now-edit{font-size:12px;color:var(--muted);text-decoration:underline;background:none;border:0;padding:2px 4px;cursor:pointer}
+.keys-d{margin-left:auto;font-size:12px;color:var(--muted)}
+.keys-d summary{cursor:pointer}
+.keys-d .keys{display:block;max-width:520px;margin-top:6px}
 .ctl .grp{display:flex;align-items:center;gap:6px;min-width:0}
 .ctl .grp > span{font-family:var(--f-display);font-weight:700;font-size:12px;letter-spacing:.12em;color:var(--dim)}
 .pills{display:flex;gap:2px;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:2px}
@@ -309,6 +320,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
   <form method="dialog" class="setup-in">
     <header class="setup-hd"><h2 id="setupTitle">RACE SETUP</h2><span class="setup-sub">Pick the special features for the next race</span></header>
     <div class="setup-row"><span class="setup-lb">DROP</span><div class="pills" id="suDeg"><button type="button" class="seg" data-v="50">STEEP 50°</button><button type="button" class="seg" data-v="72">TOO STEEP 72°</button><button type="button" class="seg" data-v="88">CLIFF 88°</button></div></div>
+    <div class="setup-row"><span class="setup-lb">GRID</span><div class="pills" id="suGridOrd"><button type="button" class="seg" data-v="std">STANDINGS</button><button type="button" class="seg" data-v="rev">REVERSE</button><button type="button" class="seg" data-v="rnd">RANDOM</button><button type="button" class="seg" data-v="season">SEASON</button></div></div>
     <div class="setup-row"><span class="setup-lb">TIME</span><div class="pills" id="suTod"><button type="button" class="seg" data-v="day">DAY</button><button type="button" class="seg" data-v="night">NIGHT</button></div></div>
     <div class="setup-grid" id="suGrid"></div>
     <label class="setup-chk"><input type="checkbox" id="suSurprise"> Surprise me every race (a new random mix each time you start the next race)</label>
@@ -374,36 +386,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
   </main>
 
   <section class="ctl" aria-label="Race controls">
-    <button class="cta" id="startBtn" disabled>START</button>
-    <button class="ghost" id="resetBtn">RESET</button>
-    <button class="ghost setup-btn" id="setupBtn" title="Pick the special features for the next race, or let the dice decide">⚙ RACE SETUP</button>
-    <button class="ghost" id="diceBtn" title="Random mix of special features for the next race">🎲 RANDOMIZE</button>
-    <div class="grp"><span>RAMP</span>
-      <div class="pills" role="group" aria-label="Ramp steepness">
-        <button class="seg" data-ramp="50" aria-pressed="false">STEEP 50°</button>
-        <button class="seg" data-ramp="72" aria-pressed="true">TOO STEEP 72°</button>
-        <button class="seg" data-ramp="88" aria-pressed="false">CLIFF 88°</button>
-      </div>
-    </div>
-    <div class="grp"><span>GRID</span>
-      <div class="pills" role="group" aria-label="Grid order">
-        <button class="seg" data-grid="std" aria-pressed="true">STANDINGS</button>
-        <button class="seg" data-grid="rev" aria-pressed="false">REVERSE</button>
-        <button class="seg" data-grid="rnd" aria-pressed="false">RANDOM</button>
-        <button class="seg" data-grid="season" aria-pressed="false" title="Season points leader starts on pole">SEASON</button>
-      </div>
-    </div>
-    <div class="grp"><span>TIME</span>
-      <div class="pills" role="group" aria-label="Time of day">
-        <button class="seg" data-tod="day" aria-pressed="true">DAY</button>
-        <button class="seg" data-tod="night" aria-pressed="false">NIGHT</button>
-      </div>
-    </div>
-    <button class="tog" id="jumpTog" aria-pressed="true"><i></i>KICKER JUMP</button>
-    <button class="tog" id="slowTog" aria-pressed="false"><i></i>SLOW-MO</button>
-    <button class="tog" id="chaosTog" aria-pressed="true"><i></i>CHAOS</button>
-    <button class="tog" id="revTog" aria-pressed="false" title="Every car races the whole course backwards (V)"><i></i>BACKWARDS</button>
-    <div class="grp"><span>SPEED</span>
+    <div class="ctl-main">
+      <button class="cta" id="startBtn" disabled>START</button>
+      <button class="ghost" id="resetBtn">RESET</button>
+      <button class="ghost setup-btn" id="setupBtn" title="Pick the special features for the next race, or let the dice decide">⚙ RACE SETUP</button>
+      <button class="ghost" id="diceBtn" title="Random mix of special features for the next race">🎲 RANDOMIZE</button>
+      <span class="ctl-sep" aria-hidden="true"></span>
+      <div class="grp"><span>SPEED</span>
       <div class="pills" role="group" aria-label="Race speed">
         <button class="seg" data-speed="1" aria-pressed="true" title="Real time">1×</button>
         <button class="seg" data-speed="1.5" aria-pressed="false" title="Fast-forward one and a half times">1.5×</button>
@@ -413,15 +402,44 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
       </div>
       <span class="spd-real" id="spdReal" hidden title="Your computer can't run the physics any faster than this"></span>
     </div>
-    <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
-    <button class="tog" id="rainTog" aria-pressed="false" title="Rain: less grip, spray and a wet track (W)"><i></i>RAIN</button>
-    <button class="tog" id="showerTog" aria-pressed="false" title="Showers: the race starts dry and the rain arrives halfway down (H)"><i></i>SHOWERS</button>
-    <button class="tog" id="stampTog" aria-pressed="false" title="Dino stampede: a herd of dinosaurs chases the cars down the mountain (K)"><i></i>STAMPEDE</button>
-    <button class="tog" id="moonTog" aria-pressed="false" title="Moon gravity: one sixth of Earth's, and no air (M)"><i></i>MOON</button>
-    <button class="tog" id="giantTog" aria-pressed="false" title="One random car is giant and starts at the back (G)"><i></i>GIANT</button>
-    <button class="tog" id="replayTog" aria-pressed="true" title="Slow-motion replays of crashes, flips and big moments"><i></i>REPLAYS</button>
-    <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
-    <span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · T turbo · W rain · H showers · K stampede · M moon · G giant · + − zoom · F full screen</span>
+      <button class="tog" id="slowTog" aria-pressed="false"><i></i>SLOW-MO</button>
+      <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
+      <button class="tog" id="replayTog" aria-pressed="true" title="Slow-motion replays of crashes, flips and big moments"><i></i>REPLAYS</button>
+    </div>
+    <div class="ctl-now"><span class="now-lb">THIS RACE</span><span class="now-chips" id="nowChips"></span><button class="now-edit" id="nowEdit" type="button">change</button>
+      <details class="keys-d"><summary>Keyboard shortcuts</summary><span class="keys">Space start · R reset · 1–6 camera · S slow-mo · D day/night · X chaos · C commentary · P replays · V backwards · T turbo · W rain · H showers · K stampede · M moon · G giant · + − zoom · F full screen</span></details></div>
+    <div class="legacy" hidden>
+      <div class="grp"><span>RAMP</span>
+      <div class="pills" role="group" aria-label="Ramp steepness">
+        <button class="seg" data-ramp="50" aria-pressed="false">STEEP 50°</button>
+        <button class="seg" data-ramp="72" aria-pressed="true">TOO STEEP 72°</button>
+        <button class="seg" data-ramp="88" aria-pressed="false">CLIFF 88°</button>
+      </div>
+    </div>
+      <div class="grp"><span>GRID</span>
+      <div class="pills" role="group" aria-label="Grid order">
+        <button class="seg" data-grid="std" aria-pressed="true">STANDINGS</button>
+        <button class="seg" data-grid="rev" aria-pressed="false">REVERSE</button>
+        <button class="seg" data-grid="rnd" aria-pressed="false">RANDOM</button>
+        <button class="seg" data-grid="season" aria-pressed="false" title="Season points leader starts on pole">SEASON</button>
+      </div>
+    </div>
+      <div class="grp"><span>TIME</span>
+      <div class="pills" role="group" aria-label="Time of day">
+        <button class="seg" data-tod="day" aria-pressed="true">DAY</button>
+        <button class="seg" data-tod="night" aria-pressed="false">NIGHT</button>
+      </div>
+    </div>
+      <button class="tog" id="jumpTog" aria-pressed="true"><i></i>KICKER JUMP</button>
+      <button class="tog" id="chaosTog" aria-pressed="true"><i></i>CHAOS</button>
+      <button class="tog" id="revTog" aria-pressed="false" title="Every car races the whole course backwards (V)"><i></i>BACKWARDS</button>
+      <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
+      <button class="tog" id="rainTog" aria-pressed="false" title="Rain: less grip, spray and a wet track (W)"><i></i>RAIN</button>
+      <button class="tog" id="showerTog" aria-pressed="false" title="Showers: the race starts dry and the rain arrives halfway down (H)"><i></i>SHOWERS</button>
+      <button class="tog" id="stampTog" aria-pressed="false" title="Dino stampede: a herd of dinosaurs chases the cars down the mountain (K)"><i></i>STAMPEDE</button>
+      <button class="tog" id="moonTog" aria-pressed="false" title="Moon gravity: one sixth of Earth's, and no air (M)"><i></i>MOON</button>
+      <button class="tog" id="giantTog" aria-pressed="false" title="One random car is giant and starts at the back (G)"><i></i>GIANT</button>
+    </div>
   </section>
 
   <aside class="tower" aria-label="Running order">
@@ -820,6 +838,9 @@ const GROUND = {};
 
 const unitBox = new THREE.BoxGeometry(1,1,1);
 (async () => { // v2.0: swap in the real textures once they arrive
+  try { const es = new THREE.Scene(), pm = new THREE.PMREMGenerator(renderer), lm = new THREE.MeshBasicMaterial({ color: 0xfff0d8 }); es.background = new THREE.Color(0x05070d); // floodlights for the cars to reflect at night
+    for (let i = 0; i < 14; i++) { const a = i/14*Math.PI*2, m = new THREE.Mesh(new THREE.SphereGeometry(5, 8, 6), lm); m.position.set(Math.cos(a)*60, 24 + (i % 3)*6, Math.sin(a)*60); es.add(m); }
+    LOOK.envNight = pm.fromScene(es, 0, .1, 300).texture; pm.dispose(); if (opts.tod === "night") for (const m of PAINT) { m.envMap = LOOK.envNight; m.needsUpdate = true; } } catch (e) {}
   const [grass, rock, snow, ad, an, ar, grassFar] = await Promise.all([["leafy_grass_diff_1k.jpg", 1], ["rock_face_03_diff_1k.jpg", 1], ["snow_02_diff_1k.jpg", 1], ["asphalt_track_diff_1k.jpg", 1], ["asphalt_track_nor_gl_1k.jpg", 0], ["asphalt_track_rough_1k.jpg", 0], ["aerial_grass_rock_diff_1k.jpg", 1]].map(([f, c]) => loadTex(f, c)));
   if (grass && rock && snow) { terrainHD(GROUND.mesh.material, { grass, grassFar, rock, snow }); HD.terrain = true; }
   if (rock) ridgeHD(RIDGE_MAT, rock);
@@ -1004,6 +1025,7 @@ function buildTrack() {
     for (let x = 20; x < track.endX; x += 55) { const y = surfaceY(x); for (const sz of [-1]) { // far side only, so they never block the TV camera
       poles.push({ cx: x, cy: y + 5, cz: sz*(W/2 + 3), hx: .3, hy: 10, hz: .3, ang: 0 });
       heads.push({ cx: x, cy: y + 15.4, cz: sz*(W/2 + 2.4), hx: 1.2, hy: .6, hz: .45, ang: 0 }); } }
+    track.lamps = heads.map(h => ({ x: h.cx, y: h.cy - .6, z: h.cz })); NIGHT.track(trackGroup, track.lamps);
     trackGroup.add(instanced(poles, mats.steel), instanced(heads, mats.lamp, null, false)); }
   props = opts.chaos ? buildProps() : [];
   if (opts.chaos && !opts.moon && Math.random() < .6) props.push(buildSnatcher());
@@ -1230,12 +1252,13 @@ function setTimeOfDay(mode) {
   opts.tod = mode; const day = mode === "day", wet = opts.rain || WEATHER.wet;
   document.querySelectorAll("[data-tod]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.tod === mode)));
   scene.background = day && LOOK.sky ? null : SKY[mode]; if (LOOK.sky) LOOK.sky.visible = day;
-  for (const m of PAINT) { m.envMap = day ? LOOK.envDay : null; m.needsUpdate = true; }
+  for (const m of PAINT) { m.envMap = day ? LOOK.envDay : LOOK.envNight || null; m.needsUpdate = true; }
   if (LOOK.bloom) { LOOK.bloom.strength = day ? .22 : .85; LOOK.bloom.threshold = day ? .95 : .72; LOOK.bloom.radius = day ? .35 : .55; }
   scene.fog.color.set(day ? 0xc3d3e4 : 0x070b16); scene.fog.near = day ? 300 : 200; scene.fog.far = day ? 2300 : 1150;
-  hemi.color.set(day ? 0xd6e8ff : 0x9db8ff); hemi.groundColor.set(day ? 0x557a3c : 0x1a1f2c); hemi.intensity = day ? 1.3 : 1.15;
-  sun.color.set(day ? 0xfff6e6 : 0xfff1dc); sun.intensity = day ? 3.1 : 2.4;
-  fill.intensity = day ? .3 : .5; renderer.toneMappingExposure = day ? (LOOK.sky ? .72 : .95) : 1.05;
+  hemi.color.set(day ? 0xd6e8ff : 0x5d74b0); hemi.groundColor.set(day ? 0x557a3c : 0x07090f); hemi.intensity = day ? 1.3 : .32; // night: dim blue moonlight, the floodlights do the rest
+  sun.color.set(day ? 0xfff6e6 : 0x9fb6ff); sun.intensity = day ? 3.1 : .45;
+  fill.intensity = day ? .3 : .08; renderer.toneMappingExposure = day ? (LOOK.sky ? .72 : .95) : 1.15;
+  if (NIGHT.set) NIGHT.set(!day); if (typeof renderNow === "function" && typeof SURPRISE !== "undefined") try { renderNow(); } catch (e) {}
   if (day && LOOK.sky) { hemi.intensity = 1.05; sun.intensity = 3.4; }
   if (!HD.terrain) { GROUND.mesh.material.map = day ? GROUND.day : null; GROUND.mesh.material.needsUpdate = true; }
   mats.lamp.emissiveIntensity = day ? .15 : 2.2;
@@ -1365,7 +1388,7 @@ function airships() { // three hot-air balloons and a blimp
     for (const bl of scenery.blades) bl.rot.rotation.z = t*bl.speed;
     if (scenery.duck) { scenery.duck.position.y = -2*T + Math.sin(t*.9)*.6; scenery.duck.rotation.z = Math.sin(t*.7)*.04; }
     if (scenery.water && scenery.water.material.normalMap) scenery.water.material.normalMap.offset.set(t*.006, t*.0045); // ripples drift
-    if (ATMO.update) ATMO.update(t);
+    if (ATMO.update) ATMO.update(t); if (NIGHT.update) NIGHT.update(t);
     // helicopter: hangs off to the side of the leader, a little behind
     let tx = track ? track.crestX + 40 : 60, ty = track ? track.startY + 28 : 140, tz = -55; // far side of the track, so it films from behind the action and never crosses the TV or side cameras
     if (race && cars.length && race.phase !== "grid" && race.phase !== "lights") { const c = focusCar(), p = c.mesh.position; tx = p.x - 12; ty = p.y + 26; tz = -52; }
@@ -1376,6 +1399,48 @@ function airships() { // three hot-air balloons and a blimp
   };
 }
 let animAirships = null;
+/* ---------- v2.0 night race: floodlight pools, beams, real lights that follow the action, light trails, a moon and camera flashes ---------- */
+const NIGHT = { on: false };
+{ const tex = (draw) => { const cv = document.createElement("canvas"); cv.width = cv.height = 128; draw(cv.getContext("2d")); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t; };
+  const poolTex = tex(x => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, "rgba(255,244,220,.9)"); g.addColorStop(.45, "rgba(255,236,200,.38)"); g.addColorStop(1, "rgba(255,230,190,0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128); });
+  const poolMat = new THREE.MeshBasicMaterial({ map: poolTex, transparent: true, opacity: .4, blending: THREE.AdditiveBlending, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, fog: false });
+  const beamGeo = new THREE.ConeGeometry(1, 1, 24, 1, true); beamGeo.translate(0, -.5, 0); beamGeo.rotateX(-Math.PI/2);
+  const beamMat = new THREE.MeshBasicMaterial({ color: 0xfff0d0, transparent: true, opacity: .045, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false });
+  NIGHT.track = (group, lamps) => { // rebuilt with each course
+    const pools = new THREE.InstancedMesh(new THREE.PlaneGeometry(1, 1), poolMat, lamps.length), beams = new THREE.InstancedMesh(beamGeo, beamMat, lamps.length), o = new THREE.Object3D(), tgt = new THREE.Vector3();
+    o.rotation.order = "ZXY";
+    lamps.forEach((L, i) => { const x = L.x + 2, th = pieceAt(x).th, y = surfaceY(x) + .08; o.position.set(x, y, -2.5); o.rotation.set(-Math.PI/2, 0, -th); o.scale.set(30, 26, 1); o.updateMatrix(); pools.setMatrixAt(i, o.matrix);
+      const b = new THREE.Object3D(); b.position.set(L.x, L.y, L.z); tgt.set(x, y, -2.5); b.lookAt(tgt); const d = b.position.distanceTo(tgt); b.scale.set(10, 10, d); b.updateMatrix(); beams.setMatrixAt(i, b.matrix); });
+    pools.frustumCulled = beams.frustumCulled = false; pools.renderOrder = 2;
+    group.add(pools, beams); NIGHT.pools = pools; NIGHT.beams = beams; pools.visible = beams.visible = NIGHT.on; };
+  NIGHT.lights = Array.from({ length: 6 }, () => { const l = new THREE.PointLight(0xffedd0, 1100, 75, 2); l.visible = false; scene.add(l); return l; });
+  const moonTex = tex(x => { const g = x.createRadialGradient(64, 64, 20, 64, 64, 64); g.addColorStop(0, "rgba(235,240,255,1)"); g.addColorStop(.36, "rgba(220,230,255,.95)"); g.addColorStop(.42, "rgba(170,190,255,.25)"); g.addColorStop(1, "rgba(120,140,220,0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    x.fillStyle = "rgba(160,170,200,.35)"; for (const [a, b, r] of [[52, 54, 7], [70, 72, 5], [60, 80, 4], [76, 52, 3]]) { x.beginPath(); x.arc(a, b, r, 0, 7); x.fill(); } });
+  const moon = new THREE.Sprite(new THREE.SpriteMaterial({ map: moonTex, fog: false, depthWrite: false, transparent: true })); moon.scale.setScalar(160); moon.visible = false; scene.add(moon);
+  const TN = 26, trailGeo = new THREE.BufferGeometry(), tp = new Float32Array(22*TN*2*3), tc = new Float32Array(22*TN*2*3); // light trails behind the cars, one draw call for all
+  trailGeo.setAttribute("position", new THREE.BufferAttribute(tp, 3)); trailGeo.setAttribute("color", new THREE.BufferAttribute(tc, 3));
+  const trails = new THREE.LineSegments(trailGeo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); trails.frustumCulled = false; trails.visible = false; scene.add(trails);
+  const hist = new Map(), tmp = new THREE.Vector3();
+  const FN = 30, fp = new Float32Array(FN*3).fill(-1e4), fg = new THREE.BufferGeometry(); fg.setAttribute("position", new THREE.BufferAttribute(fp, 3)); // camera flashes in the crowd
+  const flashTex = tex(x => { const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, "rgba(255,255,255,1)"); g.addColorStop(.2, "rgba(220,235,255,.6)"); g.addColorStop(1, "rgba(200,220,255,0)"); x.fillStyle = g; x.fillRect(0, 0, 128, 128); });
+  const flashes = new THREE.Points(fg, new THREE.PointsMaterial({ size: 2.4, map: flashTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, fog: false })); flashes.frustumCulled = false; flashes.visible = false; scene.add(flashes);
+  NIGHT.set = on => { NIGHT.on = on; if (NIGHT.pools) NIGHT.pools.visible = NIGHT.beams.visible = on; for (const l of NIGHT.lights) l.visible = on; moon.visible = trails.visible = flashes.visible = on;
+    REAR_MAT.emissiveIntensity = on ? 6 : (opts.rain || WEATHER.wet ? 3 : .6); if (!on) hist.clear(); };
+  NIGHT.update = (t) => {
+    if (!NIGHT.on || !track || !track.lamps) return;
+    moon.position.copy(camera.position).add(tmp.set(-900, 650, -1300));
+    const f = (race && cars.length) ? focusCar().mesh.position : tmp.set(30, track.startY, 0), fx = f.x, near = track.lamps.slice().sort((a, b) => Math.abs(a.x - fx) - Math.abs(b.x - fx));
+    NIGHT.lights.forEach((l, i) => { const L = near[i]; if (L) l.position.set(L.x + 1, L.y - 1, L.z + 3); });
+    let k = 0; const blink = (opts.rain || WEATHER.wet) ? (Math.sin(t*12) > 0 ? 1 : .35) : 1; REAR_MAT.emissiveIntensity = 6*blink;
+    for (const c of cars) { let h = hist.get(c); if (!h) { h = []; hist.set(c, h); }
+      if (c.hidden || c.status === "grid") { h.length = 0; continue; }
+      c.mesh.updateMatrixWorld(); tmp.set(-2.36, .22, 0).applyMatrix4(c.mesh.matrixWorld); h.unshift(tmp.x, tmp.y, tmp.z); if (h.length > TN*3) h.length = TN*3;
+      for (let i = 0; i + 5 < h.length && k < 22*TN*2; i += 3) { const a = 1 - i/(TN*3), b = 1 - (i + 3)/(TN*3), o3 = k*3;
+        tp.set([h[i], h[i + 1], h[i + 2], h[i + 3], h[i + 4], h[i + 5]], o3); tc.set([a, a*.08, a*.06, b, b*.08, b*.06], o3); k += 2; } }
+    trailGeo.attributes.position.needsUpdate = trailGeo.attributes.color.needsUpdate = true; trailGeo.setDrawRange(0, k);
+    const F = track.fans; if (F && F.base && race && race.phase !== "grid") { for (let i = 0; i < FN; i++) { if (Math.random() < .55) { fp[i*3 + 1] = -1e4; continue; } const j = Math.floor(Math.random()*F.k)*4; fp[i*3] = F.base[j]; fp[i*3 + 1] = F.base[j + 1] + .5; fp[i*3 + 2] = F.base[j + 2]; }
+      fg.attributes.position.needsUpdate = true; } };
+}
 /* ---------- v2.0 atmosphere: sun glare and sunlit dust floating in the air ---------- */
 const ATMO = {};
 { const glow = (() => { const cv = document.createElement("canvas"); cv.width = cv.height = 128; const x = cv.getContext("2d"), g = x.createRadialGradient(64, 64, 0, 64, 64, 64);
@@ -2101,6 +2166,7 @@ const C_CARBON = new THREE.Color(0x15181f), C_VISOR = new THREE.Color(0x0b0d12),
 const darkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .3 });
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .72, metalness: .25 });
 let DARK_GEO = null, WHEEL_GEO = null;
+const REAR_GEO = new THREE.BoxGeometry(.05, .07, .16), REAR_MAT = new THREE.MeshStandardMaterial({ color: 0x330000, emissive: 0xff1a1a, emissiveIntensity: .6 });
 function carParts(tc, ac) { // [geometry, x,y,z, rx,ry,rz, sx,sy,sz, colour] -- the same car as before, part for part
   const B = unitBox, K = C_CARBON, L = [];
   const add = (geo, x, y, z, rx, ry, rz, sx, sy, sz, c) => L.push({ geo, m: partMatrix(x, y, z, rx, ry, rz, sx, sy, sz), c });
@@ -2123,10 +2189,11 @@ function carMesh(colour) {
   const parts = carParts(tc, ac), paintParts = parts.filter(p => p.c === tc || p.c === ac || p.c === C_HELMET);
   if (!DARK_GEO) DARK_GEO = mergeParts(parts.filter(p => !paintParts.includes(p)));
   const paintMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: .3, metalness: .15, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: .6 });
-  paintMat.envMap = opts.tod === "day" && !opts.rain ? LOOK.envDay : null; PAINT.push(paintMat);
+  paintMat.envMap = opts.tod === "day" ? (opts.rain ? null : LOOK.envDay) : LOOK.envNight || null; PAINT.push(paintMat);
   const paint = new THREE.Mesh(mergeParts(paintParts), paintMat); paint.castShadow = true; paint.userData.own = true;
   const dark = new THREE.Mesh(DARK_GEO, darkMat); dark.castShadow = true;
-  g.add(paint, dark); return g;
+  const rl = new THREE.Mesh(REAR_GEO, REAR_MAT); rl.position.set(-2.33, .22, 0); // the red rear light real F1 cars run in the dark and the wet
+  g.add(paint, dark, rl); return g;
 }
 function wheelMesh() {
   if (!WHEEL_GEO) { const L = [], rim = new THREE.Color(0x5b6273), tyre = new THREE.Color(0x111215), ring = new THREE.Color(0xffd23f);
@@ -2260,7 +2327,7 @@ function buildWorld() {
   $("#ticker").innerHTML = ""; setFlag("ON THE GRID", ""); $("#clock").textContent = "0.000";
   $("#startBtn").textContent = "START"; $("#startBtn").disabled = false;
   { const gb = document.querySelector('[data-cam="giant"]'); gb.hidden = !opts.giant; if (!opts.giant && opts.cam === "giant") setCam("tv"); }
-  buildRows(); syncVisuals(); snapCamera(); if (POOL.on) poolOpen(); renderBets(); renderSeason();
+  buildRows(); syncVisuals(); snapCamera(); if (typeof renderNow === "function") try { renderNow(); } catch (e) {} if (POOL.on) poolOpen(); renderBets(); renderSeason();
 }
 function disposeGroup(g) {
   g.traverse(o => { if (o.userData.keep) return; if (o.userData.own) { o.geometry.dispose(); o.material.dispose(); } if (o.userData.ownGeo) o.geometry.dispose(); if (o.isInstancedMesh) o.dispose(); if (o.material && o.material.map) o.material.map.dispose(); if (o.isSprite) o.material.dispose(); });
@@ -2858,12 +2925,13 @@ const FEATS = [["chaos", "💥", "CHAOS", "Driver mistakes and 4 random obstacle
 const FEAT_ID = { chaos: "chaosTog", stampede: "stampTog", showers: "showerTog", rain: "rainTog", turbo: "turboTog", moon: "moonTog", giant: "giantTog", reverse: "revTog", jump: "jumpTog" };
 const DEG_NAME = { 50: "50° DROP", 72: "72° DROP", 88: "88° CLIFF" };
 let SURPRISE = !!store.get("f1bezerk.surprise", { on: false }).on;
-function currentSetup() { const c = { deg: opts.deg, tod: opts.tod }; for (const [k] of FEATS) c[k] = !!opts[k]; return c; }
+function currentSetup() { const c = { deg: opts.deg, tod: opts.tod, grid: opts.grid }; for (const [k] of FEATS) c[k] = !!opts[k]; return c; }
 function describeSetup(c) { const w = [DEG_NAME[c.deg] || `${c.deg}°`]; if (c.tod === "night") w.push("NIGHT"); for (const [k, , n] of FEATS) if (c[k] && k !== "jump" && k !== "chaos") w.push(n); if (c.chaos) w.push("CHAOS"); if (!c.jump) w.push("NO JUMP"); return w; }
-function randomSetup() { const R = Math.random, c = { deg: [50, 72, 72, 88][Math.floor(R()*4)], tod: R() < .3 ? "night" : "day", chaos: R() < .8, jump: R() < .75 };
+function randomSetup() { const R = Math.random, c = { grid: opts.grid, deg: [50, 72, 72, 88][Math.floor(R()*4)], tod: R() < .3 ? "night" : "day", chaos: R() < .8, jump: R() < .75 };
   const pool = ["stampede", "showers", "rain", "turbo", "moon", "giant", "reverse"].sort(() => R() - .5), n = 1 + Math.floor(R()*3);
   for (const k of pool) c[k] = false; for (const k of pool.slice(0, n)) c[k] = true; if (c.rain && c.showers) c.showers = false; return c; }
 function applySetup(c, announce) {
+  if (c.grid) { opts.grid = c.grid; document.querySelectorAll("[data-grid]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.grid === c.grid))); }
   opts.deg = c.deg; document.querySelectorAll("[data-ramp]").forEach(x => x.setAttribute("aria-pressed", String(+x.dataset.ramp === c.deg)));
   for (const [k] of FEATS) { opts[k] = !!c[k]; $("#" + FEAT_ID[k]).setAttribute("aria-pressed", String(opts[k])); }
   setTimeOfDay(c.tod === "night" ? "night" : "day"); rebuild();
@@ -2876,16 +2944,21 @@ function applySetup(c, announce) {
   grid.replaceChildren(...FEATS.map(([k, em, name, txt]) => { const b = el("button", "su-card"); b.type = "button"; b.dataset.k = k; b.append(el("span", "em", em), el("b", null, name), el("span", null, txt)); b.onclick = () => { draft[k] = !draft[k]; if (k === "rain" && draft.rain) draft.showers = false; if (k === "showers" && draft.showers) draft.rain = false; paint(); }; return b; }));
   const paint = (flash) => { for (const b of grid.children) { b.setAttribute("aria-pressed", String(!!draft[b.dataset.k])); if (flash && draft[b.dataset.k]) { b.classList.add("flash"); setTimeout(() => b.classList.remove("flash"), 220); } }
     for (const b of $("#suDeg").children) b.setAttribute("aria-pressed", String(+b.dataset.v === draft.deg)); for (const b of $("#suTod").children) b.setAttribute("aria-pressed", String(b.dataset.v === draft.tod));
+    for (const b of $("#suGridOrd").children) b.setAttribute("aria-pressed", String(b.dataset.v === (draft.grid || "std")));
     $("#suPreview").textContent = "NEXT RACE: " + describeSetup(draft).join(" · "); };
   for (const b of $("#suDeg").children) b.onclick = () => { draft.deg = +b.dataset.v; paint(); };
   for (const b of $("#suTod").children) b.onclick = () => { draft.tod = b.dataset.v; paint(); };
+  for (const b of $("#suGridOrd").children) b.onclick = () => { draft.grid = b.dataset.v; paint(); };
+  $("#nowEdit").addEventListener("click", () => $("#setupBtn").click());
   $("#setupBtn").addEventListener("click", () => { draft = currentSetup(); $("#suSurprise").checked = SURPRISE; paint(); try { dlg.showModal(); } catch (e) { dlg.setAttribute("open", ""); } });
   $("#suDice").onclick = () => { draft = randomSetup(); paint(true); };
   $("#suCancel").onclick = () => dlg.close();
-  $("#suSurprise").onchange = e => { SURPRISE = e.target.checked; store.set("f1bezerk.surprise", { on: SURPRISE }); };
+  $("#suSurprise").onchange = e => { SURPRISE = e.target.checked; store.set("f1bezerk.surprise", { on: SURPRISE }); renderNow(); };
   $("#suSave").onclick = () => { dlg.close(); store.set("f1bezerk.setup", draft); if (race && race.phase !== "grid" && race.phase !== "done" && race.phase !== "lights") return; applySetup(draft, true); };
   $("#diceBtn").addEventListener("click", () => { if (race && (race.phase === "race" || race.phase === "lights")) return; const c = randomSetup(); store.set("f1bezerk.setup", c); applySetup(c, true); });
 }
+function renderNow() { const box = $("#nowChips"); if (!box) return; const c = currentSetup(), w = describeSetup(c);
+  box.replaceChildren(...w.map((t, i) => el("span", "now-chip" + (i > 0 && !/NIGHT|CHAOS|NO JUMP/.test(t) ? " hot" : ""), t)), ...(SURPRISE ? [el("span", "now-chip", "🎲 SURPRISE ON")] : [])); }
 function nextRace() { if (SURPRISE) { const c = randomSetup(); store.set("f1bezerk.setup", c); applySetup(c, true); } else buildWorld(); }
 $("#drvBtn").addEventListener("click", () => { // driver view: the selected car, or the leader
   if (selected && !pipClosed) { pipClosed = true; $("#drvBtn").setAttribute("aria-pressed", "false"); return; }

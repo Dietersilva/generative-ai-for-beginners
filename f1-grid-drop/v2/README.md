@@ -17,6 +17,19 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 3
+
+- **Redesign:**
+  - The bar under the race now holds only START, RESET, RACE SETUP, RANDOMIZE, SPEED, SLOW-MO, COMMENTARY and REPLAYS.
+  - A "THIS RACE" line shows the active setup as tags, with a "change" link.
+  - Drop angle, grid order, time of day and every special feature are in RACE SETUP.
+  - All keyboard shortcuts still work, listed under "Keyboard shortcuts".
+- **Night race lighting:**
+  - Darkness: dark surroundings under dim blue moonlight, a moon and stars.
+  - Floodlights: the six towers nearest the action cast real light on the cars. Every tower lights a glowing pool on the track, with a faint beam under it.
+  - Cars: each runs a red rear light, as real F1 cars do at night and in the rain (it flashes in the wet), with light trails behind it. The paint reflects the floodlights.
+  - Crowd: camera flashes in the grandstand.
+
 ## v2.0 round 2
 
 - **Cars:** sculpted bodywork instead of boxes: a tapered nose, a raised cockpit and airbox, sidepods that narrow towards the back, and a shark-fin engine cover. Tyres have rounded shoulders, and the paint is glossier, with stronger sky reflections.
