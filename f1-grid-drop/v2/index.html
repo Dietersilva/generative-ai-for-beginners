@@ -836,6 +836,74 @@ const GROUND = {};
     for (let i = 0; i < 5200; i++) { const v = 170 + Math.floor(Math.random()*85); x.fillStyle = `rgba(${v},${v},${v},.55)`; x.fillRect(Math.random()*n, Math.random()*n, 1 + Math.random()*2, 2 + Math.random()*4); } }, 256, 520);
   GROUND.mesh = terrainMesh(); scene.add(GROUND.mesh); }
 
+/* ---------- v2.0 scanned nature (Poly Haven, CC0): real trees, bushes and grass as photo cards, real rock shapes ---------- */
+const SCAN = { tint: null };
+async function buildScanned(rockTex) {
+  let meta, rocks; try { [meta, rocks] = await Promise.all([fetch("assets/plants.json").then(r => r.json()), fetch("assets/rocks.json").then(r => r.json())]); } catch (e) { return; }
+  const atl = {}; await Promise.all(["broad", "fir", "bush", "grass"].map(k => loadTex(k + "_atlas.webp", 1).then(t => { if (t) { t.wrapS = t.wrapT = THREE.ClampToEdgeWrapping; atl[k] = t; } })));
+  const tint = SCAN.tint = { value: new THREE.Color(1, 1, 1) }; setPlantLight();
+  // one card that always turns to face the camera, plus a flat card seen from above
+  const cardGeo = new THREE.BufferGeometry();
+  cardGeo.setAttribute("position", new THREE.Float32BufferAttribute([-.5, 0, 0, .5, 0, 0, .5, 1, 0, -.5, 1, 0, -.5, 0, -.5, .5, 0, -.5, .5, 0, .5, -.5, 0, .5], 3));
+  cardGeo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0], 2));
+  cardGeo.setAttribute("card", new THREE.Float32BufferAttribute([0, 0, 0, 0, 1, 1, 1, 1], 1)); cardGeo.setIndex([0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6]);
+  const cardMat = (tex, m, maxD, grade) => { const mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+    mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, { tAtlas: { value: tex }, uTint: tint, uGrade: { value: new THREE.Vector3(...grade) } });
+      sh.vertexShader = sh.vertexShader.replace("#include <common>", `#include <common>
+attribute float card; varying vec2 vAt; varying float vFade;`).replace("#include <project_vertex>", `
+  vec3 C = (modelMatrix * instanceMatrix * vec4(0., 0., 0., 1.)).xyz; float S = length(instanceMatrix[0].xyz), yaw = atan(-instanceMatrix[0].z, instanceMatrix[0].x);
+  vec3 d = cameraPosition - C; float hd = max(length(d.xz), .001), dist = length(d), elev = atan(d.y, hd); vec2 f = d.xz/hd; vec3 P;
+  float near = 1. - smoothstep(${(maxD*.8).toFixed(1)}, ${maxD.toFixed(1)}, dist);
+  if (card < .5) { vec3 right = vec3(f.y, 0., -f.x); P = C + right*position.x*${m.w.toFixed(3)}*S + vec3(0., position.y*${m.h.toFixed(3)}*S, 0.);
+    float a = atan(f.x, f.y) - yaw; float k = mod(floor(a/6.2831853*8. + .5), 8.); vAt = vec2((k + uv.x)*${m.cell.toFixed(5)}, uv.y);
+    vFade = (1. - smoothstep(.8, 1.15, elev))*near; }
+  else { P = C + vec3(position.x*${m.w.toFixed(3)}*S, ${(m.h*.55).toFixed(3)}*S, position.z*${m.w.toFixed(3)}*S); vAt = vec2(8.*${m.cell.toFixed(5)} + uv.x*${m.top.toFixed(5)}, uv.y);
+    vFade = smoothstep(.75, 1.1, elev)*near; }
+  if (vFade <= 0.) P = C;
+  vec4 mvPosition = viewMatrix * vec4(P, 1.); gl_Position = projectionMatrix * mvPosition;`);
+      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", `#include <common>
+uniform sampler2D tAtlas; uniform vec3 uTint; uniform vec3 uGrade; varying vec2 vAt; varying float vFade;`).replace("#include <map_fragment>", `
+  vec4 tx = texture2D(tAtlas, vAt); float hs = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233)))*43758.5453);
+  if (tx.a < .5 || hs > vFade) discard; diffuseColor.rgb *= tx.rgb*uGrade*uTint;`); }; // uGrade: the scanned photos are dark, so each kind gets its own lift to sunlit greens
+    return mat; };
+  const o = new THREE.Object3D(), g = new THREE.Group(); g.name = "scanned";
+  const GRADE = { broad: [2.3, 3.3, 1.7], fir: [3.6, 5.2, 3.4], bush: [2, 2.9, 1.6], grass: [1.7, 2.6, 1.3] };
+  const cards = (key, list, scale, maxD) => { if (!atl[key] || !list.length) return; const im = new THREE.InstancedMesh(cardGeo, cardMat(atl[key], meta[key], maxD, GRADE[key]), list.length);
+    list.forEach((p, i) => { o.position.set(p.x, p.y, p.z); o.rotation.set(0, p.yaw, 0); o.scale.setScalar(scale(p)); o.updateMatrix(); im.setMatrixAt(i, o.matrix); });
+    im.frustumCulled = false; g.add(im); return im; };
+  // trees: firs on the high ground, leafy trees lower down; real heights of about 9 to 16 m
+  const firs = SPOTS.trees.filter(t => t.con), broads = SPOTS.trees.filter(t => !t.con);
+  const fa = cards("fir", firs, p => p.s*1.35, 2600), ba = cards("broad", broads, p => p.s*2.6, 2600), bu = cards("bush", SPOTS.bush, p => p.s*.75, 900);
+  // grass clumps near the course
+  const grass = [], R = rng(4242);
+  for (let i = 0, tries = 0; grass.length < 26000 && tries < 200000; tries++) {
+    const x = COURSE.x0 + R()*(COURSE.x1 - COURSE.x0 + 160), z = (R() < .5 ? -1 : 1)*(W/2 + 3 + Math.pow(R(), 1.3)*110);
+    if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r + 2) continue;
+    const y = terrainH(x, z), sl = Math.abs(terrainH(x + 2, z) - y) + Math.abs(terrainH(x, z + 2) - y); if (y > 140 || sl > 1.6) continue;
+    grass.push({ x, y: y - .03, z, yaw: R()*6.28, s: 1.6 + R()*1.6 }); }
+  cards("grass", grass, p => p.s, 75);
+  // rocks: five real scanned shapes, wrapped in the scanned rock photo
+  if (Array.isArray(rocks) && rocks.length && rockTex) {
+    const rockMat = new THREE.MeshStandardMaterial({ roughness: .95, vertexColors: false });
+    rockMat.onBeforeCompile = sh => { sh.uniforms.tRock = { value: rockTex };
+      sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vQP; varying vec3 vQN;").replace("#include <worldpos_vertex>", "#include <worldpos_vertex>\nvec4 qw = modelMatrix * instanceMatrix * vec4(transformed, 1.); vQP = qw.xyz; vQN = normalize(mat3(modelMatrix * instanceMatrix) * objectNormal);");
+      sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nuniform sampler2D tRock; varying vec3 vQP; varying vec3 vQN;").replace("#include <map_fragment>", `
+        vec3 bw = pow(abs(vQN), vec3(4.)); bw /= (bw.x + bw.y + bw.z);
+        vec3 rk = texture2D(tRock, vQP.zy*.35).rgb*bw.x + texture2D(tRock, vQP.xz*.35).rgb*bw.y + texture2D(tRock, vQP.xy*.35).rgb*bw.z;
+        diffuseColor.rgb *= rk*1.35;`); };
+    const geos = rocks.map(r => { const gg = new THREE.BufferGeometry(); gg.setAttribute("position", new THREE.Float32BufferAttribute(r.p, 3)); gg.setAttribute("normal", new THREE.Float32BufferAttribute(r.n, 3)); gg.setIndex(r.i); return gg; });
+    const per = geos.map(() => []); SPOTS.rock.forEach((p, i) => per[i % geos.length].push(p));
+    geos.forEach((gg, j) => { const im = new THREE.InstancedMesh(gg, rockMat, per[j].length); const c = new THREE.Color();
+      per[j].forEach((p, i) => { o.position.set(p.x, p.y, p.z); o.rotation.set(p.rx*.5, p.ry, p.rz*.5); o.scale.set(p.s*1.1, p.s*p.sy, p.s*1.1); o.updateMatrix(); im.setMatrixAt(i, o.matrix); im.setColorAt(i, c.setHSL(.08, .08, .6 + Math.random()*.25)); });
+      im.castShadow = im.receiveShadow = true; g.add(im); });
+    if (scenery.proc && scenery.proc.rk) scenery.proc.rk.visible = false;
+  }
+  // the old shapes stay as invisible shadow casters, so the new trees still throw shade
+  const P = scenery.proc; if (P) for (const k of ["cone", "ball", "trunk", "bush"]) if (P[k] && ((k === "bush" && bu) || (k !== "bush" && (fa || ba)))) { const m = P[k].material.clone(); m.colorWrite = false; m.depthWrite = false; P[k].material = m; }
+  scene.add(g); SCAN.group = g;
+}
+function setPlantLight() { if (!SCAN.tint) return; const day = opts.tod === "day", wet = opts.rain || WEATHER.wet;
+  SCAN.tint.value.setRGB(...(day ? (wet ? [.8, .85, .9] : [1.05, 1.05, 1]) : [.12, .14, .22])); }
 const unitBox = new THREE.BoxGeometry(1,1,1);
 (async () => { // v2.0: swap in the real textures once they arrive
   try { const es = new THREE.Scene(), pm = new THREE.PMREMGenerator(renderer), lm = new THREE.MeshBasicMaterial({ color: 0xfff0d8 }); es.background = new THREE.Color(0x05070d); // floodlights for the cars to reflect at night
@@ -844,6 +912,7 @@ const unitBox = new THREE.BoxGeometry(1,1,1);
   const [grass, rock, snow, ad, an, ar, grassFar] = await Promise.all([["leafy_grass_diff_1k.jpg", 1], ["rock_face_03_diff_1k.jpg", 1], ["snow_02_diff_1k.jpg", 1], ["asphalt_track_diff_1k.jpg", 1], ["asphalt_track_nor_gl_1k.jpg", 0], ["asphalt_track_rough_1k.jpg", 0], ["aerial_grass_rock_diff_1k.jpg", 1]].map(([f, c]) => loadTex(f, c)));
   if (grass && rock && snow) { terrainHD(GROUND.mesh.material, { grass, grassFar, rock, snow }); HD.terrain = true; }
   if (rock) ridgeHD(RIDGE_MAT, rock);
+  buildScanned(rock).catch(e => console.warn("Scanned nature did not load.", e));
   if (ad) { const m = mats.asphalt; m.map = ad; m.userData.uvScale = .22; m.userData.bright = 5; if (an) { m.normalMap = an; m.normalScale.set(.9, .9); } if (ar) m.roughnessMap = ar; m.roughness = 1; m.needsUpdate = true; HD.track = true; }
   TEX.loader.load("assets/sky_day_1k.jpg", t => { // a real sky photo (Poly Haven, CC0) for the reflections on the cars
     try { t.colorSpace = THREE.SRGBColorSpace; t.mapping = THREE.EquirectangularReflectionMapping; const pm = new THREE.PMREMGenerator(renderer); LOOK.envDay = pm.fromEquirectangular(t).texture; pm.dispose(); t.dispose(); HD.sky = true;
@@ -1111,6 +1180,7 @@ function waterNormals() { // v2.0: a tiling ripple pattern drawn once, scrolled 
     im.data[k] = (-dx*.5/l*.5 + .5)*255; im.data[k + 1] = (-dy*.5/l*.5 + .5)*255; im.data[k + 2] = (1/l*.5 + .5)*255; im.data[k + 3] = 255; }
   x.putImageData(im, 0, 0); const t = new THREE.CanvasTexture(cv); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
 }
+const SPOTS = { trees: [], bush: [], rock: [] }; // where every tree, bush and rock stands, shared by the scanned versions
 function treeGeos(r) { // v2.0: realistic-looking tree shapes, built once and shared by every tree
   const shade = (g, dark, light, lo, hi, jit) => { const P = g.attributes.position, c = new Float32Array(P.count*3), A = new THREE.Color(dark), B = new THREE.Color(light), t = new THREE.Color();
     for (let i = 0; i < P.count; i++) { const f = Math.min(1, Math.max(0, (P.getY(i) - lo)/(hi - lo))), rr = Math.hypot(P.getX(i), P.getZ(i)), k = Math.min(1, f*.6 + rr*.12 + (r() - .5)*jit);
@@ -1147,6 +1217,7 @@ function buildScenery() {
     if (fbm(x/260 + 7, z/260) < .45 && r() > .12) continue; // clumped into forests
     const s2 = .75 + r()*.9, conifer = y > 60 || r() < .62;
     o.position.set(x, y + 1.5*s2, z); o.rotation.set(0, r()*6, 0); o.scale.set(s2, s2, s2); o.updateMatrix(); trunk.setMatrixAt(k++, o.matrix);
+    SPOTS.trees.push({ x, y: y - .1, z, s: s2, con: conifer, yaw: Math.random()*6.28 });
     if (conifer) { o.position.y = y + 6.6*s2; o.scale.set(s2*(.8 + r()*.4), s2*(.9 + r()*.6), s2*(.8 + r()*.4)); o.updateMatrix(); cone.setMatrixAt(kc, o.matrix); cone.setColorAt(kc++, col.setHSL(.28 + r()*.08, .3 + r()*.3, .55 + r()*.3)); }
     else { o.position.y = y + 5.8*s2; o.scale.set(s2*(.9 + r()*.4), s2*(.8 + r()*.4), s2*(.9 + r()*.4)); o.updateMatrix(); ball.setMatrixAt(kb, o.matrix); ball.setColorAt(kb++, col.setHSL(.15 + r()*.15, .3 + r()*.35, .55 + r()*.35)); }
   }
@@ -1160,10 +1231,11 @@ function buildScenery() {
       if (Math.hypot(x - LAKE.x, z - LAKE.z) < LAKE.r + 4) continue;
       const y = terrainH(x, z), sl = Math.abs(terrainH(x + 3, z) - y) + Math.abs(terrainH(x, z + 3) - y); if (y > 260) continue;
       const rocky = sl > 2.2 || y > 140 || r() < .12;
-      if (rocky && nr < NR) { const sc = .6 + r()*r()*4; o.position.set(x, y - .2*sc, z); o.rotation.set(r()*.4, r()*6.28, r()*.4); o.scale.set(sc, sc*(.7 + r()*.5), sc); o.updateMatrix(); rk.setMatrixAt(nr, o.matrix); rk.setColorAt(nr++, col.setHSL(.08, .05 + r()*.1, .6 + r()*.4)); }
-      else if (!rocky && nb < NB && fbm(x/90 + 2, z/90) > .38) { const sc = .7 + r()*1.3; o.position.set(x, y + .3*sc, z); o.rotation.set(0, r()*6.28, 0); o.scale.set(sc, sc*(.8 + r()*.5), sc); o.updateMatrix(); bush.setMatrixAt(nb, o.matrix); bush.setColorAt(nb++, col.setHSL(.18 + r()*.12, .35 + r()*.3, .5 + r()*.35)); }
+      if (rocky && nr < NR) { const sc = .6 + r()*r()*4; o.position.set(x, y - .2*sc, z); o.rotation.set(r()*.4, r()*6.28, r()*.4); o.scale.set(sc, sc*(.7 + r()*.5), sc); o.updateMatrix(); rk.setMatrixAt(nr, o.matrix);
+        SPOTS.rock.push({ x, y: y - .25*sc, z, s: sc, sy: o.scale.y/sc, rx: o.rotation.x, ry: o.rotation.y, rz: o.rotation.z }); rk.setColorAt(nr++, col.setHSL(.08, .05 + r()*.1, .6 + r()*.4)); }
+      else if (!rocky && nb < NB && fbm(x/90 + 2, z/90) > .38) { const sc = .7 + r()*1.3; SPOTS.bush.push({ x, y: y - .05, z, s: sc, yaw: Math.random()*6.28 }); o.position.set(x, y + .3*sc, z); o.rotation.set(0, r()*6.28, 0); o.scale.set(sc, sc*(.8 + r()*.5), sc); o.updateMatrix(); bush.setMatrixAt(nb, o.matrix); bush.setColorAt(nb++, col.setHSL(.18 + r()*.12, .35 + r()*.3, .5 + r()*.35)); }
     }
-    bush.count = nb; rk.count = nr; bush.castShadow = rk.castShadow = true; bush.receiveShadow = rk.receiveShadow = true; g.add(bush, rk); }
+    bush.count = nb; rk.count = nr; bush.castShadow = rk.castShadow = true; bush.receiveShadow = rk.receiveShadow = true; g.add(bush, rk); scenery.proc = { trunk, cone, ball, bush, rk }; }
   // clouds (day)
   const cl = new THREE.Group(); { // v2.0: soft, sunlit cumulus made of camera-facing puffs
     const cv = document.createElement("canvas"); cv.width = cv.height = 128; const x = cv.getContext("2d");
@@ -1258,7 +1330,7 @@ function setTimeOfDay(mode) {
   hemi.color.set(day ? 0xd6e8ff : 0x5d74b0); hemi.groundColor.set(day ? 0x557a3c : 0x07090f); hemi.intensity = day ? 1.3 : .32; // night: dim blue moonlight, the floodlights do the rest
   sun.color.set(day ? 0xfff6e6 : 0x9fb6ff); sun.intensity = day ? 3.1 : .45;
   fill.intensity = day ? .3 : .08; renderer.toneMappingExposure = day ? (LOOK.sky ? .72 : .95) : 1.15;
-  if (NIGHT.set) NIGHT.set(!day); if (typeof renderNow === "function" && typeof SURPRISE !== "undefined") try { renderNow(); } catch (e) {}
+  if (NIGHT.set) NIGHT.set(!day); setPlantLight(); if (typeof renderNow === "function" && typeof SURPRISE !== "undefined") try { renderNow(); } catch (e) {}
   if (day && LOOK.sky) { hemi.intensity = 1.05; sun.intensity = 3.4; }
   if (!HD.terrain) { GROUND.mesh.material.map = day ? GROUND.day : null; GROUND.mesh.material.needsUpdate = true; }
   mats.lamp.emissiveIntensity = day ? .15 : 2.2;

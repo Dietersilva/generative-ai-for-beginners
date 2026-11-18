@@ -17,6 +17,21 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 4: real scanned nature
+
+All from Poly Haven 3D scans (CC0): Island Tree 02, Fir Sapling Medium, Searsia Lucida, Grass Medium 02, Boulder 01, Namaqualand Boulder 02 and Rock Moss Set 01.
+
+- **Trees and bushes:**
+  - Each scanned plant was photographed from 8 sides and from above into one image sheet (the "impostor" technique games use for forests).
+  - In the game, each tree is a panel that turns to face the camera and shows the matching photo angle, switching to the top view when the camera looks straight down.
+  - About 1,700 trees (firs higher up, leafy trees lower down) and 2,600 bushes.
+- **Grass:** about 26,000 scanned grass clumps around the course, drawn only within about 75 m of the camera to protect speed.
+- **Rocks:** the real scanned shapes, simplified from up to 180,000 polygons to about 2,200 each (5 shapes), wrapped in the scanned rock texture. They cast real shadows.
+- **Colour:** the scans are photographed in shade and are naturally dark, so each kind of plant gets a colour lift to sunlit greens. The plants also darken at night and in the rain.
+- **Shadows:** the earlier tree shapes still cast the tree shadows, invisibly.
+- **Fallback:** if these files don't load, the earlier trees and rocks stay.
+- **Size:** about 1.7 MB in total (four WebP image sheets, plus rocks.json and plants.json).
+
 ## v2.0 round 3
 
 - **Redesign:**
