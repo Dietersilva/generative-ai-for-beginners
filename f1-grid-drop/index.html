@@ -165,6 +165,13 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
 .panel{flex:1;overflow-y:auto;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .pn-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.spd-real{font-family:var(--f-display);font-weight:800;font-size:12px;letter-spacing:.08em;color:var(--gold,#ffd23f);margin-left:6px}
+.pop{right:14px;top:112px;width:min(34%,380px);aspect-ratio:16/9;border:2px solid var(--pc,#ff2f45);border-radius:10px;box-shadow:0 10px 40px #000b;z-index:3;animation:popIn .35s cubic-bezier(.2,1.4,.4,1)}
+.pop-hd{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:8px;padding:6px 8px;background:linear-gradient(transparent,#05070de6 35%)}
+.pop-live{font-family:var(--f-display);font-weight:800;font-size:11px;letter-spacing:.14em;padding:2px 6px;border-radius:4px;background:#ff2f45;color:#fff;flex:none}
+.pop-live::before{content:"● "}
+.pop-tx{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.04em;color:#fff;text-transform:uppercase;line-height:1.1;text-shadow:0 2px 6px #000}
+@keyframes popIn{from{transform:translateX(30px) scale(.85);opacity:0}}
 .reclist{display:flex;flex-direction:column;gap:6px}
 .rec{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
 .rec b{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.06em}
@@ -328,6 +335,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
     <div class="hud banner" id="banner" hidden><div class="big" id="bannerBig"></div><div class="small" id="bannerSmall"></div></div>
     <div class="hud dcard" id="dcard" hidden></div>
     <div class="hud mini" id="mini" aria-label="Running order"></div>
+    <div class="hud pop" id="pop" hidden><div class="pop-hd"><span class="pop-live">LIVE</span><span class="pop-tx" id="popTx"></span></div></div>
     <div class="hud pip" id="pip" hidden><span class="pip-tag" id="pipTag"></span><button class="pip-x" id="pipX" aria-label="Close driver view">✕</button></div>
     <div class="hud results" id="results" hidden></div>
     <button class="hud cta fs-start" id="fsStart">START</button>
@@ -372,6 +380,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
         <button class="seg" data-speed="3" aria-pressed="false" title="Fast-forward three times as fast">3×</button>
         <button class="seg" data-speed="4" aria-pressed="false" title="Fast-forward four times as fast">4×</button>
       </div>
+      <span class="spd-real" id="spdReal" hidden title="Your computer can't run the physics any faster than this"></span>
     </div>
     <button class="tog" id="turboTog" aria-pressed="false" title="Turbo: much less drag, much more speed (T)"><i></i>TURBO</button>
     <button class="tog" id="rainTog" aria-pressed="false" title="Rain: less grip, spray and a wet track (W)"><i></i>RAIN</button>
@@ -920,6 +929,7 @@ function buildTrack() {
       heads.push({ cx: x, cy: y + 15.4, cz: sz*(W/2 + 2.4), hx: 1.2, hy: .6, hz: .45, ang: 0 }); } }
     trackGroup.add(instanced(poles, mats.steel), instanced(heads, mats.lamp, null, false)); }
   props = opts.chaos ? buildProps() : [];
+  if (opts.chaos && !opts.moon && Math.random() < .6) props.push(buildSnatcher());
   if (opts.stampede) props.push(...buildHerd());
   scene.add(trackGroup);
   $("#fDrop").textContent = `${Math.round(track.startY)} m`; $("#fDeg").textContent = `${opts.deg}°`; $("#fFin").textContent = `${(track.length/1000).toFixed(2)} km`;
@@ -1305,10 +1315,10 @@ function buildProps() {
     const x = track.run1bX + 118, y0 = surfaceY(x), A = makeTrex(); A.root.scale.setScalar(.9);
     const b = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: pm.prop });
     b.addShape(new CANNON.Box(new CANNON.Vec3(2.2, 1.3, 1.2)), new CANNON.Vec3(.3, 3.9, 0)); b.addShape(new CANNON.Box(new CANNON.Vec3(.6, 1.7, 1.1)), new CANNON.Vec3(.2, 1.7, 0));
-    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(x, y0, 0); b.kind = "trex"; let ph = 0;
+    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(x, y0, 0); b.kind = "trex"; b.beast = A; let ph = 0;
     add(b, A.root, { update(t) { const z = 7.5*Math.sin(t*.32 + .8), vz = 7.5*.32*Math.cos(t*.32 + .8); b.position.set(x, y0, z); b.velocity.set(0, 0, vz);
         b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), vz >= 0 ? -Math.PI/2 : Math.PI/2); },
-      after() { ph += .12; A.legs.forEach((l, i) => l.rotation.z = Math.sin(ph + A.gait[i])*A.stride); A.body.position.y = Math.abs(Math.sin(ph))*A.bob; } });
+      after() { ph += .12; A.legs.forEach((l, i) => l.rotation.z = Math.sin(ph + A.gait[i])*A.stride); A.body.position.y = Math.abs(Math.sin(ph))*A.bob; chomp(A); } });
   }
   if (has("pins")) {
     const prof = [[0,-1.6],[.42,-1.6],[.62,-1.05],[.64,-.6],[.52,-.1],[.31,.45],[.29,.7],[.41,1.05],[.43,1.3],[.3,1.62],[0,1.74]].map(([r, y]) => new THREE.Vector2(r, y));
@@ -1389,15 +1399,17 @@ if ("speechSynthesis" in window) { pickVoices(); try { speechSynthesis.onvoicesc
 function commStop() { COMM.q.length = 0; COMM.busy = false; clearTimeout(COMM.timer); try { if ("speechSynthesis" in window) speechSynthesis.cancel(); } catch (e) {} const cap = $("#caption"); if (cap) cap.classList.add("fade"); }
 function say(host, text, prio = 1) {
   if (!opts.comm) return;
-  COMM.q.push({ host, text, prio, t: performance.now() });
+  const now = performance.now(), cx = COMM.ctx && now - COMM.ctx.t < 60 ? COMM.ctx : null; // the car this line is about, from the event that triggered it
+  COMM.q.push({ host, text, prio, t: now, car: cx && cx.car, pop: cx && cx.pop });
   if (COMM.q.length > 6) { COMM.q.sort((a, b) => b.prio - a.prio || a.t - b.t); COMM.q.length = 6; COMM.q.sort((a, b) => a.t - b.t); }
   pump();
 }
 function pump() {
   if (COMM.busy || !COMM.q.length) return;
-  const now = performance.now(); COMM.q = COMM.q.filter(x => x.prio >= 3 || now - x.t < 5000); if (!COMM.q.length) return;
+  const now = performance.now(); COMM.q = COMM.q.filter(x => now - x.t < (x.prio >= 3 ? 6000 : 3500)); if (!COMM.q.length) return; // drop lines that are no longer about what's on screen
   let i = COMM.q.findIndex(x => x.prio >= 3); if (i < 0) i = 0;
   const x = COMM.q.splice(i, 1)[0], h = HOSTS[x.host]; COMM.busy = true;
+  if (x.car && x.pop && !x.car.hidden && !onMainScreen(x.car)) showPop(x.car, x.pop, 1, 3600); // talking about a car you can't see? show it
   const cap = $("#caption"); cap.style.setProperty("--hc", h.col); $("#capWho").textContent = h.tag; $("#capTxt").textContent = x.text; cap.classList.remove("fade"); clearTimeout(COMM.hideT);
   const done = () => { if (!COMM.busy) return; COMM.busy = false; clearTimeout(COMM.timer); COMM.hideT = setTimeout(() => cap.classList.add("fade"), 1400); setTimeout(pump, 150); };
   let spoke = false;
@@ -1482,6 +1494,10 @@ const C = { // plain-English commentary: Rex calls the action, Priya explains it
   donuts(c) { say("rex", pick("do", [`${sur(c)} is doing donuts on the run-off! What a celebration!`, `Look at ${sur(c)} spinning it round and round past the line!`]), 2);
     say("pri", "And fireworks from the sign on the hill. Lovely.", 1); },
   record(txt) { say("pri", `That's a new all-time record. ${txt}`, 2); },
+  eaten(c) { const n = sur(c); say("rex", pick("ea", [`${n} has been eaten by a T-rex!`, `The T-rex has grabbed ${n}! It's got the whole car in its mouth!`, `Oh no! ${n} is being eaten!`]), 3);
+    say("pri", pick("ea2", ["The driver is fine. Climbed out before the first bite.", "That is definitely not in the rule book.", "I'd call that a racing incident. A very hungry racing incident."]), 2); },
+  snatch(c) { const n = sur(c); say("rex", pick("sn", [`A pterodactyl has snatched ${n}! The car is flying away!`, `${n} is being carried off into the sky!`, `It's got ${n}! A pterodactyl just picked up a Formula 1 car!`]), 3);
+    say("pri", pick("sn2", ["Well, that's one way to leave the race.", "That's the first car ever to finish in the clouds.", "I don't think the stewards have a rule for this."]), 2); },
   dino() { say("rex", pick("dn", ["Is that... a dinosaur by the track?", "There's a T-rex next to the course! Nobody told me about this!", "Look at that! A T-rex is watching the race!"]), 2);
     say("pri", pick("dn2", ["Nobody told the dinosaurs there was a race today.", "It's roaring at the cars. I don't think it's a fan.", "Keep your arms inside the car, everyone."]), 1); },
   update() { // a regular, plain-English update on the race
@@ -1528,7 +1544,8 @@ const RP = { active: false, pending: null, last: -99, count: 0, queue: [], cur: 
 function incident(kind, car, label, prio = 1) {
   if (!opts.replays || !race || race.phase !== "race" || RP.active) return;
   const lead = cars.reduce((m, c) => c.status === "race" ? Math.max(m, c.body.position.x) : m, -1e9);
-  if (track.finX - lead < 130 || race.simT - RP.last < 9 || RP.count >= 4) return;
+  if (track.finX - lead < 130 || race.simT - RP.last < 9 || RP.count >= (opts.speed >= 2 ? 2 : 4)) return;
+  if (opts.speed >= 2 && prio < 3) return; // fast-forwarding: only the biggest moments get a replay
   if (RP.pending && RP.pending.prio >= prio) return;
   RP.pending = { kind, car, label, prio, at: race.simT + 1.4, from: race.simT - (kind === "flip" || kind === "off" ? 6 : 3.8) };
 }
@@ -1789,6 +1806,49 @@ function animateCreatures(dt, t) {
   }
 }
 
+function chomp(A) { const t = performance.now() - (A.chompT || -1e9); if (t < 2200) { A.jaw.rotation.z = -.15 - .5*Math.abs(Math.sin(t*.012)); A.head.rotation.z = .25 + .15*Math.sin(t*.02); } }
+const _jaw = new THREE.Vector3();
+function eat(c, bb) { // a T-rex grabs the car in its jaws, shakes it, and throws it away
+  const A = bb.beast; if (!A || c.eaten || c.status !== "race" || (race.eatN || 0) >= 3) return false; race.eatN = (race.eatN || 0) + 1;
+  c.eaten = { A, t: 0 }; A.chompT = performance.now();
+  event("EATEN", `${c.d.code} is eaten by a T-rex`, "#4f8a3a", c); C.eaten(c);
+  out(c, "EATEN", true); setFrozen(c.body, true); c.body.collisionResponse = false;
+  incident("obst", c, `EATEN · ${c.d.code}`, 3); shake = Math.min(1.4, shake + .9); return true;
+}
+function stepEaten(c, h) { // while held: the car hangs from the T-rex's jaws
+  const E = c.eaten, b = c.body; E.t += h;
+  E.A.jaw.getWorldPosition(_jaw); b.position.set(_jaw.x + .6, _jaw.y - .3, _jaw.z); b.quaternion.setFromEuler(Math.sin(E.t*16)*.55, E.t*1.5, 1.1 + Math.sin(E.t*11)*.3);
+  if (E.t > 1.9) { E.done = true; setFrozen(b, false); b.collisionResponse = true; const sd = b.position.z >= 0 ? 1 : -1;
+    b.velocity.set(8, 11, sd*15); b.angularVelocity.set(5, 3, 7); if (chance(.7)) say("pri", pick("spit", ["And it spits it out! Formula 1 cars must taste terrible.", "Thrown away like a chew toy!"]), 2); }
+}
+
+/* ---------- SNATCH: a pterodactyl swoops down and carries a car away (chaos mode, some races) ---------- */
+function buildSnatcher() {
+  const P = makePtero(); P.root.scale.setScalar(2.3); P.root.visible = false; trackGroup.add(P.root);
+  const b = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC }); b.addShape(new CANNON.Sphere(.1)); b.collisionResponse = false; b.collisionFilterMask = 0; b.collisionFilterGroup = 0;
+  b.position.set(-600, -600, 0); b.kind = "ptero"; b.prop = true; world.addBody(b);
+  const S = { at: 9 + Math.random()*12, phase: "wait", t: 0, lastT: 0, car: null, from: new CANNON.Vec3(), ph: 0 };
+  return { b, m: P.root, pp: b.position.clone(), pq: b.quaternion.clone(),
+    update(t) {
+      const h = Math.max(0, t - S.lastT); S.lastT = t; if (!race || race.phase !== "race" && S.phase === "wait") return;
+      if (S.phase === "wait" && t > S.at) { const r = cars.filter(c => c.status === "race" && (c.sc || 1) <= 1).sort((a, z) => z.s - a.s);
+        if (r.length >= 6) { S.car = r[3 + Math.floor(Math.random()*(r.length - 5))]; S.phase = "swoop"; S.t = 0; const cp = S.car.body.position; S.from.set(cp.x - 30, cp.y + 45, cp.z + 35);
+          if (!race.said.ptero) { race.said.ptero = 1; say("rex", "Wait, what's that in the sky? It's diving at the cars!", 2); } } else S.at += 3; }
+      const c = S.car; if (!c) return; S.t += h;
+      if (S.phase === "swoop") { const f = Math.min(1, S.t/1.7), e = f*f*(3 - 2*f), cp = c.body.position;
+        b.position.set(S.from.x + (cp.x + 3 - S.from.x)*e, S.from.y + (cp.y + 3.2 - S.from.y)*e, S.from.z + (cp.z - S.from.z)*e);
+        b.velocity.set(c.body.velocity.x, 0, 0); b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), -.4*(1 - f));
+        if (c.hidden) { S.phase = "away"; S.t = 0; }
+        else if (f >= 1) { S.phase = "carry"; S.t = 0; if (c.status === "race") { out(c, "SNATCHED", true); event("SNATCHED", `${c.d.code} is snatched by a pterodactyl`, "#b65cff", c); C.snatch(c); incident("obst", c, `SNATCHED · ${c.d.code}`, 3); }
+          c.carried = true; setFrozen(c.body, true); c.body.collisionResponse = false; } }
+      else if (S.phase === "carry" || S.phase === "away") { const sd = b.position.z >= 0 ? 1 : -1; b.velocity.set(16, 9 + S.t*2, sd*12); b.position.x += b.velocity.x*h; b.position.y += b.velocity.y*h; b.position.z += b.velocity.z*h;
+        b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.atan2(b.velocity.z, b.velocity.x));
+        if (S.phase === "carry") { c.body.position.set(b.position.x, b.position.y - 2.6, b.position.z); c.body.quaternion.setFromEuler(Math.sin(S.t*3)*.2, -Math.atan2(b.velocity.z, b.velocity.x), Math.sin(S.t*2.3)*.15); }
+        if (S.t > 6) { const was = S.phase; S.phase = "gone"; if (was === "carry") { c.hidden = true; c.mesh.visible = c.label.visible = false; c.wheels.forEach(w => w.visible = false); } b.position.set(-600, -600, 0); } } },
+    after() { const on = S.phase === "swoop" || S.phase === "carry" || S.phase === "away"; P.root.visible = on; if (!on) return;
+      S.ph += .3; const flap = Math.sin(S.ph)*(S.phase === "swoop" ? .25 : .7); for (const w of P.wings) w.rotation.x = w.userData.sz*flap; } };
+}
+
 /* ---------- STAMPEDE: a herd of dinosaurs chases the field down the mountain ---------- */
 function xAtS(s) { // the inverse of progressS
   const P = track.P; if (s <= 0) return P[0].x0;
@@ -1796,27 +1856,31 @@ function xAtS(s) { // the inverse of progressS
   const p = P[lo], f = Math.min(1, Math.max(0, (s - p.s0)/Math.max(1e-6, p.s1 - p.s0))); return p.x0 + f*(p.x1 - p.x0);
 }
 function buildHerd() {
-  const H = { s: 0, v: 0, on: false, lastT: 0 }, list = [];
+  const H = { s: 0, v: 0, z: 0, on: false, lastT: 0 }, list = [];
   [{ dz: -4.4, ds: 0, rap: [-3.4] }, { dz: 4.4, ds: -3, rap: [3.4] }, { dz: 0, ds: -10, rap: [-3.2, 3.2] }].forEach((mb, i) => {
     const A = makeTrex(); A.root.scale.setScalar(.9); A.ph = i*1.3;
     const raps = mb.rap.map(z => { const R = makeTrex("#a8743a", "#6b4422", "#e6cf98"); R.root.scale.setScalar(.5); R.root.position.set(3.5, 0, z/.9); R.ph = Math.random()*6; A.root.add(R.root); return R; });
     const b = new CANNON.Body({ mass: 0, type: CANNON.Body.KINEMATIC, material: pm.prop });
     b.addShape(new CANNON.Box(new CANNON.Vec3(2.2, 1.3, 1.2)), new CANNON.Vec3(.3, 3.9, 0)); b.addShape(new CANNON.Box(new CANNON.Vec3(.6, 1.7, 1.1)), new CANNON.Vec3(.2, 1.7, 0));
-    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(-400 - i*30, -400, 0); b.kind = "herd"; b.prop = true;
+    b.addShape(new CANNON.Box(new CANNON.Vec3(1.2, .6, .6)), new CANNON.Vec3(3, 5.6, 0)); b.position.set(-400 - i*30, -400, 0); b.kind = "herd"; b.prop = true; b.beast = A;
     world.addBody(b); trackGroup.add(A.root); A.root.visible = false;
     const q = { b, m: A.root, pp: b.position.clone(), pq: b.quaternion.clone(),
       update(t) {
         if (i === 0) { const dt = Math.max(0, t - H.lastT); H.lastT = t;
           const r = cars.filter(c => c.status === "race"), minS = r.length ? Math.min(...r.map(c => c.s || 0)) : track.length;
           if (!H.on && t > 2.5 && race.phase === "race") { H.on = true; H.s = Math.max(0, minS - 35); event("STAMPEDE", "A herd of dinosaurs is chasing the field", "#4f8a3a"); C.stampede(); }
-          if (H.on) { const tgt = r.length ? minS - 5 : track.length - 30; H.v = Math.max(0, Math.min(46, (tgt - H.s)*1.3)); H.s = Math.min(track.length - 30, H.s + H.v*dt); } }
+          if (H.on) { // it runs down the last car still racing: always a bit faster than its prey, and steers towards it
+            const prey = r.find(c => (c.s || 0) === minS);
+            if (prey) { const gap = minS - H.s; H.v = Math.max(0, Math.min(52, gap > 0 ? prey.spd + 7 + gap*.8 : prey.spd*.9)); H.z += (Math.max(-5, Math.min(5, prey.body.position.z)) - H.z)*Math.min(1, dt*2); }
+            else H.v = Math.max(0, Math.min(30, (track.length - 30 - H.s)*1.3));
+            H.s = Math.min(track.length - 30, H.s + H.v*dt); } }
         if (!H.on) return;
         const x = xAtS(Math.max(0, H.s + mb.ds)), th = pieceAt(x).th, v = H.v;
-        b.position.set(x, surfaceY(x), mb.dz); b.velocity.set(Math.cos(th)*v, -Math.sin(th)*v, 0);
+        b.position.set(x, surfaceY(x), Math.max(-6.4, Math.min(6.4, H.z + mb.dz*.7))); b.velocity.set(Math.cos(th)*v, -Math.sin(th)*v, 0);
         b.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 0, 1), -Math.min(th, .6)); },
       after() { A.root.visible = H.on; if (!H.on) return; const k = .04 + H.v*.0055; A.ph += k;
         A.legs.forEach((l, j) => l.rotation.z = Math.sin(A.ph + A.gait[j])*A.stride); A.body.position.y = Math.abs(Math.sin(A.ph))*A.bob;
-        const roar = Math.max(0, Math.sin(A.ph*.13)); A.jaw.rotation.z = -.6*roar; A.head.rotation.z = .2*roar;
+        const roar = Math.max(0, Math.sin(A.ph*.13)); A.jaw.rotation.z = -.6*roar; A.head.rotation.z = .2*roar; chomp(A);
         for (const R of raps) { R.ph += k*1.5; R.legs.forEach((l, j) => l.rotation.z = Math.sin(R.ph + R.gait[j])*R.stride*1.2); R.body.position.y = Math.abs(Math.sin(R.ph))*R.bob; } } };
     list.push(q);
   });
@@ -1950,6 +2014,21 @@ function setFrozen(b, on) {
 }
 
 /* ---------- world (re)build ---------- */
+{ // physics speed-up: skip the costly sphere-against-box contact routine when the sphere is clearly outside the box
+  const NP = CANNON.Narrowphase.prototype, orig = NP.sphereBox, d = new CANNON.Vec3(), l = new CANNON.Vec3(), q = new CANNON.Quaternion();
+  NP.sphereBox = function (si, sj, xi, xj, qi, qj, bi, bj, rsi, rsj, justTest) {
+    const h = sj.halfExtents, R = si.radius;
+    if (h && R !== undefined) { xi.vsub(xj, d); qj.conjugate(q); q.vmult(d, l);
+      if (Math.abs(l.x) > h.x + R || Math.abs(l.y) > h.y + R || Math.abs(l.z) > h.z + R) return false; }
+    return orig.call(this, si, sj, xi, xj, qi, qj, bi, bj, rsi, rsj, justTest);
+  };
+}
+const _bpD = new CANNON.Vec3(), _bpL = new CANNON.Vec3(), _bpQ = new CANNON.Quaternion();
+function nearBox(b, s) { // is body b within reach of the single box that makes up track piece s?
+  const sh = s.shapes[0]; if (s.shapes.length !== 1 || !sh.halfExtents) return true;
+  b.position.vsub(s.position, _bpD); s.quaternion.conjugate(_bpQ); _bpQ.vmult(_bpD, _bpL); const h = sh.halfExtents, r = b.boundingRadius + .5;
+  return Math.abs(_bpL.x) <= h.x + r && Math.abs(_bpL.y) <= h.y + r && Math.abs(_bpL.z) <= h.z + r;
+}
 class TrackBroadphase extends CANNON.Broadphase { // fixed track pieces sorted once along the course; each step only cars and props look up the pieces near them
   constructor() { super(); this.n = -1; this.fixed = []; this.wide = []; this.maxW = 0; this.mov = []; this.set = new Set(); }
   refresh(world) {
@@ -1967,7 +2046,7 @@ class TrackBroadphase extends CANNON.Broadphase { // fixed track pieces sorted o
     this.refresh(world); const M = this.movers();
     for (let i = 0; i < M.length; i++) { const bi = M[i];
       for (let j = i + 1; j < M.length; j++) if (this.needBroadphaseCollision(bi, M[j])) this.intersectionTest(bi, M[j], p1, p2);
-      if (bi.type !== CANNON.Body.STATIC) this.near(bi.aabb.lowerBound.x, bi.aabb.upperBound.x, s => { if (this.needBroadphaseCollision(bi, s)) this.intersectionTest(bi, s, p1, p2); }); }
+      if (bi.type !== CANNON.Body.STATIC) this.near(bi.aabb.lowerBound.x, bi.aabb.upperBound.x, s => { if (this.needBroadphaseCollision(bi, s) && nearBox(bi, s)) this.intersectionTest(bi, s, p1, p2); }); }
   }
   aabbQuery(world, aabb, result = []) {
     this.refresh(world); for (const b of this.movers()) if (b.aabb.overlaps(aabb)) result.push(b);
@@ -2095,9 +2174,9 @@ function pickLane(c) { // pull out when the car ahead is slower or stopped
 }
 function releaseCars() { for (const c of cars) { c.relT = race.simT + c.release; } }
 
-let LASTRAW = 1/60;
+let LASTRAW = 1/60; const SPD = { sim: 0, real: 0, want: 1 };
 function simulate(dt) {
-  race.acc = (race.acc || 0) + dt; let n = 0; const t0 = performance.now(), budget = Math.min(28, Math.max(9, LASTRAW*600)); // physics may use about 60% of a frame
+  race.acc = (race.acc || 0) + dt; let n = 0; const t0 = performance.now(), budget = Math.min(32, Math.max(9, LASTRAW*(opts.speed > 1 && race.phase === "race" ? 780 : 600))); // physics may use about 60% of a frame, more when fast-forwarding
   while (race.acc >= STEP && n < 26) {
     if (n >= 2 && performance.now() - t0 > budget) { race.acc = Math.min(race.acc, STEP*.99); break; } // over budget: let this frame show rather than stall it (the race runs a touch slower instead of stuttering)
     race.acc -= STEP; n++; race.simT += STEP;
@@ -2117,6 +2196,10 @@ function simulate(dt) {
     if (racing) postStep(STEP);
   }
   if (n === 26) race.acc = 0;
+  if (race.phase === "race" && !RP.active) { // how fast is the race really running? (shown next to SPEED when the computer can't keep up)
+    const SR = SPD, wall = performance.now(); SR.sim += n*STEP; SR.real += Math.min(.5, (wall - (SR.last || wall))/1000); SR.last = wall;
+    if (SR.real > 1.5) { const k = SR.sim/SR.real; SR.sim = SR.real = 0; const show = opts.speed > 1 && !opts.slow && k < opts.speed*.85;
+      const e = $("#spdReal"); e.hidden = !show; if (show) e.textContent = `running ${k.toFixed(1)}×`; } }
 }
 function postStep(h) {
   const t = race.simT - race.goAt;
@@ -2130,9 +2213,11 @@ function postStep(h) {
         if (c.donutT > 10) { c.donutOn = false; c.donutDone = true; c.vehicle.wheelInfos.forEach(w => w.frictionSlip = opts.rain || WEATHER.wet ? .9 : 1.5); } }
     }
     if (c.status === "fin" && !c.parked && !c.donutOn) { c.restT = sp < .4 ? (c.restT || 0) + h : 0; if (c.restT > 1) { c.parked = true; setFrozen(b, true); } } // stopped after the line: no more physics
+    if (c.eaten && !c.eaten.done) stepEaten(c, h);
+    if (c.carried) { c.lastV.copy(v); continue; } // up in the air with the pterodactyl
     if (c.status === "out") { // marshals lift the wreck clear after a few seconds
       c.outT = (c.outT || 0) + h;
-      const lim = c.out === "OFF TRACK" ? 8 : 3.5;
+      const lim = c.out === "OFF TRACK" ? 8 : c.out === "EATEN" ? 7 : 3.5;
       if (c.outT > lim && !c.gone) { c.gone = true; setFrozen(b, true); b.collisionResponse = false; c.vehicle.wheelInfos.forEach(w => w.suspensionLength = w.suspensionRestLength); }
       if (c.gone) { b.position.y += h*Math.min(9, (c.outT - lim)*6); if (c.outT > lim + 3) { c.hidden = true; c.mesh.visible = c.label.visible = false; c.wheels.forEach(w => w.visible = false); } }
       c.lastV.copy(v); continue;
@@ -2217,6 +2302,7 @@ function onCollide(car, e) {
       else if (k === "wreck") { event("WRECKING BALL", `${car.d.code} is hit by the wrecking ball`, "#ff2f45", car); C.hit("wreck", car); incident("obst", car, `WRECKING BALL · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
       else if (k === "windmill") { event("WINDMILL", `${car.d.code} gets whacked by the windmill`, "#ff2f45", car); C.hit("windmill", car); incident("obst", car, `WINDMILL · ${car.d.code}`, 3); }
       else if (k === "trex") { event("T-REX", `${car.d.code} runs into the T-rex`, "#4f8a3a", car); C.hit("trex", car); incident("obst", car, `T-REX · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .8); }
+      else if ((k === "herd" || k === "trex") && chance(k === "herd" ? .6 : .45) && eat(car, other)) { /* gulp */ }
       else if (k === "herd") { event("STAMPEDE", `${car.d.code} is caught by the stampede`, "#4f8a3a", car); C.hit("herd", car); incident("obst", car, `STAMPEDE · ${car.d.code}`, 3); shake = Math.min(1.4, shake + .9); }
       else if (k === "tyre") { event("TYRE", `${car.d.code} hits a runaway tyre`, "#ff8a3d", car); C.hit("tyre", car); incident("obst", car, `RUNAWAY TYRE · ${car.d.code}`, 2); } }
     return;
@@ -2252,8 +2338,12 @@ function setGantry(n) { if (track.lightMeshes) for (const l of track.lightMeshes
 
 /* ---------- HUD ---------- */
 function setFlag(txt, cls) { const f = $("#flag"); f.textContent = opts.slow && cls !== "chq" ? `${txt} · SLOW-MO` : txt; f.className = "flag " + (opts.slow && cls !== "chq" ? "slow" : cls); f.dataset.cls = cls; f.dataset.txt = txt; }
+const POP_PRIO = { EATEN: 3, SNATCHED: 3, STAMPEDE: 2, "T-REX": 2, "WRECKING BALL": 2, WINDMILL: 2, TYRE: 2, BOWLING: 2, OUT: 2, AIR: 1, WALL: 1, CONTACT: 1, HAY: 1, CONES: 1 };
 function event(kind, text, colour, car) {
   if (!race) return;
+  if (car && POP_PRIO[kind] != null) { const head = text.split(car.d.code).join(sur(car));
+    COMM.ctx = { car, pop: head, t: performance.now() }; const pr = POP_PRIO[kind];
+    if (pr >= 3 || (pr >= 1 && !onMainScreen(car) && (pr >= 2 || gate("popm", 5)))) showPop(car, head, pr, pr >= 3 ? 5200 : 3800, colour); }
   const t = Math.max(0, race.simT - race.goAt);
   const el = document.createElement("div"); el.className = "tk";
   el.innerHTML = `<i style="background:${colour}"></i><b>${kind}</b><span></span><em>${t.toFixed(1)}s</em>`;
@@ -2479,6 +2569,29 @@ function adaptQuality(raw) { // lower the render resolution when frames are slow
   else if (avg < 1/56 && pr < prMax) { if (++perf.good >= 3) { pr = Math.min(prMax, pr + .25); perf.good = 0; renderer.setPixelRatio(pr); resize(); } }
   else perf.good = 0;
 }
+/* ---------- LIVE pop-up: a small window that cuts to action happening off-screen ---------- */
+const POP = { car: null, until: 0, prio: 0, ang: 0 }, popCam = new THREE.PerspectiveCamera(55, 16/9, .1, 2400), _popFr = new THREE.Frustum(), _popM = new THREE.Matrix4();
+function onMainScreen(c) {
+  if (!c || !c.mesh) return false; camera.updateMatrixWorld(); _popM.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse); _popFr.setFromProjectionMatrix(_popM);
+  return _popFr.containsPoint(c.mesh.position) && camera.position.distanceTo(c.mesh.position) < 170;
+}
+function showPop(c, text, prio = 1, ms = 3800, colour) {
+  if (!race || RP.active || !c || c.hidden) return; const now = performance.now();
+  if (POP.car && now < POP.until && POP.prio > prio && POP.car !== c) return;
+  const fresh = POP.car !== c || now >= POP.until; if (fresh) POP.ang = Math.random()*6.28;
+  Object.assign(POP, { car: c, until: Math.max(now + ms, fresh ? 0 : POP.until), prio: Math.max(prio, fresh ? 0 : POP.prio) }); $("#popTx").textContent = text; const el = $("#pop"); el.style.setProperty("--pc", colour || c.d.colour);
+  if (el.hidden) el.hidden = false; else if (fresh) { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; }
+}
+function renderPop(dt) {
+  const el = $("#pop"), c = POP.car, now = performance.now(), show = !!(c && now < POP.until && !RP.active && race && cars.includes(c) && !c.hidden);
+  if (!show) { if (!el.hidden) { el.hidden = true; POP.car = null; } return; }
+  const cr = canvas.getBoundingClientRect(), r = el.getBoundingClientRect(), x = r.left - cr.left + 2, y = cr.bottom - r.bottom + 2, w = r.width - 4, h = r.height - 4;
+  if (w < 20 || h < 20) return;
+  POP.ang += dt*.45; const P = c.mesh.position, sc = (c.sc || 1) > 1 ? 2.2 : 1, d = 11*sc;
+  popCam.position.set(P.x + Math.cos(POP.ang)*d, P.y + 4.5*sc, P.z + Math.sin(POP.ang)*d); popCam.lookAt(P.x, P.y + .6*sc, P.z); popCam.aspect = w/h; popCam.updateProjectionMatrix();
+  renderer.shadowMap.autoUpdate = false; renderer.setScissorTest(true); renderer.setScissor(x, y, w, h); renderer.setViewport(x, y, w, h); renderer.render(scene, popCam);
+  renderer.setScissorTest(false); renderer.setViewport(0, 0, cr.width, cr.height); renderer.shadowMap.autoUpdate = true;
+}
 let pipClosed = false; const pipCam = new THREE.PerspectiveCamera(70, 16/9, .1, 2400), pipLook = new THREE.Vector3(), pipUp = new THREE.Vector3();
 function renderPip() { // a small window with the selected driver's own view, drawn into a corner of the same canvas
   const el = $("#pip"), c = selected, show = !!(c && !pipClosed && !RP.active && race && cars.includes(c) && !c.hidden);
@@ -2508,7 +2621,7 @@ function frame(now) {
   }
   if (LOOK.sky) LOOK.sky.position.copy(camera.position);
   if (LOOK.composer && LOOK.bloomOn) LOOK.composer.render(); else renderer.render(scene, camera);
-  renderPip();
+  renderPip(); renderPop(dt);
   renderJumbo();
   requestAnimationFrame(frame);
 }

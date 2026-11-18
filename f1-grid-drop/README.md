@@ -58,7 +58,7 @@ A typical race takes 30 to 40 seconds.
 
 ## More modes
 
-- **SPEED (1×, 1.5×, 2×, 3×, 4×):** fast-forwards the whole race. Physics and results are unchanged, and replays keep their slow motion.
+- **SPEED (1×, 1.5×, 2×, 3×, 4×):** fast-forwards the whole race. Physics and results are unchanged. At 2× and above, only the biggest moments (cars eaten or snatched, off the mountain, wrecking ball) get a replay, and at most two, so the race isn't held up. If your computer can't run the physics fast enough, a "running 2.4×" note next to the buttons shows the real speed.
 - **TURBO (T):** air drag cut to 35% and rolling resistance halved, so cars build far more speed. Expect more airtime and many more crashes: in a test with chaos on, 7 of 22 finished and the winner took 29.0 s.
 
 - **RAIN (W):** falling rain, overcast sky, a shiny wet track, spray behind the cars and much less grip.
@@ -66,6 +66,17 @@ A typical race takes 30 to 40 seconds.
 - **GIANT (G):** one random car is 2.5× bigger and starts at the back.
 - **SHOWERS (H):** the race starts dry. When the leader is halfway down, the rain arrives: the sky clouds over, the track turns wet and every car loses grip.
 - **STAMPEDE (K):** a herd of three T. rexes and four raptors chases the field down the mountain, a few metres behind the last car still racing. Cars that slow down or crash get trampled, with a replay.
+
+## LIVE pop-ups
+
+- When something happens off-screen (a crash at the back, a car hit by an obstacle, big air), a LIVE window pops up in the top-right corner and shows it from an orbiting camera, with a headline such as "BOTTAS IS EATEN BY A T-REX".
+- When a host talks about a car you can't see, the window cuts to that car while they speak.
+- Commentary lines that are more than 3.5 seconds out of date are dropped, so the hosts talk about what is happening now.
+
+## Monsters
+
+- **Eaten:** in STAMPEDE mode, and with the T-rex crossing obstacle, a T-rex can grab a car in its jaws, shake it and throw it away. At most three cars per race. The driver is listed as EATEN.
+- **Snatched:** in chaos mode, in about 6 races out of 10, a giant pterodactyl dives at a car in the middle of the pack and carries it off into the sky. The driver is listed as SNATCHED.
 
 ## Celebrations
 
@@ -146,7 +157,7 @@ Space start · R reset · H showers · K stampede · 1–5 camera (TV, side, cha
 - If the add-ons fail to load, the page falls back to the basic look.
 - **Speed:** each car is merged into one painted mesh, one dark mesh and four wheel meshes, which cuts draw calls from about 1,500 to about 330 per frame with no visible change. Sharpness starts at 1.5× and rises to 2× on fast machines. The jumbotron skips drawing when it's off-screen, and cars that have stopped after the finish leave the physics simulation.
 - **Backups:** `backups/` keeps a copy of the page from before the performance work.
-- **Physics speed-up:** the course has about 880 fixed physics pieces. The stock physics engine compared every one of them with every other one on every step. The page now keeps them sorted along the course and checks each car only against the pieces near it, which made each physics step about 3.5 times faster in testing.
+- **Physics speed-up:** the course has about 880 fixed physics pieces. The stock physics engine compared every one of them with every other one on every step. The page now keeps them sorted along the course and checks each car only against the pieces near it, which made each physics step about 3.5 times faster in testing. A second change skips the costly contact test between a car's hull and a track piece when they are clearly apart, which made racing physics another 2.6 times faster.
 - **No stutter:** if a slow computer can't keep up, the race runs slightly slower for a moment instead of freezing a frame.
 - **Smooth motion:**
   - Cars are drawn between physics steps.
