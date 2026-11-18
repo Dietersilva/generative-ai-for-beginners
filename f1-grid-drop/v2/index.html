@@ -176,6 +176,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
 .panel{flex:1;overflow-y:auto;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .pn-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.bs-watch{font-family:var(--f-display);font-weight:800;font-size:16px;letter-spacing:.06em;padding:14px 16px;border-radius:12px;border:0;background:linear-gradient(90deg,#ff2f45,#ff6a13);color:#fff;box-shadow:0 6px 20px #ff2f4555}
+body.watch .app{display:block;height:100%}body.watch .app>*:not(.stage){display:none!important}
+body.watch .stage{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;border-radius:0;border:0}
+body.watch .stage .hud:not(.wh):not(.banner){display:none!important}
+.wh{position:absolute;left:0;right:0;pointer-events:none;z-index:7;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;padding:max(10px,env(safe-area-inset-top)) 12px 10px}
+.wh-top{top:0}.wh-bot{bottom:0;align-items:flex-end;padding-bottom:max(12px,env(safe-area-inset-bottom))}
+.wh-card{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:#05070dcc;backdrop-filter:blur(6px);border-left:4px solid var(--tc,#888)}
+.wh-pos{font-family:var(--f-display);font-weight:800;font-size:30px;line-height:1}
+.wh-nm{display:flex;flex-direction:column}.wh-nm b{font-family:var(--f-display);font-weight:800;font-size:16px;letter-spacing:.04em;color:#fff}.wh-nm span{font-size:11px;color:#b8c0d0}
+.wh-spd{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1;color:#fff;text-align:right}.wh-spd small{display:block;font-size:11px;letter-spacing:.14em;color:#b8c0d0}
+.wh-state{font-family:var(--f-display);font-weight:800;font-size:13px;letter-spacing:.12em;color:#ffd23f}
+.wh button{pointer-events:auto;font-family:var(--f-display);font-weight:800;font-size:15px;padding:10px 14px;border-radius:12px;border:1px solid #ffffff33;background:#05070dcc;color:#fff}
 .setup{padding:0;border:1px solid var(--line-2);border-radius:16px;background:var(--panel);color:var(--text);width:min(720px,calc(100vw - 32px));max-height:calc(100vh - 40px)}
 .setup::backdrop{background:#03050ccc;backdrop-filter:blur(4px)}
 .setup-in{display:flex;flex-direction:column;gap:14px;padding:20px}
@@ -347,6 +359,10 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 
   <main class="stage" id="stage">
     <div class="cheers" id="cheers" aria-hidden="true"></div>
+    <div class="wh wh-top" id="watchHud" hidden><div class="wh-card"><span class="wh-pos" id="whPos">–</span><span class="wh-nm"><b id="whName"></b><span id="whTeam"></span></span></div>
+      <div class="wh-card"><span class="wh-state" id="whState"></span><span class="wh-nm"><span id="whTime"></span></span></div></div>
+    <div class="wh wh-bot" id="watchBar" hidden><span><button id="whPrev" aria-label="Previous driver">◀</button> <button id="whNext" aria-label="Next driver">▶</button></span>
+      <div class="wh-card"><span class="wh-spd"><span id="whSpd">0</span><small>KM/H</small></span></div><button id="whBack">BACK TO SLIP</button></div>
     <canvas id="cv" aria-label="3D view of the soapbox race"></canvas>
     <div class="hud hud-tl">
       <div class="timebox"><span class="lbl">TIME</span><span class="cur" id="clock">0.000</span></div>
@@ -471,6 +487,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 <script type="module">
 const $ = s => document.querySelector(s);
 const loadMsg = $("#loadMsg");
+const WATCH = /^#watch=/.test(location.hash) ? { code: decodeURIComponent(location.hash.slice(7)).slice(0, 3).toUpperCase(), buf: [], order: null, sig: "", rid: "" } : null; // phone driver view
 const BET_ONLY = location.hash === "#bet"; // phones open the link with #bet for a light betting slip
 let THREE, CANNON;
 if (!BET_ONLY) try {
@@ -673,6 +690,9 @@ async function renderShared(box, phone) {
   const lockedMine = st && !open && me && picks[me] ? picks[me].pick : "", mine = open ? POOL.myPick : lockedMine;
   const mp = el("p", "bs-mine"); mp.textContent = !st ? "" : open ? (mine ? `Your pick: ${DBY[mine].name}. Change it any time before lights out.` : "Tap a driver to place your bet.") : (lockedMine ? `Locked in: ${DBY[lockedMine].name}` : "No pick this race.");
   frag.append(mp);
+  if (phone) { const wb = el("button", "bs-watch", `📺 WATCH FROM ${mine || lockedMine ? (DBY[mine || lockedMine].name.split(" ").slice(-1)[0] + "'S").toUpperCase() : "A DRIVER'S"} COCKPIT`); wb.type = "button";
+    wb.onclick = () => { location.hash = "#watch=" + (mine || lockedMine || (st && st.grid && st.grid[0]) || "ANT"); location.reload(); }; frag.append(wb);
+    frag.append(el("p", "pn-note", "Live from the race screen: the cockpit view of the car you picked, with your position and speed.")); }
   if (st && (phone || !POOL.host)) { // cheer: shows up live on the race screen with your name
     const cb = el("div", "bs-cheer"), note = el("div", "bs-cheer-ok"); cb.append(el("span", "bs-cheer-l", "CHEER ON THE BIG SCREEN"));
     CHEERS.forEach(e => { const b = el("button", "bs-cheer-b", e); b.type = "button"; b.setAttribute("aria-label", `Send ${e} to the race screen`); b.onclick = () => sendCheer(e, b, note); cb.append(b); });
@@ -2179,6 +2199,7 @@ function buildHerd() {
 
 /* ---------- grid ---------- */
 function gridOrder() {
+  if (WATCH && WATCH.order) return WATCH.order.map(c => DRIVERS.find(x => x.code === c)).filter(Boolean); // the phone copies the race screen's grid
   const d = DRIVERS.slice();
   if (opts.grid === "rev") d.reverse();
   if (opts.grid === "season") d.sort((a, b) => (SEASON.pts[b.code] || 0) - (SEASON.pts[a.code] || 0) || DRIVERS.indexOf(a) - DRIVERS.indexOf(b));
@@ -2388,10 +2409,10 @@ function buildWorld() {
   buildTrack();
   carGroup = new THREE.Group(); scene.add(carGroup);
   const order = gridOrder(), slots = gridSlots();
-  if (opts.giant) order.push(order.splice(Math.floor(Math.random()*order.length), 1)[0]); // the giant starts at the back
+  if (opts.giant && !(WATCH && WATCH.order)) order.push(order.splice(Math.floor(Math.random()*order.length), 1)[0]); // the giant starts at the back
   cars = order.map((d, i) => opts.giant && i === order.length - 1 ? makeCar(d, { x: 9, z: 0 }, i, 2.5) : makeCar(d, slots[i], i));
   for (let i = 0; i < 3; i++) world.step(STEP); // place the wheels
-  race = { phase: "grid", t: 0, simT: 0, lightsAt: 0, goAt: 0, endAt: 0, events: [], said: {}, acc: 0, highlights: [] };
+  race = { phase: "grid", t: 0, simT: 0, lightsAt: 0, goAt: 0, endAt: 0, events: [], said: {}, acc: 0, highlights: [], rid: Math.random().toString(36).slice(2, 8) };
   REC.buf = []; REC.next = 0; RP.pending = null; RP.count = 0; RP.last = -99; if (RP.active || RP.queue.length) stopReplayHard();
   commStop();
   FX.clear(); party = null; shake = 0;
@@ -2916,24 +2937,85 @@ function renderPip() { // a small window with the selected driver's own view, dr
 }
 function frame(now) {
   const raw = Math.min(.25, (now - last)/1000), dt = Math.min(.05, raw); last = now; LASTRAW = Math.min(.05, raw); adaptQuality(raw);
-  if (RP.active) { /* the race waits while the replay plays */ }
+  if (WATCH) { /* the phone only draws: the race screen runs the race */ }
+  else if (RP.active) { /* the race waits while the replay plays */ }
   else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1)*opts.speed); // SPEED fast-forwards the race; replays keep their own pace
   else if (race) simulate(dt);
   const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
   FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position);
   if ((opts.rain || WEATHER.wet) && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
   if (race) {
-    if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
+    if (WATCH) watchFrame(dt); else if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
     hudT += dt; if (hudT > .12) { hudT = 0; updateTower(); updateCard();
       const t = race.phase === "race" ? race.simT - race.goAt : race.phase === "done" ? race.endAt - race.goAt : 0;
       $("#clock").textContent = t.toFixed(3); }
   }
   if (LOOK.sky) LOOK.sky.position.copy(camera.position);
   if (LOOK.composer && LOOK.bloomOn) LOOK.composer.render(); else renderer.render(scene, camera);
-  renderPip(); renderPop(dt);
+  if (!WATCH) { renderPip(); renderPop(dt); } telTick(now);
   renderJumbo();
   requestAnimationFrame(frame);
 }
+
+/* ---------- v2.0 phone driver view: the race screen broadcasts the race; phones draw it from inside one car ---------- */
+const TEL = { last: 0, lastSetup: 0, off: false };
+function telTick(now) { // race screen: send the setup every 2 s and every car's state about 6 times a second
+  if (TEL.off || WATCH || !POOL.on || !POOL.host || !POOL.room || !race || !cars.length) return;
+  const room = POOL.room, send = d => room.emit("tel", d).catch(e => { if (e && e.code === "not_permitted") TEL.off = true; });
+  if (now - TEL.lastSetup > 2000) { TEL.lastSetup = now;
+    send({ k: "s", rid: race.rid, order: cars.map(c => c.d.code), deg: opts.deg, jump: !!opts.jump, tod: opts.tod, wet: !!(opts.rain || WEATHER.wet), giant: !!opts.giant, rev: !!opts.reverse }); }
+  const gap = race.phase === "grid" || race.phase === "lights" ? 1000 : 160; if (now - TEL.last < gap) return; TEL.last = now;
+  const c9 = [], st = { grid: 0, race: 1, fin: 2, out: 3 };
+  for (const c of cars) { const p = c.body.position, q = c.body.quaternion;
+    c9.push(Math.round(p.x*100), Math.round(p.y*100), Math.round(p.z*100), Math.round(q.x*1000), Math.round(q.y*1000), Math.round(q.z*1000), Math.round(q.w*1000), Math.round((c.spd || 0)*3.6), c.hidden ? 4 : (st[c.status] ?? 1)); }
+  const ord = order(), t = race.phase === "race" ? race.simT - race.goAt : race.phase === "done" ? race.endAt - race.goAt : 0;
+  send({ k: "t", rid: race.rid, ph: race.phase, t: Math.round(t*100), c: c9, rk: ord.map(c => cars.indexOf(c)) });
+}
+function watchMsg(d) { // phone: everything that arrives is checked before use
+  if (!d || typeof d !== "object") return;
+  if (d.k === "s") {
+    const ord = Array.isArray(d.order) ? d.order.filter(c => typeof c === "string" && CODES.has(c)) : []; if (ord.length < 2 || ord.length > 22 || ![50, 72, 88].includes(d.deg)) return;
+    const sig = [d.rid, d.deg, !!d.jump, !!d.giant, ord.join("")].join("|"); if (sig === WATCH.sig) return; WATCH.sig = sig; WATCH.rid = String(d.rid || "").slice(0, 12);
+    Object.assign(opts, { deg: d.deg, jump: !!d.jump, giant: !!d.giant, reverse: !!d.rev, rain: !!d.wet, chaos: false, stampede: false, showers: false });
+    WATCH.order = ord; WATCH.buf.length = 0; setTimeOfDay(d.tod === "night" ? "night" : "day"); buildWorld();
+    if (!ord.includes(WATCH.code)) WATCH.code = ord[0]; watchHud(); return; }
+  if (d.k === "t" && WATCH.order && d.rid === WATCH.rid && Array.isArray(d.c) && d.c.length === cars.length*9 && d.c.every(Number.isFinite)) {
+    WATCH.buf.push({ at: performance.now(), t: +d.t || 0, ph: String(d.ph || ""), c: d.c, rk: Array.isArray(d.rk) ? d.rk.slice(0, 22) : [] }); if (WATCH.buf.length > 40) WATCH.buf.shift(); }
+}
+const _wqa = new THREE.Quaternion(), _wqb = new THREE.Quaternion(), _wv = new THREE.Vector3(), WOFF = [[1.78, .92], [1.78, -.92], [-1.52, .9], [-1.52, -.9]];
+function watchFrame(dt) {
+  const B = WATCH.buf, me = cars.find(c => c.d.code === WATCH.code) || cars[0]; if (!me) return;
+  if (B.length) {
+    const rt = performance.now() - 280; let a = B[B.length - 1], b = a;
+    for (let i = B.length - 1; i > 0; i--) if (B[i - 1].at <= rt) { a = B[i - 1]; b = B[i]; break; }
+    const f = b.at > a.at ? Math.min(1, Math.max(0, (rt - a.at)/(b.at - a.at))) : 1, L = (x, y) => x + (y - x)*f;
+    cars.forEach((c, i) => { const k = i*9, A = a.c, C = b.c;
+      c.mesh.position.set(L(A[k], C[k])/100, L(A[k + 1], C[k + 1])/100, L(A[k + 2], C[k + 2])/100);
+      _wqa.set(A[k + 3], A[k + 4], A[k + 5], A[k + 6]).normalize(); _wqb.set(C[k + 3], C[k + 4], C[k + 5], C[k + 6]).normalize(); c.mesh.quaternion.slerpQuaternions(_wqa, _wqb, f);
+      c.spd = L(A[k + 7], C[k + 7])/3.6; const s = C[k + 8]; c.status = ["grid", "race", "fin", "out", "out"][s] || "race"; c.hidden = s === 4;
+      c.mesh.visible = c.label.visible = !c.hidden; c.mesh.updateMatrixWorld(); c.spin = (c.spin || 0) + c.spd*dt/(.34*c.sc);
+      c.wheels.forEach((w, j) => { w.visible = !c.hidden; w.position.set(WOFF[j][0]*c.sc, -.3*c.sc, WOFF[j][1]*c.sc).applyMatrix4(c.mesh.matrixWorld); w.quaternion.copy(c.mesh.quaternion); w.rotateZ(-c.spin); });
+      c.label.position.set(c.mesh.position.x, c.mesh.position.y + 2.1*c.sc, c.mesh.position.z); });
+    WATCH.now = { t: L(a.t, b.t)/100, ph: b.ph, rank: b.rk.indexOf(cars.indexOf(me)) + 1 };
+  }
+  // the camera sits in the chosen driver's cockpit; if the car is out, it watches from behind
+  const m = me.mesh.matrixWorld, dir = opts.reverse ? -1 : 1, sc = me.sc;
+  if (me.status === "out" || me.hidden) { _wv.set(-9*dir*sc, 4*sc, 0).applyMatrix4(m); camera.position.lerp(_wv, Math.min(1, dt*3)); camera.up.set(0, 1, 0); camera.lookAt(me.mesh.position); }
+  else { camera.position.set((dir > 0 ? -.55 : .5)*sc, .98*sc, 0).applyMatrix4(m); _wv.set(dir*14*sc, .55*sc, 0).applyMatrix4(m); camera.up.set(0, 1, 0).applyQuaternion(me.mesh.quaternion); camera.lookAt(_wv); }
+  if (camera.fov !== 72) { camera.fov = 72; camera.updateProjectionMatrix(); }
+  me.label.visible = false;
+  WATCH.hudT = (WATCH.hudT || 0) + dt; if (WATCH.hudT > .15) { WATCH.hudT = 0; watchHud(); }
+}
+function watchHud() {
+  const me = cars.find(c => c.d.code === WATCH.code), N = WATCH.now || {}, hud = $("#watchHud"); if (!hud || !me) return;
+  hud.style.setProperty("--tc", me.d.colour); $("#whName").textContent = `${me.d.name}`; $("#whTeam").textContent = me.d.team || "";
+  const live = WATCH.buf.length && performance.now() - WATCH.buf[WATCH.buf.length - 1].at < 6000;
+  $("#whPos").textContent = N.rank ? `P${N.rank}` : "–"; $("#whSpd").textContent = `${Math.round((me.spd || 0)*3.6)}`;
+  $("#whState").textContent = !live ? (WATCH.order ? "WAITING FOR THE RACE SCREEN…" : "CONNECTING TO THE RACE SCREEN…") : N.ph === "grid" ? "ON THE GRID" : N.ph === "lights" ? "LIGHTS…" : me.status === "fin" ? "FINISHED" : me.status === "out" ? "OUT OF THE RACE" : N.ph === "done" ? "RACE OVER" : "● LIVE";
+  $("#whTime").textContent = (N.t || 0).toFixed(1) + " s";
+}
+function watchStep(d) { const ord = WATCH.order || DRIVERS.map(x => x.code); let i = ord.indexOf(WATCH.code); i = (i + d + ord.length) % ord.length; WATCH.code = ord[i];
+  try { history.replaceState(null, "", "#watch=" + WATCH.code); } catch (e) {} watchHud(); }
 
 /* ---------- controls ---------- */
 function rebuild() { buildWorld(); }
@@ -3079,8 +3161,13 @@ buildScenery();
 buildCreatures();
 animAirships = airships();
 { let tod = "day"; try { tod = localStorage.getItem("gridDrop.tod") || "day"; } catch (e) {} setTimeOfDay(tod === "night" ? "night" : "day"); }
-{ const sv = store.get("f1bezerk.setup", null); if (sv && sv.deg) applySetup(sv, false); else buildWorld(); } // the last saved RACE SETUP
-initPool(() => { if (race) renderBets(); }).then(ok => { POOL.on = ok; if (ok) { poolOpen(); renderBets(); } });
+if (WATCH) { document.body.classList.add("watch"); Object.assign(opts, { comm: false, replays: false, chaos: false, stampede: false }); $("#watchHud").hidden = $("#watchBar").hidden = false;
+  $("#whPrev").onclick = () => watchStep(-1); $("#whNext").onclick = () => watchStep(1); $("#whBack").onclick = () => { location.hash = "#bet"; location.reload(); };
+  if (LOOK.ao) LOOK.ao.enabled = false; buildWorld(); watchHud(); }
+else { const sv = store.get("f1bezerk.setup", null); if (sv && sv.deg) applySetup(sv, false); else buildWorld(); } // the last saved RACE SETUP
+initPool(() => { if (race && !WATCH) renderBets(); }).then(ok => { POOL.on = ok;
+  if (WATCH) { if (ok) POOL.room.on("tel", m => watchMsg(m && m.data), () => {}); else $("#whState").textContent = "OPEN THIS FROM THE CLAUDE.AI LINK THE HOST SHARED"; return; }
+  if (ok) { poolOpen(); renderBets(); } });
 $("#loading").hidden = true;
 requestAnimationFrame(frame);
 </script>
