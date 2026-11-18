@@ -149,6 +149,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .row .ps{font-family:var(--f-display);font-weight:800;font-size:17px;text-align:right;font-style:italic}
 .row .tc{width:4px;height:18px;border-radius:2px;background:var(--tc)}
 .row .cd{font-family:var(--f-display);font-weight:700;font-size:16.5px;letter-spacing:.05em;display:flex;align-items:center;gap:6px;min-width:0}
+.row .cd{position:relative}.row .cd .ms{position:absolute;left:0;bottom:1px;display:flex;gap:2px;pointer-events:none}.row .cd .ms i{width:10px;height:3px;border-radius:1px;background:rgba(255,255,255,.1)}.row .cd .ms i.p,.pip-info .secs .mini i.p{background:var(--purple)}.row .cd .ms i.g,.pip-info .secs .mini i.g{background:#38e383}.row .cd .ms i.y,.pip-info .secs .mini i.y{background:#ffd400}.pip-info .secs .mini i.b{background:#5a6478}
+.pip-info .secs{grid-column:1/-1;display:grid;grid-template-columns:repeat(3,1fr) auto;gap:2px 10px}.pip-info .secs .mini{display:flex;gap:1px;margin-top:3px}.pip-info .secs .mini i{flex:1;height:4px;background:rgba(255,255,255,.1)}.pip-info .secs b.p{color:var(--purple)}.pip-info .secs b.g{color:#38e383}.pip-info .secs b.y{color:#ffd400}
+.stbl .best{color:var(--purple);font-weight:700}.chg-up{color:#38e383}.chg-dn{color:#ff5a6a}
 .row .cd .fl{width:7px;height:7px;border-radius:50%;background:var(--purple);box-shadow:0 0 6px var(--purple)}
 .row .cd .mic{width:12px;height:12px;color:var(--red);animation:pulse .6s infinite}
 .row .cd .bt{font-size:9px;font-family:var(--f-mono);color:var(--sc);border:1px solid color-mix(in srgb,var(--sc) 50%,transparent);border-radius:3px;padding:0 3px;letter-spacing:0}
@@ -790,7 +793,8 @@ function buildEvents(R){
   for (const e of R.stew) { const m = STEW[e[2]]; if (!m) continue;
     const who = e[1].map(n => R.byNum[n] ? R.byNum[n].code : "#" + n).join(" / ");
     E.push({t: e[0], k: "STEW", label: m.ticker, text: who + (e[2] === "PEN" || e[2] === "TL" ? " · " + e[3] : "") + (e[4] ? " · " + e[4].toLowerCase() : ""), c: m.c, stew: e}); }
-  R.overtakes = detectOvertakes(R);
+  R.overtakes = R.h.ext && R.h.ext.ov && R.h.ext.ov.length ? officialOvertakes(R) : detectOvertakes(R);
+  prepSectors(R);
   for (const o of R.overtakes) E.push({t: o.t, k: "OV", label: "OVERTAKE", text: `${o.a.code} passes ${o.b.code} for P${o.pos}`, c: "#38e383", ov: o});
   R.battles = detectBattles(R);
   for (const b of R.battles) { const t3 = R.lapStarts[Math.min(R.lapStarts.length - 1, b.fromLap + 1)] + 5;
@@ -1170,6 +1174,8 @@ function renderLinear(now, wdt){
     ctx.fillText(String(o.pos < 99 ? o.pos : "–"), 46, y + fs*0.35); ctx.textAlign = "left";
     ctx.fillStyle = D.hex; ctx.fillRect(54, y - rowH*0.3, 4, rowH*0.6);
     ctx.fillStyle = out ? "#56607a" : "#e8ecf6"; ctx.font = `700 ${fs}px "Saira Condensed", sans-serif`; ctx.fillText(D.code, 64, y + fs*0.35);
+    if (R.sec && !out) { const q = secNow(D, t); if (q) { const bw = Math.max(6, ctx.measureText(D.code).width / 3 - 1.5), by = y + Math.min(rowH*0.5 - 3, fs*0.35 + 3);   // live sectors under the code
+      for (let k = 0; k < 3; k++) { const c = k < q.n ? q.L.c[k] : null; ctx.fillStyle = c === "p" ? "#b65cff" : c === "g" ? "#38e383" : c === "y" ? "#ffd400" : "rgba(255,255,255,0.1)"; ctx.fillRect(64 + k*(bw + 2), by, bw, 2.5); } } }
     // speed streak behind the car (it races to the right)
     if (!out && x > x0 + 4) { const gr = ctx.createLinearGradient(x0, 0, x - L*0.5, 0); gr.addColorStop(0, rgba(D.col, 0)); gr.addColorStop(1, rgba(D.col, 0.6));
       ctx.strokeStyle = gr; ctx.lineWidth = Math.max(2, rowH*0.14); ctx.lineCap = "round"; ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(x - L*0.5, y); ctx.stroke(); }
@@ -1293,6 +1299,10 @@ function renderPip(now, wdt){
   const g = ctx.createRadialGradient(W/2, H/2, 0, W/2, H/2, W*0.7); g.addColorStop(0, "#111a2e"); g.addColorStop(1, "#05070d"); ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
   try { renderTrackScene(now, wdt, true); } finally { ctx = sv.ctx; W = sv.W; H = sv.H; DPR = sv.DPR; cam.x = sv.x; cam.y = sv.y; cam.s = sv.s; cam.r = sv.r; }
 }
+function secHTML(D, t){ const q = secNow(D, t); if (!q) return ""; const L = q.L;
+  const cell = k => { const on = k < q.n, v = L.s[k], m = (L.mini[k] || "").split("");
+    return `<div>S${k + 1}<b class="${on ? L.c[k] || "" : ""}">${on && v ? v.toFixed(3) : "–"}</b><span class="mini">${m.map(c => `<i class="${on && c !== "-" ? c : ""}"></i>`).join("")}</span></div>`; };
+  return `<div class="secs">${cell(0)}${cell(1)}${cell(2)}<div>Trap<b>${q.n === 3 && L.sp[2] ? L.sp[2] + "" : "–"}</b></div></div>`; }
 function updatePipInfo(force){
   const el = $("#pip"); if (el.hidden && !force) return; const m = pipMode(); if (!m) return; const R = st.R, t = st.t;
   if (m.kind === "inc") {
@@ -1312,7 +1322,7 @@ function updatePipInfo(force){
   const stops = D.pits.filter(p => p[0] - (p[4] || 22)*0.5 <= t && p[0] > R.lightsOut).length;
   const status = isOut(D, t) ? "OUT" : inPit(D, t) ? "IN PIT" : o && o.pos === 1 ? "Leading" : o ? fmtGap(o.gl) : "–";
   const chips = stewChips(D, t).map(c => `<span class="chip ${c.cls}">${esc(c.txt)}</span>`).join("");
-  const html = `<div class="spd"><b>${R.noTrack ? "–" : Math.round(kmh)}</b>KM/H</div><div>Lap<b>${lap || "–"}/${R.total}</b></div><div>Tyre<b>${s ? s[3].charAt(0) + s[3].slice(1).toLowerCase() + " " + age : "–"}</b></div><div>Stops<b>${stops}</b></div><div>Gap<b>${esc(status)}</b></div>${chips ? `<div class="chips">${chips}</div>` : ""}`;
+  const html = `<div class="spd"><b>${R.noTrack ? "–" : Math.round(kmh)}</b>KM/H</div><div>Lap<b>${lap || "–"}/${R.total}</b></div><div>Tyre<b>${s ? s[3].charAt(0) + s[3].slice(1).toLowerCase() + " " + age : "–"}</b></div><div>Stops<b>${stops}</b></div><div>Gap<b>${esc(status)}</b></div>${chips ? `<div class="chips">${chips}</div>` : ""}${secHTML(D, t)}`;
   const pi = $("#pipInfo"); pi.hidden = false; if (pi.dataset.h !== html) { pi.dataset.h = html; pi.innerHTML = html; }
   $("#pipRadio").hidden = false;
   if (st.radio) { const playing = curSrc && curSrc.clip; $("#pipRadio").querySelectorAll("button").forEach(bt => { const on = !!playing && playing.off === +bt.dataset.off; bt.classList.toggle("now", on); const ic = bt.firstElementChild; const want = on ? "■" : "▶"; if (ic && ic.textContent !== want) ic.textContent = want; }); }
@@ -1475,6 +1485,81 @@ function renderQuali(now, wdt){
 }
 document.getElementById("qZoom").addEventListener("click", e => { st.qZoom = st.qZoom === false; e.currentTarget.setAttribute("aria-pressed", String(st.qZoom !== false)); });
 /* ---------------- overtakes ---------------- */
+// official OpenF1 overtakes: every position swap the timing system recorded. Swaps caused by pit stops, retirements,
+// safety-car or flag periods, timing-loop glitches (one car swapping with several at once) and swaps undone within a few
+// seconds are left out, so the list is on-track passes.
+function officialOvertakes(R){
+  const raw = R.h.ext.ov, ev = [];
+  const pitNear = (D, t) => D.pits.some(p => t > p[0] - (p[4] || 22) - 25 && t < p[0] + 25);
+  const flagged = t => R.segs.some(s => t >= s.a - 5 && t <= s.b + 30);
+  for (const [t, an, bn, pos] of raw) {
+    const A = R.byNum[an], B = R.byNum[bn]; if (!A || !B || t < R.lightsOut - 5 || t > R.chq + 5) continue;
+    if (raw.some(o => o[1] === bn && o[2] === an && Math.abs(o[0] - t) <= 4)) continue;
+    // a car "passing" or "losing" three or more places within a few seconds away from the start is a timing-loop glitch, not racing
+    if (t > R.lightsOut + 60 && [an, bn].some(n => raw.filter(o => (o[1] === n || o[2] === n) && Math.abs(o[0] - t) <= 5).length >= 3)) continue;
+    if (!(posAt(A, t + 8) < posAt(B, t + 8))) continue;   // the pass must still stand a few seconds later
+    if (pitNear(A, t) || pitNear(B, t) || isOut(B, t + 1) || flagged(t)) continue;
+    if (ev.some(e => e.a === A && e.b === B && Math.abs(e.t - t) < 20)) continue;
+    ev.push({t, a: A, b: B, pos: pos || posAt(A, t + 2), off: true});
+  }
+  R.ovRaw = raw.length; R.ovSrc = "OpenF1";
+  return ev.sort((x, y) => x.t - y.t);
+}
+// sector times and mini-sectors: purple = fastest anyone had done so far, green = the driver's own best so far, yellow = slower
+function prepSectors(R){
+  const lp = R.h.ext && R.h.ext.lp; R.sec = null; if (!lp) return;
+  const all = [];
+  for (const D of R.drivers) { D.sec = {}; const rows = lp[D.num] || [];
+    for (const r of rows) { const i = D.lapN.indexOf(r[0]); const t0 = i >= 0 ? D.lapT[i] : null;
+      const L = {lap: r[0], s: [r[1], r[2], r[3]], sp: [r[4], r[5], r[6]], mini: (r[7] || "").split("|"), t0, c: [null, null, null]}; D.sec[r[0]] = L;
+      if (t0 == null) continue; let acc = 0;
+      for (let k = 0; k < 3; k++) { if (L.s[k] == null) { acc = null; break; } acc += L.s[k]; all.push({t: t0 + acc, D, L, k}); } } }
+  all.sort((a, b) => a.t - b.t); const ob = [1e9, 1e9, 1e9];
+  for (const e of all) { const v = e.L.s[e.k]; if (e.L.lap === 1 && e.k === 0) { e.L.c[0] = "y"; continue; }
+    const pb = e.D.pb || (e.D.pb = [1e9, 1e9, 1e9]);
+    e.L.c[e.k] = v <= ob[e.k] ? "p" : v <= pb[e.k] ? "g" : "y";
+    if (v < ob[e.k]) ob[e.k] = v; if (v < pb[e.k]) pb[e.k] = v; }
+  R.sec = true;
+}
+// the sectors a driver has completed on the current lap at time t (or the last lap, just after crossing the line)
+function secNow(D, t){
+  if (!D.sec) return null; const lap = lapOf(D, t); let L = D.sec[lap];
+  const done = L && L.t0 != null ? (() => { let a = L.t0, n = 0; for (let k = 0; k < 3; k++) { if (L.s[k] == null) break; a += L.s[k]; if (a <= t) n++; } return n; })() : 0;
+  if (!done) { const P = D.sec[lap - 1]; if (P && P.t0 != null && t - D.lapT[Math.max(0, D.lapN.indexOf(lap))] < 8) return {L: P, n: 3}; }
+  return L ? {L, n: done} : null;
+}
+function renderTraps(info){
+  const R = st.R; if (!R.sec) { info.innerHTML = `<p class="empty">Sector times and speed traps aren't available for this session.</p>`; return; }
+  const rows = R.drivers.map(D => { const L = Object.values(D.sec || {}); const mx = k => { const v = L.map(l => l.sp[k]).filter(x => x > 0 && x < 400); return v.length ? Math.max(...v) : null; };
+    const mn = k => { const v = L.filter(l => l.lap > 1).map(l => l.s[k]).filter(x => x > 0); return v.length ? Math.min(...v) : null; };
+    const s = [mn(0), mn(1), mn(2)]; return {D, i1: mx(0), i2: mx(1), st: mx(2), s, ideal: s.every(x => x) ? s[0] + s[1] + s[2] : null}; }).filter(r => r.st || r.s.some(x => x));
+  const top = f => Math.max(...rows.map(f).filter(x => x != null)), low = f => Math.min(...rows.map(f).filter(x => x != null));
+  const T = {st: top(r => r.st), i1: top(r => r.i1), i2: top(r => r.i2), s0: low(r => r.s[0]), s1: low(r => r.s[1]), s2: low(r => r.s[2]), id: low(r => r.ideal)};
+  const sp = (v, b) => v == null ? "–" : `<span class="${v === b ? "best" : ""}">${Math.round(v)}</span>`;
+  const sc = (v, b) => v == null ? "–" : `<span class="${v === b ? "best" : ""}">${v.toFixed(3)}</span>`;
+  const cols = [{h: "DRIVER", v: r => r.D.code, f: r => `<b style="color:${r.D.css}">${esc(r.D.code)}</b>`, asc: true},
+    {h: "SPEED TRAP", v: r => r.st, f: r => sp(r.st, T.st), def: true, tip: "Top speed at the speed trap, km/h"},
+    {h: "INT 1", v: r => r.i1, f: r => sp(r.i1, T.i1), tip: "Top speed at intermediate 1, km/h"}, {h: "INT 2 / FINISH", v: r => r.i2, f: r => sp(r.i2, T.i2), tip: "Top speed at intermediate 2, km/h"},
+    {h: "BEST S1", v: r => r.s[0], f: r => sc(r.s[0], T.s0), asc: true}, {h: "BEST S2", v: r => r.s[1], f: r => sc(r.s[1], T.s1), asc: true}, {h: "BEST S3", v: r => r.s[2], f: r => sc(r.s[2], T.s2), asc: true},
+    {h: "IDEAL LAP", v: r => r.ideal, f: r => r.ideal ? `<span class="${r.ideal === T.id ? "best" : ""}">${fmtLap(r.ideal)}</span>` : "–", asc: true, tip: "Best S1 + best S2 + best S3"}];
+  info.innerHTML = statsTable(cols, rows, "trap") + `<p class="anote">Official OpenF1 timing. Speeds in km/h; purple = best in the race. <b>Ideal lap</b> adds a driver's best three sectors (lap 1 left out). The coloured bars under each code in the timing tower are the live sectors: <b style="color:var(--purple)">purple</b> fastest so far, <b style="color:#38e383">green</b> personal best, <b style="color:#ffd400">yellow</b> slower. Click a column to sort.</p>`;
+  info.querySelectorAll("[data-si]").forEach(th => th.onclick = () => { const i = +th.dataset.si, o = STATS.sort; STATS.sort = {tab: "trap", i, dir: o && o.tab === "trap" && o.i === i ? -o.dir : -1}; renderTraps(info); });
+}
+function renderChamp(info){
+  const R = st.R, x = R.h.ext;
+  if (!x || !x.cd || !x.cd.length) { info.innerHTML = `<p class="empty">Championship standings aren't published for this session${st.meta && st.meta.kind === "sprint" ? " (OpenF1 only updates them after the main race)" : ""}.</p>`; return; }
+  const arrow = (a, b) => a == null || b == null || a === b ? `<span style="color:var(--dim)">–</span>` : a > b ? `<span class="chg-up">▲${a - b}</span>` : `<span class="chg-dn">▼${b - a}</span>`;
+  const pts = v => v == null ? "–" : (Math.round(v * 10) / 10).toString();
+  const dr = x.cd.slice().sort((a, b) => (a[2] || 99) - (b[2] || 99)).map(c => { const D = R.byNum[c[0]];
+    return `<tr><td>${c[2] || "–"}</td><td>${arrow(c[1], c[2])}</td><td>${D ? `<b style="color:${D.css}">${esc(D.code)}</b> ${esc(D.first + " " + D.last)}` : "#" + c[0]}</td><td>${pts(c[4])}</td><td>${c[4] != null && c[3] != null && c[4] - c[3] ? "+" + pts(c[4] - c[3]) : "–"}</td></tr>`; }).join("");
+  const tm = (x.ct || []).slice().sort((a, b) => (a[2] || 99) - (b[2] || 99)).map(c => { const D = R.drivers.find(d => d.team === c[0]);
+    return `<tr><td>${c[2] || "–"}</td><td>${arrow(c[1], c[2])}</td><td>${D ? `<b style="color:${D.css}">■</b> ` : ""}${esc(c[0])}</td><td>${pts(c[4])}</td><td>${c[4] != null && c[3] != null && c[4] - c[3] ? "+" + pts(c[4] - c[3]) : "–"}</td></tr>`; }).join("");
+  const lead = x.cd.find(c => c[2] === 1), sec = x.cd.find(c => c[2] === 2);
+  const gap = lead && sec && lead[4] != null && sec[4] != null ? `<p class="anote">After this ${st.meta && st.meta.kind === "sprint" ? "sprint" : "race"}, ${R.byNum[lead[0]] ? esc(R.byNum[lead[0]].first + " " + R.byNum[lead[0]].last) : "#" + lead[0]} leads by <b>${pts(lead[4] - sec[4])}</b> points.</p>` : "";
+  const th = `<thead><tr><th>POS</th><th>±</th><th>NAME</th><th>PTS</th><th>${st.meta && st.meta.kind === "sprint" ? "THIS SPRINT" : "THIS RACE"}</th></tr></thead>`;
+  info.innerHTML = gap + `<h4>DRIVERS</h4><table class="stbl">${th}<tbody>${dr}</tbody></table><h4>CONSTRUCTORS</h4><table class="stbl">${th}<tbody>${tm}</tbody></table>
+    <p class="anote">Official standings from OpenF1 after this session, with the change from before it. <b>PTS</b> is the running total; the last column is what was scored in this session alone.</p>`;
+}
 function detectOvertakes(R){
   const ev = [], byT = {};
   for (const D of R.drivers) for (let i = 1; i < D.pT.length; i++) {
@@ -1516,7 +1601,7 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["trap", "SPEED & SECTORS"], ["champ", "CHAMPIONSHIP"], ["season", "SEASON"]];
 st.anaTab = "h2h";
 function openAnalysis(){ if (!st.R && !(st.Q && (st.Q.q.all || st.Q.hasTele))) return; if (st.Q && !["pos", "laps", "tele"].includes(st.anaTab)) st.anaTab = st.Q.q.all ? "pos" : "tele"; if (st.Q && st.anaTab === "tele" && !st.Q.hasTele) st.anaTab = "pos"; if (st.R && st.anaTab === "tele") st.anaTab = "h2h"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
@@ -1582,7 +1667,7 @@ function renderAna(){
       return `<li><span class="k k-${x.kind}">${x.kind === "crash" ? "CRASH" : x.kind === "contact" ? "INCIDENT" : "STOPPED"}</span><b>${esc(who)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, x.t))}</span>${R.noTrack ? "" : `<button class="btn" data-rec="${i}">▶ WATCH</button>`}</li>`; }).join("");
     info.innerHTML = `<ul class="inclist">${items || '<li class="none">No crashes, stops or contacts were detected in this race.</li>'}</ul>
       <p class="anote">Crashes and stops are inferred from the car-position data; incidents are those race control noted between two cars. <b>Watch</b> replays each one on the track map in slow motion.</p>
-      <h4>OVERTAKES · ${(R.overtakes || []).length}</h4><ul class="inclist ov">${(R.overtakes || []).map((o, i) => `<li><span class="k k-ov">P${o.pos}</span><b style="color:${o.a.css}">${esc(o.a.code)}</b> passes <b style="color:${o.b.css}">${esc(o.b.code)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, o.t))}</span><button class="btn" data-jump="${o.t}">JUMP</button></li>`).join("") || '<li class="none">No on-track passes found (position changes from pit stops are left out).</li>'}</ul>`;
+      <h4>OVERTAKES · ${(R.overtakes || []).length}</h4>${R.ovSrc ? `<p class="anote">From the official OpenF1 overtake feed: ${R.ovRaw} position swaps recorded, of which ${(R.overtakes || []).length} are on-track passes. Swaps caused by pit stops, retirements, safety-car or flag periods, and timing glitches are left out.</p>` : ``}<ul class="inclist ov">${(R.overtakes || []).map((o, i) => `<li><span class="k k-ov">P${o.pos}</span><b style="color:${o.a.css}">${esc(o.a.code)}</b> passes <b style="color:${o.b.css}">${esc(o.b.code)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, o.t))}</span><button class="btn" data-jump="${o.t}">JUMP</button></li>`).join("") || '<li class="none">No on-track passes found (position changes from pit stops are left out).</li>'}</ul>`;
     info.querySelectorAll("[data-rec]").forEach(b => b.onclick = () => recreate(R.incidents[+b.dataset.rec]));
     info.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { closeAnalysis(); setTime(+b.dataset.jump - 6); setPlaying(true); });
   } else if (st.anaTab === "pos") {
@@ -1619,6 +1704,10 @@ function renderAna(){
     renderWeather(info);
   } else if (st.anaTab === "season") {
     renderSeason(ctl, info);
+  } else if (st.anaTab === "trap") {
+    $("#anaCv").hidden = true; renderTraps(info);
+  } else if (st.anaTab === "champ") {
+    $("#anaCv").hidden = true; renderChamp(info);
   }
 }
 function leaderLapF(R, t){ const i = ub(R.lapStarts, t) - 1; if (i < 0) return 0; const a = R.lapStarts[i], b = R.lapStarts[i+1] ?? a + 90; return clamp(i + 1 + (t - a)/(b - a) - 1, 0, R.total); }
@@ -1764,6 +1853,7 @@ function computeOrder(){
   order = R.drivers.map(D => { const g = gapOf(D, t); return {D, pos: posAt(D, t), gl: g[0], gi: g[1]}; });
   order.sort((a, b) => (a.pos - b.pos) || (a.D.num - b.D.num));
 }
+function msBar(D, t){ const q = !isOut(D, t) && secNow(D, t); if (!q) return ""; let h = ""; for (let k = 0; k < 3; k++) h += `<i class="${k < q.n ? q.L.c[k] || "" : ""}"></i>`; return `<span class="ms">${h}</span>`; }
 function updateTower(){
   const R = st.R, t = st.t; if (!R) return;
   const flHolder = (() => { let b = null; for (const x of R.h.best) { if (x[0] <= t) b = x; else break; } return b ? b[1] : null; })();
@@ -1777,7 +1867,7 @@ function updateTower(){
     const battle = racing && !out && !pit && i > 0 && o.gi != null && o.gi >= 0 && o.gi <= 1.0;
     setHTML(r, "cd", r.cd, `<span class="code">${esc(D.code)}</span>` + (D.num === flHolder ? `<span class="fl" title="Fastest lap"></span>` : "") +
       (D.num === speakingNum ? `<svg class="mic" viewBox="0 0 12 12"><rect x="4" y="1" width="4" height="7" rx="2" fill="currentColor"/><path d="M2.5 6a3.5 3.5 0 0 0 7 0M6 9.5V11" stroke="currentColor" fill="none"/></svg>` : "") +
-      (battle ? `<span class="bt">&lt;1s</span>` : "") + (() => { const c = stewChips(D, t)[0]; return c ? `<span class="chip ${c.cls}" data-tip="${esc(chipTip(c.txt))}">${esc(c.short || c.txt)}</span>` : ""; })());
+      (battle ? `<span class="bt">&lt;1s</span>` : "") + msBar(D, t) + (() => { const c = stewChips(D, t)[0]; return c ? `<span class="chip ${c.cls}" data-tip="${esc(chipTip(c.txt))}">${esc(c.short || c.txt)}</span>` : ""; })());
     let gp;
     if (out) gp = `<span class="pill out">OUT</span>`;
     else if (D.res && D.res.dsq && t >= R.chq + 30) gp = `<span class="pill dsq">DSQ</span>`;
@@ -2327,7 +2417,7 @@ function renderStats(){
   let ctl = `<label>Season <select id="stYear"><option value="all">All seasons (${years[years.length - 1]}–${years[0]})</option>${years.map(y => `<option value="${y}" ${String(y) === STATS.year ? "selected" : ""}>${y}</option>`).join("")}</select></label>`;
   const gp = statsEvents(["gp"]), spr = statsEvents(["sprint"]), q = statsEvents(["quali"]); let html = "";
   if (STATS.tab === "drv" || STATS.tab === "team") {
-    const isT = STATS.tab === "team", acc = {}, get = (k, extra) => acc[k] || (acc[k] = {k, races: 0, wins: 0, pod: 0, poles: 0, fq: 0, sw: 0, fl: 0, pts: 0, dnf: 0, fin: [], best: 99, gain: 0, team: null, one2: 0, drivers: new Set(), ...extra});
+    const isT = STATS.tab === "team", acc = {}, get = (k, extra) => acc[k] || (acc[k] = {k, races: 0, wins: 0, pod: 0, poles: 0, fq: 0, sw: 0, fl: 0, pts: 0, dnf: 0, fin: [], best: 99, gain: 0, ovm: 0, ovl: 0, ovn: 0, team: null, one2: 0, drivers: new Set(), ...extra});
     for (const e of gp) { const p1 = e.res.filter(r => r[3] === 1 || r[3] === 2);
       if (isT && p1.length === 2 && p1[0][1] === p1[1][1]) get(p1[0][1]).one2++;
       for (const r of e.res) { const o = get(isT ? r[1] : r[0]); o.team = r[1]; o.drivers.add(r[0]); o.races += isT ? 0 : 1;
@@ -2336,6 +2426,8 @@ function renderStats(){
       if (e.fl) { const t = e.res.find(r => r[0] === e.fl[0]); get(isT ? (t ? t[1] : "?") : e.fl[0]).fl++; } }
     if (isT) for (const e of gp) { const seen = new Set(e.res.map(r => r[1])); seen.forEach(t => acc[t] && acc[t].races++); }
     for (const e of spr) for (const r of e.res) { const o = get(isT ? r[1] : r[0]); o.pts += r[4]; if (r[3] === 1) o.sw++; }
+    for (const e of gp.concat(spr)) if (e.ov) { const tm = {}; for (const r of e.res) tm[r[0]] = r[1];
+      for (const c in e.ov) { const o = get(isT ? (tm[c] || "?") : c); o.ovm += e.ov[c][0]; o.ovl += e.ov[c][1]; } }
     for (const e of q) for (const r of e.res) if (r[2] === 1) get(isT ? r[1] : r[0]).fq++;
     const rows = Object.values(acc).filter(o => o.races > 0);
     const nameCell = o => isT ? `<i class="sdot" style="background:${esc(D.teams[o.k] || "#888")}"></i>${esc(o.k)}` : `<i class="sdot" style="background:${esc(statsCol(o.k))}"></i><b>${esc(o.k)}</b> ${esc(statsName(o.k))}`;
@@ -2347,8 +2439,10 @@ function renderStats(){
     if (isT) cols.push({h: "1–2s", v: o => o.one2, tip: "Grands Prix where the team finished first and second"}, {h: "Drivers", v: o => o.drivers.size, f: o => [...o.drivers].join(", "), asc: true});
     else cols.push({h: "Avg finish", v: o => o.fin.length ? o.fin.reduce((a, b) => a + b, 0) / o.fin.length : null, f: o => o.fin.length ? fx1(o.fin.reduce((a, b) => a + b, 0) / o.fin.length) : "–", asc: true, tip: "Average finishing position when classified"},
       {h: "Best", v: o => o.best < 99 ? o.best : null, f: o => o.best < 99 ? "P" + o.best : "–", asc: true}, {h: "Places gained", v: o => o.gain, tip: "Grid position minus finishing position, summed over classified finishes"});
+    cols.push({h: "Overtakes", v: o => o.ovm, tip: "On-track passes made in Grands Prix and sprints (official OpenF1 overtake feed, without pit-stop, safety-car and glitch swaps)"},
+      {h: "Passed by", v: o => o.ovl, tip: "Times passed on track by another car"}, {h: "Net", v: o => o.ovm - o.ovl, f: o => (o.ovm - o.ovl > 0 ? "+" : "") + (o.ovm - o.ovl), tip: "Overtakes minus times passed"});
     cols.push({h: "DNFs", v: o => o.dnf});
-    html = statsTable(cols, rows, STATS.tab) + `<p class="anote">${gp.length} Grands Prix, ${spr.length} sprints. Points include sprints. Data from OpenF1; 2023 points for Saudi Arabia and the United States were recomputed from positions.</p>`;
+    html = statsTable(cols, rows, STATS.tab) + `<p class="anote">${gp.length} Grands Prix, ${spr.length} sprints. Points include sprints. Overtakes are on-track passes from the official OpenF1 overtake feed, with swaps caused by pit stops, safety cars and timing glitches left out, so they won't match other published counts exactly. Data from OpenF1; 2023 points for Saudi Arabia and the United States were recomputed from positions.</p>`;
   } else if (STATS.tab === "mate") {
     const pairs = {}, key = (y, t) => y + "|" + t;
     for (const e of gp) { const byT = {}; for (const r of e.res) (byT[r[1]] = byT[r[1]] || []).push(r);
@@ -2721,6 +2815,9 @@ function allSessions(){ return st.idx.races.concat(st.idx.sprints || [], st.idx.
 $("#cards").addEventListener("click", e => { const b = e.target.closest(".card[data-sk]"); if (!b) return; closeCal(); const r = st.idx.races.find(x => x.session_key === +b.dataset.sk); if (r) { location.hash = "round-" + r.round; } });
 
 /* ---------------- race loading ---------------- */
+// one extras file per season (official overtakes, standings, sectors, speed traps), fetched once and kept
+const EXTRAS = {};
+function loadExtras(url){ return EXTRAS[url] || (EXTRAS[url] = fetchBytes(url).then(b => JSON.parse(new TextDecoder().decode(b))).catch(e => { console.warn("extras", e); delete EXTRAS[url]; return null; })); }
 async function loadRace(r){
   stopHighlights();
   commStop();
@@ -2733,8 +2830,9 @@ async function loadRace(r){
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + r.name.toUpperCase();
   $("#podium").hidden = true;
   try {
+    const exP = r.extra_file ? loadExtras(r.extra_file).then(m => m && m[r.session_key] || null) : Promise.resolve(null);
     const u8 = await fetchBytes(r.file); if (id !== st.loadingId) return;
-    const {header, body} = splitPack(u8);
+    const {header, body} = splitPack(u8); header.ext = await exP; if (id !== st.loadingId) return;
     const R = prep(header, body); R.outline = R.outlineW;
     R.noTrack = R.outline.length < 20 || R.drivers.filter(D => D.vis.reduce((a, v) => a + v, 0) > R.N*0.5).length < R.drivers.length/2;
     if (R.noTrack) R.outline = [[0,0],[1,0],[1,1]];

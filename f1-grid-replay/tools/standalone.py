@@ -14,6 +14,8 @@ for r in idx["races"] + idx.get("sprints", []):
     if r.get("radio_file"):
         import base64
         emb[r["radio_file"]] = base64.b64encode(open(f"{base}/{r['radio_file']}", "rb").read()).decode()
+    if r.get("extra_file") and r["extra_file"] not in emb:   # one per season: official overtakes, standings, sectors, speed traps
+        emb[r["extra_file"]] = __import__("base64").b64encode(open(f"{base}/{r['extra_file']}", "rb").read()).decode()
 import base64 as _b64, os as _os2
 # optional: COMM_DIR=comm/<year> embeds pre-rendered commentary packs (<sk>.mp3) for every race that has one
 cd = _os2.environ.get("COMM_DIR")

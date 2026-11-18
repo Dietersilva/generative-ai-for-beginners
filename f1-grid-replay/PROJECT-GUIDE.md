@@ -82,7 +82,32 @@ put on hold.
   fastest race lap, sprint winner per year) and pit stops (fastest stops, team medians). Season filter or all
   seasons. **Poles = started the GP from P1** (official pole after grid penalties; matches the official counts,
   e.g. 2023 VER 12, LEC 5); "Fastest in Q" counts who was quickest in qualifying. Data: `tools/build_stats.py pub`
-  → `stats.json` (217 KB; embedded in F1_Unleashed.html offline). Rebuild it after new races are added.
+  → `stats.json` (217 KB; embedded in F1_Unleashed.html offline). Rebuild it after new races are added, then
+  re-add overtakes with ovcollect.js + merge_ov.py (see the timing extras section).
+
+### Added 18 November 2026 (later): official timing extras
+- **Official overtakes**: the INCIDENTS tab, timeline, highlights and commentary use OpenF1's `/overtakes` feed.
+  The raw feed records every position swap (e.g. 218 at Suzuka 2026), so `officialOvertakes()` in the page keeps
+  on-track passes only: it drops swaps near either car's pit stop, during SC/VSC/red flags, swaps undone within 4 s,
+  one car swapping with 3+ cars within 5 s after the start (timing-loop glitches, e.g. LAW at Suzuka), and passes
+  that don't still stand 8 s later. Races without extras fall back to the old position-based `detectOvertakes()`.
+- **CHAMPIONSHIP tab**: drivers' and constructors' standings after the session (OpenF1 `championship_drivers` /
+  `championship_teams`), position change and points scored. Sprints have their own standings; a race's "points
+  before" already includes that weekend's sprint. Checked: 2023 VER 575 / PER 285 / HAM 234, RBR 860; 2024 VER 437 /
+  NOR 374 / LEC 356, McLaren 666 / Ferrari 652; 2025 NOR 423 / VER 421 / PIA 410, McLaren 833 — all match.
+- **SPEED & SECTORS tab**: per driver top speed at the speed trap, intermediate 1 and 2/finish, best S1/S2/S3 and
+  the ideal lap (sum of best sectors, lap 1 excluded). Sortable.
+- **Live sectors**: three bars under each driver code (linear view canvas and timing tower): purple = fastest anyone
+  so far, green = personal best so far, yellow = slower; the driver panel shows the sector times, the official
+  mini-sector strip for each sector and the speed-trap speed.
+- **STATS hub**: Overtakes, Passed by and Net columns (drivers and teams, GPs + sprints).
+- Data: `tools/fetch_extras.py pub extras` → `extras/<sk>.json` (resumable), then `tools/pack_extras.py pub extras`
+  → ONE gzip file per season (`extra.mp3`, `2025/extra.mp3`, …; ~0.5 MB each) and `extra_file` on every race/sprint
+  in the indexes. One file per season because the artifact allows at most **511 files per version** (it had 489).
+  Stats: after `build_stats.py`, run `node tools/ovcollect.js overtakes.json` (test server on :8767) and
+  `python3 tools/merge_ov.py pub/stats.json overtakes.json`. Offline: standalone.py embeds the season's extra file.
+- New sessions added by the weekend updater have no extras until fetch_extras + pack_extras are run again (the
+  page then falls back to the old overtake detection and hides the sector bars and new tabs' data).
 
 ## 4. How it is built (architecture)
 
@@ -146,7 +171,7 @@ The lines are original; no real commentator's voice or catchphrases are imitated
 
 ## 7. Size budget (online)
 
-The artifact allows 256 MB per version. Current total ≈ 246 MB (after packing qualifying files) (2026 data + radio + commentary,
+The artifact allows 256 MB and **511 files** per version. Current total ≈ 252.8 MB in 493 files (version 37, 18 Nov 2026) (2026 data + radio + commentary,
 2023–2025 data + radio). That is why race data is binary, radio is 24 kbps, and past-season commentary
 audio is offline only. The three remaining 2026 races add ~6 MB plus ~2 MB of commentary. A 2027
 season would need room to be made (e.g. moving a past season to a second artifact).
