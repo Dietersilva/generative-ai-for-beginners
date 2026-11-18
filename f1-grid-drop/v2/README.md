@@ -17,6 +17,25 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 6
+
+- **Progress page:** https://claude.ai/artifact/NoagHvUYA67fxdHe5G9syZ shows every round with before-and-after screenshots. It's also linked as "📈 What's new" under the race, and a copy is in `progress/`.
+- **🏆 Championship mode:** from RACE SETUP, "START A 5-RACE CHAMPIONSHIP".
+  - Each race gets a random setup, announced by the hosts.
+  - F1 points (25, 18, 15, 12, 10, 8, 6, 4, 2, 1) and a standings table after every race.
+  - After race 5, a "WORLD CHAMPION" ceremony with fireworks.
+  - "THIS RACE" shows 🏆 RACE n/5.
+  - The championship is saved in this browser.
+- **Phones see the obstacles and creatures too:** the race screen sends which obstacles were chosen and streams their positions (wrecking ball, windmill, balls, pins, tyres, the T-rex crossing, the stampede herd and the pterodactyl). Phones only show them when their copy of the course matches exactly.
+- **Lighter rendering:** about 3.6× fewer triangles per frame (4.25 million → 1.19 million):
+  - Rocks simplified to about 320 triangles each.
+  - The invisible shadow-casting trees use very simple shapes.
+  - Lighter heads for the crowd.
+- **Cars:** a team-colour stripe along the nose, a roll-hoop camera pod, and wheels at the real 2026 tyre size (about 72 cm).
+- **Downloaded copy:**
+  - Opened straight from disk, it now skips the textures (browsers block them in 3D from files) instead of risking a frozen screen.
+  - The phone betting slip no longer waits forever: it explains why it can't connect and offers "▶ OPEN THE RACE INSTEAD".
+
 ## v2.0 round 5
 
 - **Phone driver view (📺):**

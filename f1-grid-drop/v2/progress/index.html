@@ -1,0 +1,195 @@
+<title>F1 Bezerk Progress</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@600;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: a race-control timing screen. One dark world on purpose: a timeline of "laps" (rounds), each with its before/after evidence. */
+:root{
+  --bg:#07090f; --panel:#0e1320; --panel-2:#141b2c; --line:#222b40; --fg:#e8ecf6; --muted:#97a1b6;
+  --red:#ff2f45; --gold:#ffd23f; --green:#38e383; --cyan:#3fd8ff;
+  --f-display:"Saira Condensed","Arial Narrow",sans-serif; --f-body:"Inter",system-ui,sans-serif; --f-mono:"JetBrains Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body)}
+.wrap{max-width:1100px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:40px}
+h1,h2,h3{font-family:var(--f-display);font-weight:800;letter-spacing:.02em;text-wrap:balance;margin:0}
+.hero{display:grid;gap:18px;border-bottom:1px solid var(--line);padding-bottom:28px}
+.flag{display:flex;align-items:center;gap:12px}
+.chk{width:44px;height:30px;background:conic-gradient(var(--fg) 25%,transparent 0 50%,var(--fg) 0 75%,transparent 0) 0 0/11px 10px;transform:skewX(-12deg)}
+.hero h1{font-size:clamp(40px,7vw,72px);line-height:.95;font-style:italic}
+.hero h1 em{color:var(--red);font-style:italic}
+.lede{max-width:66ch;color:var(--muted);font-size:17px;margin:0}
+.links{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--f-display);font-weight:800;font-size:17px;letter-spacing:.06em;padding:10px 16px;border-radius:10px;text-decoration:none;color:var(--fg);border:1px solid var(--line);background:var(--panel)}
+.btn.go{background:var(--red);border-color:var(--red);color:#fff}
+.btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.board{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cell{background:var(--panel);padding:14px 16px;display:grid;gap:2px}
+.cell .k{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.14em;color:var(--muted);text-transform:uppercase}
+.cell .v{font-family:var(--f-mono);font-size:22px;font-variant-numeric:tabular-nums}
+.cell .v b{color:var(--green);font-weight:500}
+.cell .n{font-size:12.5px;color:var(--muted)}
+.sec-h{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.sec-h h2{font-size:30px}
+.sec-h span{color:var(--muted)}
+.laps{display:flex;flex-direction:column;gap:0;border-left:2px solid var(--line);margin-left:8px}
+.lap{position:relative;padding:0 0 34px 26px;display:grid;gap:12px}
+.lap::before{content:"";position:absolute;left:-8px;top:6px;width:14px;height:14px;border-radius:50%;background:var(--bg);border:3px solid var(--red)}
+.lap.now::before{border-color:var(--gold);background:var(--gold)}
+.lap-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.tag{font-family:var(--f-mono);font-size:12px;color:var(--gold);border:1px solid color-mix(in srgb,var(--gold) 50%,transparent);border-radius:6px;padding:1px 7px}
+.lap h3{font-size:24px}
+.lap ul{margin:0;padding-left:20px;max-width:72ch;display:grid;gap:4px}
+.lap li::marker{color:var(--red)}
+.shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:12px}
+figure{margin:0;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+figure img{display:block;width:100%;height:auto;background:var(--panel-2)}
+figcaption{padding:9px 12px;font-size:13px;color:var(--muted)}
+figcaption b{color:var(--fg);font-weight:600}
+figure.tall{max-width:300px}
+.note{background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--cyan);border-radius:10px;padding:14px 16px;max-width:78ch}
+.note h3{font-size:20px;margin-bottom:6px}
+.note p{margin:0 0 6px;color:var(--muted)}
+.next{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}
+.next div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.next b{font-family:var(--f-display);font-size:18px;letter-spacing:.03em;display:block}
+.next span{color:var(--muted);font-size:13.5px}
+footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padding-top:16px}
+@media (prefers-reduced-motion:no-preference){figure{transition:border-color .2s}figure:hover{border-color:#3a4766}}
+</style>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="flag"><span class="chk" aria-hidden="true"></span><span class="tag">BUILD LOG · 18 NOV 2026</span></div>
+    <h1>F1 Bezerk <em>v2.0</em> progress</h1>
+    <p class="lede">Everything we have changed since v1.0, round by round, with screenshots from my test runs. v1.0 stays locked as a backup; all new work goes into v2.0.</p>
+    <div class="links">
+      <a class="btn go" href="https://claude.ai/artifact/51RaQNnxXYXN9voVZQa2Vx" target="_blank" rel="noopener">▶ Play v2.0</a>
+      <a class="btn" href="https://claude.ai/artifact/T78SFRzPEEh7yYV2BaSAXJ" target="_blank" rel="noopener">v1.0 (locked)</a>
+    </div>
+  </header>
+
+  <section aria-labelledby="by-numbers" style="display:grid;gap:14px">
+    <div class="sec-h"><h2 id="by-numbers">By the numbers</h2><span>measured on my test machine, which has no graphics card</span></div>
+    <div class="board">
+      <div class="cell"><span class="k">Physics per step</span><span class="v">10.1 → <b>2.9 ms</b></span><span class="n">Smarter collision checks for the ~880 track pieces</span></div>
+      <div class="cell"><span class="k">Racing physics</span><span class="v">7.5 → <b>2.9 ms</b></span><span class="n">Skips contact maths when a car is clearly clear of a piece</span></div>
+      <div class="cell"><span class="k">Triangles per frame</span><span class="v">4.25M → <b>1.19M</b></span><span class="n">Lighter rocks and invisible shadow shapes (latest round)</span></div>
+      <div class="cell"><span class="k">Fast-forward</span><span class="v">120 → <b>60 Hz</b></span><span class="n">At 2× and up: half the work per second of race</span></div>
+      <div class="cell"><span class="k">Phone updates</span><span class="v"><b>&lt;1 KB</b> × 6/s</span><span class="n">Every car's position, for the cockpit view</span></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="laps" style="display:grid;gap:18px">
+    <div class="sec-h"><h2 id="laps">Round by round</h2><span>newest last</span></div>
+    <div class="laps">
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v1.0</span><h3>The starting grid</h3></div>
+        <ul>
+          <li>22 cars of the 2026 grid, no engines, a 0.9 km mountain course, real-time physics.</li>
+          <li>Chaos obstacles, dinosaurs, two hosts calling the race, replays, betting from phones with live cheering, season points and all-time records.</li>
+          <li>Physics made about 3.5× faster; showers, stampede, donuts and fireworks, LIVE pop-ups, T-rexes that eat cars and a pterodactyl that snatches one.</li>
+        </ul>
+        <div class="shots">
+          <figure><img src="img/popup-eaten.jpg" alt="A LIVE pop-up window reading Bottas is eaten by a T-rex" loading="lazy" width="1100" height="680"><figcaption><b>LIVE pop-up.</b> Off-screen action cuts in, in sync with the commentary.</figcaption></figure>
+          <figure><img src="img/cheers.jpg" alt="Emoji cheers with names floating up the race screen" loading="lazy" width="1100" height="653"><figcaption><b>Phone cheering.</b> Friends' emoji float up the big screen with their names.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 1</span><h3>Real textures</h3></div>
+        <ul>
+          <li>Photo-scanned grass, rock, snow and asphalt from Poly Haven (free, CC0), blended by height and steepness.</li>
+          <li>Car reflections from a real sky photo, smoother edges and soft contact shadows.</li>
+        </ul>
+        <div class="shots">
+          <figure><img src="img/textures-tv.jpg" alt="Top: v1.0 flat green hills. Bottom: v2.0 photo-textured hills" loading="lazy" width="940" height="940"><figcaption><b>Top v1.0, bottom v2.0.</b> Real grass detail and grey asphalt.</figcaption></figure>
+          <figure><img src="img/textures-side.jpg" alt="Top: v1.0 beige drop face. Bottom: v2.0 real rock drop face" loading="lazy" width="940" height="940"><figcaption><b>Top v1.0, bottom v2.0.</b> The big drop is real rock now.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 2</span><h3>Cars, trees, water, setup menu</h3></div>
+        <ul>
+          <li>Sculpted bodywork instead of boxes: tapered nose, sidepods, engine cover fin, rounded tyres, glossier paint.</li>
+          <li>Layered conifers, leafy trees, bushes and boulders; a rippled lake; soft clouds, sun glare and sunlit dust.</li>
+          <li>RACE SETUP menu with 🎲 RANDOMIZE and "Surprise me every race"; a DRIVER button; faster fast-forward.</li>
+        </ul>
+        <div class="shots">
+          <figure><img src="img/cars-r2.jpg" alt="Left: boxy v1 cars. Right: sculpted v2 cars" loading="lazy" width="1100" height="928"><figcaption><b>Left before, right after.</b> The same car from three angles.</figcaption></figure>
+          <figure><img src="img/setup-menu.jpg" alt="The RACE SETUP menu with feature cards and a randomize button" loading="lazy" width="1100" height="653"><figcaption><b>RACE SETUP.</b> Pick features or let the dice decide; the hosts announce the mix.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 3</span><h3>Redesign and night racing</h3></div>
+        <ul>
+          <li>A clean control bar: START, RESET, SETUP, RANDOMIZE, SPEED; everything else lives in RACE SETUP, with a "THIS RACE" summary.</li>
+          <li>Night: dark hills under moonlight, floodlight pools and beams, real lights that follow the action, red rear lights with light trails, a moon and crowd camera flashes.</li>
+        </ul>
+        <div class="shots">
+          <figure><img src="img/redesign.jpg" alt="The redesigned page with a single control row and This Race tags" loading="lazy" width="1100" height="688"><figcaption><b>Redesign.</b> One row of everyday controls.</figcaption></figure>
+          <figure><img src="img/night-side.jpg" alt="Night race with floodlit track and red light trails" loading="lazy" width="1100" height="688"><figcaption><b>Night race.</b> Floodlit track, light trails behind the cars.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 4</span><h3>Real scanned nature</h3></div>
+        <ul>
+          <li>Real 3D-scanned trees, bushes and grass, photographed from 8 sides and shown as camera-facing photo cards (the way games draw big forests).</li>
+          <li>Real scanned rock shapes, simplified for the browser and wrapped in the scanned rock photo.</li>
+        </ul>
+        <div class="shots">
+          <figure><img src="img/scanned-crow.jpg" alt="Hills covered with photo-real trees and a meadow beside the track" loading="lazy" width="940" height="470"><figcaption><b>Scanned trees</b> on the hills, a tall-grass meadow by the track.</figcaption></figure>
+          <figure><img src="img/scanned-side.jpg" alt="Side view of the grid with scanned trees behind" loading="lazy" width="940" height="470"><figcaption><b>From the side camera.</b></figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 5</span><h3>Phone cockpit, creatures and venue</h3></div>
+        <ul>
+          <li>📺 Phone driver view: friends watch live from inside the car they bet on, with position, speed and race time.</li>
+          <li>Real wing profiles, carbon, team-colour helmets and driver codes on the cars.</li>
+          <li>Smooth T-rex, raptors and long-necked dinosaurs with mottled skin; lattice light towers; grandstands with people, ad boards and flags.</li>
+          <li>Fixed a bug that drew the grass at fir-tree size.</li>
+        </ul>
+        <div class="shots">
+          <figure class="tall"><img src="img/phone-cockpit.jpg" alt="Phone screen showing Hamilton's cockpit view, P3 and LIVE" loading="lazy" width="360" height="720"><figcaption><b>Phone cockpit.</b> Live from Hamilton's Ferrari.</figcaption></figure>
+          <figure><img src="img/trex.jpg" alt="The new smooth T-rex from the side and the front" loading="lazy" width="940" height="940"><figcaption><b>New T-rex.</b> One smooth body, mottled skin, real legs.</figcaption></figure>
+          <figure><img src="img/stands-towers.jpg" alt="Grandstand full of fans in team shirts with ad boards and flags" loading="lazy" width="940" height="940"><figcaption><b>Grandstands.</b> Fans, ad boards, flags and a lattice tower.</figcaption></figure>
+          <figure><img src="img/cars-r5.jpg" alt="Left: round 2 car. Right: round 5 car with wing profiles and team helmet" loading="lazy" width="1100" height="928"><figcaption><b>Left round 2, right round 5.</b> Wing profiles, helmets, rear light.</figcaption></figure>
+          <figure><img src="img/sauropod.jpg" alt="A long-necked dinosaur by the lake" loading="lazy" width="940" height="470"><figcaption><b>Long-necked dinosaur</b> by the lake.</figcaption></figure>
+        </div>
+      </article>
+
+      <article class="lap now">
+        <div class="lap-h"><span class="tag">v2.0 · round 6 · now</span><h3>Championship, phones see everything, lighter</h3></div>
+        <ul>
+          <li>🏆 5-race championship: random setup each race, F1 points, standings after every race and a champion's ceremony with fireworks.</li>
+          <li>Phones now also see the obstacles and creatures: wrecking ball, windmill, balls, pins, the stampede herd and the pterodactyl.</li>
+          <li>About 3.6× fewer triangles per frame, with nothing visible removed.</li>
+          <li>The downloaded copy works when opened from disk (simpler scenery), and the phone betting slip explains itself instead of waiting forever.</li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <aside class="note">
+    <h3>Opening the downloaded copy</h3>
+    <p>Browsers block a page opened straight from a file from using images in 3D, so the downloaded copy shows the simpler scenery. For the full look, play the live page, or run a small local web server in the folder (<code>python3 -m http.server</code>) and open http://localhost:8000.</p>
+    <p>If the address ends in <code>#bet</code>, that is the phone betting slip, not the race.</p>
+  </aside>
+
+  <section aria-labelledby="next" style="display:grid;gap:14px">
+    <div class="sec-h"><h2 id="next">Still on the list</h2></div>
+    <div class="next">
+      <div><b>True photoreal</b><span>Needs Unreal Engine and a gaming PC; the browser version can keep improving but won't look like a photo.</span></div>
+      <div><b>Better cars</b><span>No free scanned F1-style car exists; more hand modelling or a generated model (would use your Higgsfield credits).</span></div>
+      <div><b>Replays on phones</b><span>Phones show the live race but not the slow-motion replays yet.</span></div>
+    </div>
+  </section>
+
+  <footer>Fan-made and not affiliated with Formula 1. Textures, scanned plants and rocks from Poly Haven (CC0). Screenshots come from automated test runs on a machine without a graphics card, so they are lower quality than on a real screen.</footer>
+</div>

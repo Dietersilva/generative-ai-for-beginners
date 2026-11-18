@@ -10,13 +10,15 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 | `assets/` | Textures, scanned plant image sheets and rock shapes from Poly Haven (CC0). They must stay next to `index.html`. |
 | `README.md` | Every feature, round by round, plus the full v1.0 guide. |
 | `RELEASE-NOTES.md` | This file. |
+| `progress/` | The progress page with every round and its screenshots (open `progress/index.html`). |
 
 ## Version details
 
 - **Live page:** https://claude.ai/artifact/51RaQNnxXYXN9voVZQa2Vx (private to you unless you share it).
+- **Progress page:** https://claude.ai/artifact/NoagHvUYA67fxdHe5G9syZ
 - **v1.0 live page (locked):** https://claude.ai/artifact/T78SFRzPEEh7yYV2BaSAXJ
 - **Source in git:** `f1-grid-drop/v2/` on branch `claude/youthful-cerf-49o4ha`.
-- **SHA-256 of `index.html`:** `4a6bbdd4c82289ee39e75149f5c140bb8ed710ac22176d8b78bf3f3088622e69`
+- **SHA-256 of `index.html`:** `abcfd0935e0a4b6e96c2174a9b3f8f9bec7fff76131fa3d39df1cbb101666a68`
 - **Libraries,** loaded from jsDelivr with pinned versions: three.js 0.160.0 (plus its add-ons) and cannon-es 0.20.0.
 
 ## What v2.0 adds over v1.0
@@ -36,6 +38,8 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **Controls:** a cleaner control bar, and a RACE SETUP menu with 🎲 RANDOMIZE and "Surprise me every race".
 - **Phone driver view (📺):** friends watch the race live from inside their driver's cockpit.
 - **Speed:** faster fast-forward (60 physics steps a second at 2× and above), plus a real-speed readout.
+- **Championship:** a 5-race championship with F1 points and a champion's ceremony.
+- **Lighter rendering:** about 3.6× fewer triangles per frame than round 5.
 
 ## How to run it
 
@@ -43,7 +47,7 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **From this folder:** opening `index.html` straight from your computer may not load the textures, because browsers block pages opened from disk from loading other files. Use a small local web server instead, then open http://localhost:8000.
   - On a Mac or Linux, run this inside the folder: `python3 -m http.server`
   - On Windows, install Python first and run the same command.
-- **Offline fallback:** without the `assets/` folder (or offline), the game still runs with the simpler v1.0-style scenery.
+- **Offline fallback:** opened straight from disk, or without the `assets/` folder, the game runs with the simpler v1.0-style scenery.
 - **Shared features:** phone betting, cheering and the phone driver view only work on the live claude.ai page.
 
 ## How to restore it as a live page
