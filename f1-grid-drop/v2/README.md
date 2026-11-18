@@ -17,6 +17,37 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 5
+
+- **Phone driver view (📺):**
+  - The race screen broadcasts every car's position, rotation, speed and status about 6 times a second through the page's live room. Each message is under 1 KB; the platform limit is 4 KB.
+  - Every 2 seconds it also sends the race setup: course, car order, giant car, weather and time of day.
+  - On the betting slip, **📺 WATCH FROM …'S COCKPIT** opens a full-screen cockpit view of the driver you picked, with your position, speed and race time. ◀ ▶ switch drivers, and BACK TO SLIP returns.
+  - The phone draws the same course and scenery itself, and smooths the motion between updates.
+  - Everything the phone receives is checked before use.
+  - Only the race screen (owner or Editor) can broadcast.
+  - Not shown on phones yet: obstacles, dinosaurs and replays.
+- **Cars:**
+  - Wings use real aerodynamic profiles: rounded leading edge, thin trailing edge, cambered downwards.
+  - Glossy carbon parts.
+  - Helmets in the team's lighter colour.
+  - The driver's code on both sides of the engine cover.
+- **T-rex and raptors:**
+  - One smooth body from tail tip to neck, with a sculpted head and jaw.
+  - Muscular thighs and slim shins.
+  - Pale bellies, dark backs, stripes and blotches.
+- **Light towers:** steel lattice masts with zig-zag bracing and a bank of 12 floodlights each.
+- **Grandstands:**
+  - Fans with bodies, arms and heads in team-coloured shirts.
+  - A roof frame.
+  - Lit advertising boards.
+  - Seven team-colour flags waving on the roof.
+- **Long-necked dinosaurs:** rebuilt the same way as the T-rex: smooth body, neck, head and solid legs, with mottled skin.
+- **Stampede balance:** the herd now gains on the last car more gently. In one test with the earlier, harder herd, only 3 of 22 finished.
+- **Fixes:**
+  - The four plant kinds were sharing one compiled shader on the graphics card, so the grass was drawn at fir-tree size. Each kind now has its own.
+  - The grass is now knee-high, as intended.
+
 ## v2.0 round 4: real scanned nature
 
 All from Poly Haven 3D scans (CC0): Island Tree 02, Fir Sapling Medium, Searsia Lucida, Grass Medium 02, Boulder 01, Namaqualand Boulder 02 and Rock Moss Set 01.

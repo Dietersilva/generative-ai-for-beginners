@@ -868,6 +868,7 @@ async function buildScanned(rockTex) {
   cardGeo.setAttribute("uv", new THREE.Float32BufferAttribute([0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0], 2));
   cardGeo.setAttribute("card", new THREE.Float32BufferAttribute([0, 0, 0, 0, 1, 1, 1, 1], 1)); cardGeo.setIndex([0, 1, 2, 0, 2, 3, 4, 6, 5, 4, 7, 6]);
   const cardMat = (tex, m, maxD, grade) => { const mat = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide });
+    mat.customProgramCacheKey = () => `card-${m.w}-${m.h}-${m.cell}-${maxD}`; // each plant kind needs its own compiled shader (sizes are baked into it)
     mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, { tAtlas: { value: tex }, uTint: tint, uGrade: { value: new THREE.Vector3(...grade) } });
       sh.vertexShader = sh.vertexShader.replace("#include <common>", `#include <common>
 attribute float card; varying vec2 vAt; varying float vFade;`).replace("#include <project_vertex>", `
@@ -1115,7 +1116,15 @@ function buildTrack() {
       poles.push({ cx: x, cy: y + 5, cz: sz*(W/2 + 3), hx: .3, hy: 10, hz: .3, ang: 0 });
       heads.push({ cx: x, cy: y + 15.4, cz: sz*(W/2 + 2.4), hx: 1.2, hy: .6, hz: .45, ang: 0 }); } }
     track.lamps = heads.map(h => ({ x: h.cx, y: h.cy - .6, z: h.cz })); NIGHT.track(trackGroup, track.lamps);
-    trackGroup.add(instanced(poles, mats.steel), instanced(heads, mats.lamp, null, false)); }
+    { // v2.0: steel lattice masts with a bank of 12 floodlights each
+      const legs = [], braces = [], rings = [], frames = [], cells = [], D = Math.atan2(2, .7), BL = Math.hypot(2, .7)/2;
+      for (const P of poles) { const x = P.cx, y0 = P.cy - P.hy, z = P.cz;
+        for (const dx of [-.35, .35]) for (const dz of [-.35, .35]) legs.push({ cx: x + dx, cy: P.cy, cz: z + dz, hx: .05, hy: P.hy, hz: .05, ang: 0 });
+        for (let k = 0; k < 10; k++) { const yb = y0 + 1 + k*2; for (const dz of [-.35, .35]) braces.push({ cx: x, cy: yb, cz: z + dz, hx: BL, hy: .03, hz: .03, ang: (k % 2 ? 1 : -1)*D });
+          for (const dx of [-.35, .35]) rings.push({ cx: x + dx, cy: yb, cz: z, hx: .03, hy: .03, hz: .35, ang: 0 }); }
+        const hy = y0 + 2*P.hy + .6; frames.push({ cx: x, cy: hy, cz: z + .3, hx: 1.65, hy: 1.05, hz: .12, ang: 0 });
+        for (let i = 0; i < 4; i++) for (let j = 0; j < 3; j++) cells.push({ cx: x - 1.2 + i*.8, cy: hy - .6 + j*.6, cz: z + .45, hx: .32, hy: .24, hz: .05, ang: 0 }); }
+      trackGroup.add(instanced(legs, mats.steel), instanced(braces, mats.steel, null, false), instanced(rings, mats.steel, null, false), instanced(frames, mats.carbon), instanced(cells, mats.lamp, null, false)); } }
   props = opts.chaos ? buildProps() : [];
   if (opts.chaos && !opts.moon && Math.random() < .6) props.push(buildSnatcher());
   if (opts.stampede) props.push(...buildHerd());
@@ -1303,10 +1312,27 @@ function buildScenery() {
   g.add(scenery.stars);
   scene.add(g);
 }
+let PERSON_GEO_C = null; const personGeo = () => PERSON_GEO_C || (PERSON_GEO_C = (() => { /* built on first use: it needs mergeParts, defined further down */ const torso = new THREE.CylinderGeometry(.17, .22, .58, 8), head = new THREE.SphereGeometry(.125, 10, 8), arms = new THREE.CylinderGeometry(.06, .06, .5, 5);
+  torso.translate(0, -.12, 0); head.translate(0, .3, 0); const A = arms.clone(); arms.rotateZ(.35); arms.translate(.24, -.1, 0); A.rotateZ(-.35); A.translate(-.24, -.1, 0);
+  const parts = [[torso, 0], [arms, 0], [A, 0], [head, 1]].map(([g, h]) => ({ geo: g, m: new THREE.Matrix4(), c: h ? new THREE.Color(.8, .6, .46) : new THREE.Color(1, 1, 1) }));
+  const m = mergeParts(parts), n = m.attributes.position.count, mask = new Float32Array(n); let k = 0;
+  for (const [g, h] of [[torso, 0], [arms, 0], [A, 0], [head, 1]]) for (let i = 0; i < g.attributes.position.count; i++) mask[k++] = h;
+  m.setAttribute("headMask", new THREE.BufferAttribute(mask, 1)); return m; })());
+const PERSON_MAT = (() => { const m = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .85 }); // shirts take the instance colour, heads keep the skin colour
+  m.onBeforeCompile = sh => { sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nattribute float headMask;").replace("#include <color_vertex>", `
+    vColor = vec3(1.0);
+    #ifdef USE_COLOR
+      vColor *= color;
+    #endif
+    #ifdef USE_INSTANCING_COLOR
+      vColor.rgb *= mix(instanceColor.rgb, vec3(1.0), headMask);
+    #endif`); };
+  m.customProgramCacheKey = () => "person"; return m; })();
+const FLAG_T = { value: 0 };
 function grandstands(finX) { // two stands facing the finish straight, with a crowd
   const g = new THREE.Group(), tiers = 7, len = 170, x0 = finX - 125;
   const stand = new THREE.MeshStandardMaterial({ color: 0x9aa3b5, roughness: .8 }), roofM = new THREE.MeshStandardMaterial({ color: 0xe8ecf6, roughness: .5, metalness: .2 });
-  const fans = new THREE.InstancedMesh(new THREE.BoxGeometry(.5, .9, .45), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .9 }), 2*tiers*Math.floor(len/1.1));
+  const fans = new THREE.InstancedMesh(personGeo(), PERSON_MAT, 2*tiers*Math.floor(len/1.1)); // v2.0: people (shirt, head) instead of boxes
   const o = new THREE.Object3D(), col = new THREE.Color(), r = rng(7), base = []; let k = 0;
   const shirt = ["#ff2f45","#f47600","#00d7b6","#4781d7","#ed1131","#e8ecf6","#ffd23f","#229971","#1868db","#f50537","#2b303b"];
   for (const sz of [-1]) { // far side only, so the side and TV cameras always see the finish
@@ -1323,6 +1349,22 @@ function grandstands(finX) { // two stands facing the finish straight, with a cr
     for (let i = 0; i <= 6; i++) { const post = new THREE.Mesh(unitBox, mats.steel); post.scale.set(.4, tiers*1.1 + 7, .4); post.position.set(x0 + i*len/6, (tiers*1.1 + 7)/2 - 2*T, zIn + sz*(back + 1.5)); g.add(post); }
   }
   fans.count = k; fans.castShadow = false; g.add(fans);
+  { // v2.0: roof frame, advertising boards and waving flags
+    const zIn = -(W/2 + 24), back = tiers*1.6 + .8, top = tiers*1.1 + 6, trussM = new THREE.MeshStandardMaterial({ color: 0x5b6273, roughness: .5, metalness: .6 });
+    for (let i = 0; i <= 12; i++) { const b = new THREE.Mesh(unitBox, trussM); b.scale.set(.18, .5, back + 3); b.position.set(x0 + i*len/12, top - .45, zIn - (back/2 + .6)); g.add(b); }
+    const cv = document.createElement("canvas"); cv.width = 1024; cv.height = 96; const cx = cv.getContext("2d");
+    const ads = [["F1 BEZERK", "#ff2f45"], ["SOAPBOX WORLD SERIES", "#ffd23f"], ["GRAVITY POWERED", "#3fd8ff"], ["NO ENGINES · NO BRAKES", "#38e383"]];
+    ads.forEach(([t, c], i) => { cx.fillStyle = i % 2 ? "#0b1020" : "#141a2c"; cx.fillRect(i*256, 0, 256, 96); cx.fillStyle = c; cx.font = "800 34px 'Saira Condensed', 'Arial Narrow', sans-serif"; cx.textAlign = "center"; cx.textBaseline = "middle"; cx.fillText(t, i*256 + 128, 50, 240); });
+    const at = new THREE.CanvasTexture(cv); at.colorSpace = THREE.SRGBColorSpace; at.wrapS = THREE.RepeatWrapping; at.repeat.x = len/40; at.anisotropy = 8;
+    const ad = new THREE.Mesh(new THREE.PlaneGeometry(len, 1.3), new THREE.MeshStandardMaterial({ map: at, roughness: .6, emissive: 0xffffff, emissiveMap: at, emissiveIntensity: .35 }));
+    ad.position.set(x0 + len/2, .2, zIn + 1.4); g.add(ad); ad.userData.own = true;
+    const flagGeo = new THREE.PlaneGeometry(2.6, 1.5, 12, 4); flagGeo.translate(1.3, 0, 0);
+    const teamCols = [...new Set(DRIVERS.map(d => d.colour))];
+    for (let i = 0; i < 7; i++) { const fm = new THREE.MeshStandardMaterial({ color: teamCols[i % teamCols.length], roughness: .7, side: THREE.DoubleSide });
+      fm.onBeforeCompile = sh => { sh.uniforms.uT = FLAG_T; sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nuniform float uT;").replace("#include <begin_vertex>", "#include <begin_vertex>\ntransformed.z += sin(position.x*2.6 - uT*6.0 + " + i + ".0)*.22*(position.x/2.6);"); };
+      fm.customProgramCacheKey = () => "flag" + i;
+      const pole = new THREE.Mesh(unitBox, trussM); pole.scale.set(.08, 3, .08); pole.position.set(x0 + i*len/6, top + 1.4, zIn - .4); g.add(pole);
+      const f = new THREE.Mesh(flagGeo, fm); f.position.set(x0 + i*len/6, top + 2.2, zIn - .4); f.rotation.y = .3; g.add(f); } }
   g.userData.fans = { mesh: fans, base, k };
   return g;
 }
@@ -1480,7 +1522,7 @@ function airships() { // three hot-air balloons and a blimp
     for (const bl of scenery.blades) bl.rot.rotation.z = t*bl.speed;
     if (scenery.duck) { scenery.duck.position.y = -2*T + Math.sin(t*.9)*.6; scenery.duck.rotation.z = Math.sin(t*.7)*.04; }
     if (scenery.water && scenery.water.material.normalMap) scenery.water.material.normalMap.offset.set(t*.006, t*.0045); // ripples drift
-    if (ATMO.update) ATMO.update(t); if (NIGHT.update) NIGHT.update(t);
+    if (ATMO.update) ATMO.update(t); if (NIGHT.update) NIGHT.update(t); FLAG_T.value = t;
     // helicopter: hangs off to the side of the leader, a little behind
     let tx = track ? track.crestX + 40 : 60, ty = track ? track.startY + 28 : 140, tz = -55; // far side of the track, so it films from behind the action and never crosses the TV or side cameras
     if (race && cars.length && race.phase !== "grid" && race.phase !== "lights") { const c = focusCar(), p = c.mesh.position; tx = p.x - 12; ty = p.y + 26; tz = -52; }
@@ -2017,34 +2059,51 @@ function limb(parent, x, y, z, len, thick, c, foot) { // hangs from a hip or sho
   const g = new THREE.Group(); g.position.set(x, y, z); const L = []; cp(L, CYL, c, 0, -len/2, 0, thick, len, thick);
   if (foot) cp(L, SPH, foot, thick*.35, -len, 0, thick*1.5, thick*.6, thick*1.25); g.add(cmesh(L)); parent.add(g); return g; }
 function stick(L, geo, c, x0, y0, x1, y1, r) { const dx = x1 - x0, dy = y1 - y0, len = Math.hypot(dx, dy); cp(L, geo, c, (x0 + x1)/2, (y0 + y1)/2, 0, r, len, r, 0, 0, -Math.atan2(dx, dy)); }
-function makeTrex(G = "#4f8a3a", D = "#355f27", B = "#b9c77a") { // the same build makes a raptor in other colours
+function skinColours(g, top, belly, spot) { // countershading (dark back, pale belly) and mottled skin, like real animals
+  const P = g.attributes.position, N = g.attributes.normal, c = new Float32Array(P.count*3), A = new THREE.Color(top), B = new THREE.Color(belly), S = new THREE.Color(spot), t = new THREE.Color();
+  for (let i = 0; i < P.count; i++) { const f = sstep(-.45, .35, N.getY(i)), n = fbm(P.getX(i)*1.6 + 5, P.getZ(i)*1.6 + P.getY(i)*1.2, 3), stripe = Math.max(0, Math.sin(P.getX(i)*2.4 + n*3));
+    t.copy(B).lerp(A, f); t.lerp(S, Math.min(.85, Math.pow(stripe, 3)*.95*sstep(-.25, .5, N.getY(i)) + (n > .52 ? (n - .52)*2.6 : 0))); t.multiplyScalar(.75 + n*.5); c.set([t.r, t.g, t.b], i*3); } // pale belly, dark back with stripes and blotches
+  g.setAttribute("color", new THREE.BufferAttribute(c, 3)); return g;
+}
+const aloft = (st, seg = 24) => { // rounder, animal cross-sections, with extra rings blended smoothly between the given ones (detail for skin markings)
+  const out = []; for (let k = 0; k < st.length - 1; k++) { const A = st[k], B = st[k + 1], P0 = st[Math.max(0, k - 1)], P3 = st[Math.min(st.length - 1, k + 2)];
+    for (let j = 0; j < 5; j++) { const t = j/5, cr = (a, b, c, d) => .5*((2*b) + (-a + c)*t + (2*a - 5*b + 4*c - d)*t*t + (-a + 3*b - 3*c + d)*t*t*t);
+      out.push([0, 1, 2, 3].map(i => cr(P0[i], A[i], B[i], P3[i])).concat(2.05)); } }
+  const L = st[st.length - 1]; out.push([L[0], L[1], L[2], L[3], 2.05]); return loftGeo(out, seg); };
+const skinMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .78, metalness: 0 });
+function skinMesh(g) { const m = new THREE.Mesh(g, skinMat); m.castShadow = true; m.userData.ownGeo = true; return m; }
+function makeTrex(G = "#4f8a3a", D = "#355f27", B = "#b9c77a") { // v2.0: one smooth body from tail tip to neck, a sculpted head and jaw, real legs
   const root = new THREE.Group(), body = new THREE.Group(); root.add(body);
-  const L = [];
-  cp(L, SPH, G, 0, 4.3, 0, 2.6, 1.6, 1.35, 0, 0, .22); cp(L, SPH, B, .5, 3.9, 0, 2.1, 1.1, 1.1, 0, 0, .22);
-  cp(L, CONE, G, -3.7, 3.7, 0, 1.15, 5.2, 1.15, 0, 0, Math.PI/2 + .14);
-  stick(L, CYL, G, 1.8, 4.9, 2.8, 5.9, .75);
-  for (const z of [-.95, .95]) stick(L, CYL, D, 1.7, 4, 2.3, 3.3, .14);
-  for (let k = 0; k < 6; k++) cp(L, SPH, D, -1.5 + k*.6, 5.75 - k*.04, 0, .18, .32, .18); // ridge along the back
-  body.add(cmesh(L));
+  const spot = new THREE.Color(D).multiplyScalar(.45);
+  body.add(skinMesh(skinColours(aloft([[-7.4, 3.0, .07, .07], [-6.2, 3.3, .24, .26], [-4.8, 3.72, .48, .52], [-3.3, 4.12, .78, .82], [-1.9, 4.42, 1.08, 1.18], [-.6, 4.5, 1.3, 1.5],
+    [.7, 4.55, 1.22, 1.45], [1.6, 4.95, .9, 1.02], [2.3, 5.5, .66, .74], [2.85, 5.95, .58, .64]], 22), G, B, spot)));
   const head = new THREE.Group(); head.position.set(3, 6.1, 0); body.add(head);
-  const Hd = []; cp(Hd, SPH, G, .9, 0, 0, 1.55, .78, .78); cp(Hd, SPH, "#ffd23f", 1.25, .38, .58, .15, .15, .1); cp(Hd, SPH, "#ffd23f", 1.25, .38, -.58, .15, .15, .1);
-  for (let k = 0; k < 5; k++) for (const z of [-.42, .42]) cp(Hd, CONE, "#f4f1e4", 2.05 - k*.32, -.42, z, .07, .26, .07, Math.PI, 0, 0);
+  head.add(skinMesh(skinColours(aloft([[-.25, .05, .52, .62], [.35, .14, .64, .72], [.95, .12, .55, .58], [1.55, .02, .43, .44], [2.1, -.06, .3, .32], [2.38, -.1, .16, .2]], 20), G, B, spot)));
+  const Hd = []; for (const z of [-.47, .47]) { cp(Hd, SPH, "#e8b830", 1.18, .36, z, .14, .14, .08); cp(Hd, SPH, "#0b0b0b", 1.21, .36, z*1.04, .06, .09, .05); }
+  for (let k = 0; k < 6; k++) for (const z of [-.38, .38]) cp(Hd, CONE, "#efe9d6", 2.05 - k*.3, -.36, z*(1 - k*.05), .055, .22, .055, Math.PI, 0, 0);
   head.add(cmesh(Hd));
-  const jaw = new THREE.Group(); jaw.position.set(.3, -.4, 0); head.add(jaw); const J = []; cp(J, SPH, D, .95, -.12, 0, 1.3, .32, .66);
-  for (let k = 0; k < 4; k++) for (const z of [-.38, .38]) cp(J, CONE, "#f4f1e4", 1.8 - k*.32, .14, z, .06, .22, .06); jaw.add(cmesh(J));
-  const legs = [limb(root, .2, 3.7, .95, 3.5, .5, D, D), limb(root, .2, 3.7, -.95, 3.5, .5, D, D)];
+  const jaw = new THREE.Group(); jaw.position.set(.3, -.4, 0); head.add(jaw);
+  jaw.add(skinMesh(skinColours(aloft([[-.1, 0, .44, .22], [.7, -.03, .4, .19], [1.4, -.01, .31, .15], [1.95, .02, .17, .09]], 16), D, B, spot)));
+  const J = []; for (let k = 0; k < 5; k++) for (const z of [-.34, .34]) cp(J, CONE, "#efe9d6", 1.75 - k*.3, .14, z*(1 - k*.06), .05, .2, .05); jaw.add(cmesh(J));
+  const arms = []; for (const z of [-.85, .85]) stick(arms, CYL, D, 1.5, 4.0, 2.05, 3.45, .13); body.add(cmesh(arms));
+  const leg = sz => { // hip, big thigh, shin and a three-toed foot, hanging from the hip so it can swing
+    const g = new THREE.Group(); g.position.set(.1, 3.9, sz*.9); root.add(g);
+    const lg = aloft([[-.3, 0, .7, .85], [.5, .3, .78, .95], [1.25, .38, .6, .7], [1.9, .12, .36, .4], [2.7, -.12, .25, .27], [3.45, -.02, .21, .22]], 16); lg.rotateZ(-Math.PI/2); // big muscular thigh, slim shin
+    g.add(skinMesh(skinColours(lg, D, B, spot)));
+    const F = []; for (const a of [-.45, 0, .45]) cp(F, SPH, D, .45*Math.cos(a), -3.55, .45*Math.sin(a), .42, .14, .12, 0, -a, 0); g.add(cmesh(F)); return g; };
+  const legs = [leg(1), leg(-1)];
   return { root, body, head, jaw, legs, gait: [0, Math.PI], stride: .5, bob: .25 };
 }
-function makeSauropod() {
-  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const G = "#7d8f66", D = "#5f6f4b", L = [];
-  cp(L, SPH, G, 0, 5.2, 0, 4.6, 2.7, 2.4); cp(L, SPH, "#a7b48d", 0, 4.4, 0, 3.8, 1.8, 2.1);
-  cp(L, CONE, G, -6.4, 4.6, 0, 1.3, 7, 1.3, 0, 0, Math.PI/2 + .2);
-  for (let k = 0; k < 7; k++) cp(L, SPH, "#8fa37a", -3 + k, 7.7 - Math.abs(k - 3)*.18, 0, .35, .3, .5);
-  body.add(cmesh(L));
-  const neck = new THREE.Group(); neck.position.set(3.4, 6.2, 0); body.add(neck); const N = [];
-  stick(N, CYL, G, 0, 0, 3.6, 6.2, .75); cp(N, SPH, G, 4, 6.7, 0, 1.05, .6, .6); cp(N, SPH, "#111", 4.45, 6.95, .45, .1, .1, .1); cp(N, SPH, "#111", 4.45, 6.95, -.45, .1, .1, .1);
-  neck.add(cmesh(N));
-  const legs = [limb(root, 2.5, 4.4, 1.5, 4.2, .75, D, D), limb(root, 2.5, 4.4, -1.5, 4.2, .75, D, D), limb(root, -2.4, 4.4, 1.5, 4.2, .8, D, D), limb(root, -2.4, 4.4, -1.5, 4.2, .8, D, D)];
+function makeSauropod() { // v2.0: smooth long-necked giant with countershaded, mottled skin
+  const root = new THREE.Group(), body = new THREE.Group(); root.add(body); const G = "#7d8f66", D = "#5f6f4b", B = "#b9c29d", spot = new THREE.Color(D).multiplyScalar(.5);
+  body.add(skinMesh(skinColours(aloft([[-12, 4.0, .12, .12], [-10, 4.4, .35, .35], [-7.5, 5.0, .85, .8], [-5, 5.6, 1.7, 1.6], [-2.5, 5.7, 2.3, 2.5], [0, 5.4, 2.45, 2.7], [2.3, 5.6, 2.0, 2.2], [3.7, 6.3, 1.05, 1.15]]), G, B, spot)));
+  const neck = new THREE.Group(); neck.position.set(3.4, 6.2, 0); body.add(neck);
+  const ng = aloft([[-.4, 0, 1.0, 1.05], [2, 0, .66, .7], [4.6, 0, .48, .5], [7.0, 0, .38, .4]]); ng.rotateZ(Math.atan2(6.2, 3.6)); neck.add(skinMesh(skinColours(ng, G, B, spot)));
+  const hg = aloft([[-.35, 0, .4, .44], [.35, .06, .44, .42], [.95, -.04, .3, .27], [1.3, -.08, .17, .17]]); hg.translate(3.75, 6.55, 0); neck.add(skinMesh(skinColours(hg, G, B, spot)));
+  const N = []; cp(N, SPH, "#111", 4.25, 6.75, .38, .09, .09, .09); cp(N, SPH, "#111", 4.25, 6.75, -.38, .09, .09, .09); neck.add(cmesh(N));
+  const leg = (x, z) => { const g = new THREE.Group(); g.position.set(x, 4.4, z); root.add(g); const lg = aloft([[-.4, 0, .9, 1.0], [1.4, .08, .78, .82], [3.0, 0, .66, .7], [4.2, 0, .78, .8]], 18); lg.rotateZ(-Math.PI/2);
+    g.add(skinMesh(skinColours(lg, D, B, spot))); return g; };
+  const legs = [leg(2.5, 1.5), leg(2.5, -1.5), leg(-2.4, 1.5), leg(-2.4, -1.5)];
   return { root, body, neck, legs, gait: [0, Math.PI, Math.PI, 0], stride: .28, bob: .15 };
 }
 function makeGiraffe() {
@@ -2181,7 +2240,7 @@ function buildHerd() {
           if (!H.on && t > 2.5 && race.phase === "race") { H.on = true; H.s = Math.max(0, minS - 35); event("STAMPEDE", "A herd of dinosaurs is chasing the field", "#4f8a3a"); C.stampede(); }
           if (H.on) { // it runs down the last car still racing: always a bit faster than its prey, and steers towards it
             const prey = r.find(c => (c.s || 0) === minS);
-            if (prey) { const gap = minS - H.s; H.v = Math.max(0, Math.min(52, gap > 0 ? prey.spd + 7 + gap*.8 : prey.spd*.9)); H.z += (Math.max(-5, Math.min(5, prey.body.position.z)) - H.z)*Math.min(1, dt*2); }
+            if (prey) { const gap = minS - H.s; H.v = Math.max(0, Math.min(48, gap > 0 ? prey.spd + 3.5 + gap*.5 : prey.spd*.9)); H.z += (Math.max(-5, Math.min(5, prey.body.position.z)) - H.z)*Math.min(1, dt*2); }
             else H.v = Math.max(0, Math.min(30, (track.length - 30 - H.s)*1.3));
             H.s = Math.min(track.length - 30, H.s + H.v*dt); } }
         if (!H.on) return;
@@ -2256,7 +2315,12 @@ function mergeParts(parts) {
   g.setAttribute("color", new THREE.BufferAttribute(col, 3)); g.setIndex(new THREE.BufferAttribute(idx, 1)); g.computeBoundingSphere(); return g;
 }
 const C_CARBON = new THREE.Color(0x15181f), C_VISOR = new THREE.Color(0x0b0d12), C_HELMET = new THREE.Color(0xf2f4f8);
-const darkMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .3 });
+const darkMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: .38, metalness: .25, clearcoat: .8, clearcoatRoughness: .15 }); // glossy carbon
+const AIRFOIL = (() => { // v2.0: a real wing section (rounded leading edge, thin trailing edge), unit chord, thickness and span
+  const sh = new THREE.Shape(), N = 14, th = x => 5*.12*(.2969*Math.sqrt(x) - .126*x - .3516*x*x + .2843*x**3 - .1015*x**4)/.06;
+  for (let i = 0; i <= N; i++) { const x = 1 - i/N, xx = x*x; i ? sh.lineTo(.5 - xx, th(xx)*.5 - .12*Math.sin(Math.PI*xx)) : sh.moveTo(.5 - xx, th(xx)*.5); }
+  for (let i = 1; i <= N; i++) { const x = i/N, xx = x*x; sh.lineTo(.5 - xx, -th(xx)*.5 - .12*Math.sin(Math.PI*xx)); }
+  const g = new THREE.ExtrudeGeometry(sh, { depth: 1, bevelEnabled: false }); g.translate(0, 0, -.5); g.computeVertexNormals(); return g; })(); // leading edge forward, cambered downwards like a real F1 wing
 const wheelMat = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .72, metalness: .25 });
 let DARK_GEO = null, WHEEL_GEO = null;
 const REAR_GEO = new THREE.BoxGeometry(.05, .07, .16), REAR_MAT = new THREE.MeshStandardMaterial({ color: 0x330000, emissive: 0xff1a1a, emissiveIntensity: .6 });
@@ -2271,22 +2335,32 @@ function carParts(tc, ac) { // [geometry, x,y,z, rx,ry,rz, sx,sy,sz, colour] -- 
     add(B, -2.38, .4, sz*.54, 0, 0, 0, .62, .54, .04, K);
   }
   add(B, -.24, .38, 0, 0, 0, 0, .06, .2, .22, K); // dark airbox intake above the driver
-  add(helmetGeo, .3, .3, 0, 0, 0, 0, 1, 1, 1, C_HELMET); add(B, .45, .33, 0, 0, 0, 0, .06, .09, .24, C_VISOR); add(haloGeo, .3, .44, 0, 0, 0, 0, 1, 1, 1, K);
-  add(B, .62, .33, 0, 0, 0, 0, .04, .22, .05, K); add(B, 2.55, -.24, 0, 0, 0, 0, .5, .05, 1.95, K); add(B, 2.44, -.17, 0, 0, 0, .12, .26, .04, 1.9, tc);
-  add(B, 2.36, -.11, 0, 0, 0, .25, .18, .03, 1.85, K); add(B, -2.38, .58, 0, 0, 0, 0, .42, .06, 1.05, tc); add(B, -2.5, .67, 0, 0, 0, .3, .2, .04, 1.05, ac);
-  add(B, -2.4, .44, 0, 0, 0, 0, .3, .05, 1.05, K); add(B, -2.3, .22, 0, 0, 0, 0, .12, .42, .06, K);
+  add(helmetGeo, .3, .3, 0, 0, 0, 0, 1, 1, 1, ac); // helmet in the team's lighter colour add(B, .45, .33, 0, 0, 0, 0, .06, .09, .24, C_VISOR); add(haloGeo, .3, .44, 0, 0, 0, 0, 1, 1, 1, K);
+  add(B, .62, .33, 0, 0, 0, 0, .04, .22, .05, K); add(AIRFOIL, 2.55, -.24, 0, 0, 0, -.08, .5, .06, 1.95, K); add(AIRFOIL, 2.42, -.165, 0, 0, 0, .14, .26, .045, 1.88, tc);
+  add(AIRFOIL, 2.33, -.105, 0, 0, 0, .3, .18, .035, 1.82, K); add(AIRFOIL, -2.36, .58, 0, 0, 0, -.12, .44, .07, 1.05, tc); add(AIRFOIL, -2.52, .68, 0, 0, 0, .32, .22, .05, 1.05, ac);
+  add(AIRFOIL, -2.38, .43, 0, 0, 0, -.05, .3, .05, 1.0, K); add(B, -2.3, .22, 0, 0, 0, 0, .12, .42, .06, K);
   return L;
 }
-function carMesh(colour) {
+function codeDecal(code, colour) { // the driver's code on both sides of the engine cover
+  const cv = document.createElement("canvas"); cv.width = 128; cv.height = 64; const x = cv.getContext("2d");
+  x.font = "800 50px 'Saira Condensed', 'Arial Narrow', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle"; x.lineWidth = 7; x.strokeStyle = "rgba(5,7,13,.85)"; x.strokeText(code, 64, 35); x.fillStyle = "#ffffff"; x.fillText(code, 64, 35);
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4;
+  const w = .5, h = .25, cx = -.95, cy = .2, z = .245, g = new THREE.BufferGeometry();
+  g.setAttribute("position", new THREE.Float32BufferAttribute([cx + w/2, cy - h/2, z, cx - w/2, cy - h/2, z, cx - w/2, cy + h/2, z, cx + w/2, cy + h/2, z, cx - w/2, cy - h/2, -z, cx + w/2, cy - h/2, -z, cx + w/2, cy + h/2, -z, cx - w/2, cy + h/2, -z], 3));
+  g.setAttribute("normal", new THREE.Float32BufferAttribute([0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0, -1, 0, 0, -1, 0, 0, -1, 0, 0, -1], 3));
+  g.setAttribute("uv", new THREE.Float32BufferAttribute([1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1], 2)); g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: .4, polygonOffset: true, polygonOffsetFactor: -2 })); m.userData.own = true; return m;
+}
+function carMesh(colour, code) {
   const g = new THREE.Group(), tc = new THREE.Color(colour).offsetHSL(0, .08, -.03), ac = new THREE.Color(colour).lerp(new THREE.Color(0xffffff), .55);
-  const parts = carParts(tc, ac), paintParts = parts.filter(p => p.c === tc || p.c === ac || p.c === C_HELMET);
+  const parts = carParts(tc, ac), paintParts = parts.filter(p => p.c === tc || p.c === ac);
   if (!DARK_GEO) DARK_GEO = mergeParts(parts.filter(p => !paintParts.includes(p)));
   const paintMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: .3, metalness: .15, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: .6 });
   paintMat.envMap = opts.tod === "day" ? (opts.rain ? null : LOOK.envDay) : LOOK.envNight || null; PAINT.push(paintMat);
   const paint = new THREE.Mesh(mergeParts(paintParts), paintMat); paint.castShadow = true; paint.userData.own = true;
   const dark = new THREE.Mesh(DARK_GEO, darkMat); dark.castShadow = true;
   const rl = new THREE.Mesh(REAR_GEO, REAR_MAT); rl.position.set(-2.33, .22, 0); // the red rear light real F1 cars run in the dark and the wet
-  g.add(paint, dark, rl); return g;
+  g.add(paint, dark, rl); if (code) g.add(codeDecal(code, colour)); return g;
 }
 function wheelMesh() {
   if (!WHEEL_GEO) { const L = [], rim = new THREE.Color(0x5b6273), tyre = new THREE.Color(0x111215), ring = new THREE.Color(0xffd23f);
@@ -2323,7 +2397,7 @@ function makeCar(d, slot, idx, sc = 1) {
   for (const [x, z] of [[1.78, .92], [1.78, -.92], [-1.52, .9], [-1.52, -.9]]) { wo.chassisConnectionPointLocal.set(x*sc, 0, z*sc); vehicle.addWheel(wo); }
   vehicle.addToWorld(world);
   setFrozen(body, true); // held in place until lights out (brakes make this vehicle model hop)
-  const mesh = carMesh(d.colour); mesh.scale.setScalar(sc); carGroup.add(mesh);
+  const mesh = carMesh(d.colour, d.code); mesh.scale.setScalar(sc); carGroup.add(mesh);
   const wheels = [0,1,2,3].map(() => { const w = new THREE.Group(); w.add(wheelMesh()); w.scale.setScalar(sc); carGroup.add(w); return w; });
   const label = labelSprite(d); if (sc > 1) label.scale.multiplyScalar(1.6); carGroup.add(label);
   const car = { d, idx, body, vehicle, mesh, wheels, label, status: "grid", out: "", finT: 0, s: 0, spd: 0, top: 0, airCur: 0, airMax: 0, peakG: 0,
