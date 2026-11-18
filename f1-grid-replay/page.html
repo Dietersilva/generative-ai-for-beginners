@@ -62,6 +62,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .flag.red{background:var(--red);color:#fff;animation:pulse .8s ease-in-out infinite}
 .flag.chq{background:repeating-conic-gradient(#fff 0 25%,#111 0 50%) 0 0/10px 10px;color:#000;text-shadow:0 0 4px #fff,0 0 8px #fff}
 .flag.grid{background:var(--panel-2);color:var(--muted)}
+#seasonSel{min-width:96px;flex-shrink:0}
+.stats-body{overflow:auto;flex:1;min-height:0;padding:4px 2px 18px}.stbl{width:100%;border-collapse:collapse;font-size:12.5px}.stbl th{position:sticky;top:0;background:var(--ink);text-align:left;font-family:var(--f-mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted);padding:6px 8px;cursor:pointer;white-space:nowrap;border-bottom:1px solid var(--line-2)}.stbl th.on{color:var(--text)}.stbl td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,.05);white-space:nowrap}.stbl tr:hover td{background:#ffffff06}.sdot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:middle}
+.mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}.mcard{border:1px solid var(--line-2);border-radius:8px;padding:8px 10px}.mhd{font-size:12px;margin-bottom:6px}.mrow{display:flex;justify-content:space-between;font-size:11px;font-family:var(--f-mono);margin-top:4px}.hbar{display:flex;height:6px;border-radius:3px;overflow:hidden;background:#ffffff10}.hbar i{display:block;height:100%}.sh{margin:6px 0;font-size:13px;letter-spacing:.06em}
 .hlbar{display:flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:10.5px;font-weight:700;letter-spacing:.1em;color:#05070d;background:#ffd23f;padding:2px 6px;border-radius:4px;white-space:nowrap;pointer-events:auto;max-width:46vw;overflow:hidden}
 .hlbar span{overflow:hidden;text-overflow:ellipsis}.hlbar button{color:#05070d;font-weight:800;padding:0 3px}
 .tl .band.hl{background:rgba(255,210,63,.35);top:0;bottom:0;height:auto;border-left:1px solid #ffd23f}
@@ -428,6 +431,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
     <select class="race-sel season-sel" id="seasonSel" aria-label="Choose a season"></select>
     <select class="race-sel" id="raceSel" aria-label="Choose a race"><option>Loading season…</option></select>
     <div class="wx" id="wx"></div>
+    <button class="fs-btn" id="statsBtn" title="Stats hub: drivers, teams, team-mate head-to-heads, track history and pit stops, 2023 to 2026">STATS</button>
     <button class="fs-btn" id="anaBtn" title="Head to head, incidents, positions, lap times and season standings">ANALYSIS</button>
     <button class="fs-btn" id="fsBtn" title="Full screen">⛶ FULL SCREEN</button>
   </header>
@@ -481,6 +485,10 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
     <div class="hud ana" id="ana" hidden role="dialog" aria-label="Race analysis">
       <div class="ana-hd"><div class="tabs" id="anaTabs" role="tablist"></div><button class="pip-x" id="anaClose" aria-label="Close analysis">✕</button></div>
       <div class="ana-body"><div class="ana-ctl" id="anaCtl"></div><canvas id="anaCv"></canvas><div class="ana-info" id="anaInfo"></div></div>
+    </div>
+    <div class="hud ana stats" id="stats" hidden role="dialog" aria-label="Stats hub">
+      <div class="ana-hd"><div class="tabs" id="statsTabs" role="tablist"></div><button class="pip-x" id="statsClose" aria-label="Close stats">✕</button></div>
+      <div class="ana-body"><div class="ana-ctl" id="statsCtl"></div><div class="stats-body" id="statsBody"></div></div>
     </div>
     <div class="hud loading" id="loading"><div class="in"><div class="spin"></div><div id="loadMsg">LOADING SEASON</div></div></div>
   </section>
@@ -2291,6 +2299,106 @@ function renderQualiTele(ctl, info){
     (late.length ? `<h4 style="margin:10px 0 4px;font-size:12px;letter-spacing:.08em;color:var(--muted)">BRAKING POINTS</h4>` + late.map(z => `<div class="srow">Zone B${z.n} (from ${Math.round(z.v)} km/h): <b style="color:${(z.diff > 0 ? B : A).css}">${esc((z.diff > 0 ? B : A).code)}</b> brakes ${Math.round(Math.abs(z.diff))} m later</div>`).join("") : "") +
     `<p class="anote">Each driver's fastest lap, lined up by distance. GAP shows time between them along the lap (line above the middle = ${esc(A.code)} ahead). Telemetry from OpenF1 at about 4 samples a second, so braking points are accurate to roughly ±15 m; differences over 35 m are left out as likely measurement error.</p>`;
 }
+
+/* ---------------- STATS hub: drivers, teams, teammates, tracks and pit stops across 2023-2026 ---------------- */
+const STATS = {data: null, tab: "drv", year: "all", sort: null, circuit: null};
+async function openStats(){
+  $("#stats").hidden = false;
+  if (!STATS.data) { $("#statsBody").innerHTML = '<p class="anote">Loading stats…</p>';
+    try { STATS.data = JSON.parse(new TextDecoder().decode(await fetchBytes("stats.json"))); } catch (e) { $("#statsBody").innerHTML = '<p class="anote">The stats file could not be loaded.</p>'; return; } }
+  renderStats();
+}
+function closeStats(){ $("#stats").hidden = true; }
+function statsEvents(kind){ const y = STATS.year; return STATS.data.events.filter(e => (y === "all" || e.y === +y) && (!kind || kind.includes(e.kind))); }
+function statsName(code){ const d = STATS.data.drivers[code]; return d ? d.name : code; }
+function statsCol(code){ const d = STATS.data.drivers[code]; return d ? d.colour : "#8590a8"; }
+function statsTable(cols, rows, key){
+  const s = STATS.sort && STATS.sort.tab === key ? STATS.sort : {i: cols.findIndex(c => c.def), dir: -1};
+  const i = s.i >= 0 ? s.i : 0, c = cols[i];
+  rows.sort((a, b) => { const va = c.v(a), vb = c.v(b); if (va == null) return 1; if (vb == null) return -1; return (typeof va === "string" ? va.localeCompare(vb) : va - vb) * (c.asc ? -s.dir : s.dir); });
+  return `<table class="stbl"><thead><tr>${cols.map((c, j) => `<th data-si="${j}" class="${j === i ? "on" : ""}" title="${esc(c.tip || "Sort")}">${c.h}</th>`).join("")}</tr></thead><tbody>` +
+    rows.map(r => `<tr>${cols.map(c => `<td>${c.f ? c.f(r) : esc(String(c.v(r) ?? "–"))}</td>`).join("")}</tr>`).join("") + "</tbody></table>";
+}
+const fx1 = v => v == null ? "–" : (Math.round(v * 10) / 10).toString();
+function renderStats(){
+  const D = STATS.data; if (!D) return; const tabs = [["drv", "DRIVERS"], ["team", "TEAMS"], ["mate", "TEAMMATES"], ["track", "TRACKS"], ["pit", "PIT STOPS"]];
+  $("#statsTabs").innerHTML = tabs.map(([k, l]) => `<button class="tab" data-st="${k}" aria-selected="${k === STATS.tab}">${l}</button>`).join("");
+  const years = [...new Set(D.events.map(e => e.y))].sort((a, b) => b - a);
+  let ctl = `<label>Season <select id="stYear"><option value="all">All seasons (${years[years.length - 1]}–${years[0]})</option>${years.map(y => `<option value="${y}" ${String(y) === STATS.year ? "selected" : ""}>${y}</option>`).join("")}</select></label>`;
+  const gp = statsEvents(["gp"]), spr = statsEvents(["sprint"]), q = statsEvents(["quali"]); let html = "";
+  if (STATS.tab === "drv" || STATS.tab === "team") {
+    const isT = STATS.tab === "team", acc = {}, get = (k, extra) => acc[k] || (acc[k] = {k, races: 0, wins: 0, pod: 0, poles: 0, fq: 0, sw: 0, fl: 0, pts: 0, dnf: 0, fin: [], best: 99, gain: 0, team: null, one2: 0, drivers: new Set(), ...extra});
+    for (const e of gp) { const p1 = e.res.filter(r => r[3] === 1 || r[3] === 2);
+      if (isT && p1.length === 2 && p1[0][1] === p1[1][1]) get(p1[0][1]).one2++;
+      for (const r of e.res) { const o = get(isT ? r[1] : r[0]); o.team = r[1]; o.drivers.add(r[0]); o.races += isT ? 0 : 1;
+        if (r[3] === 1) o.wins++; if (r[3] && r[3] <= 3) o.pod++; if (r[2] === 1) o.poles++; o.pts += r[4]; if (r[5]) o.dnf++;
+        if (r[3] && !r[5] && !r[6]) { o.fin.push(r[3]); o.best = Math.min(o.best, r[3]); if (r[2]) o.gain += r[2] - r[3]; } }
+      if (e.fl) { const t = e.res.find(r => r[0] === e.fl[0]); get(isT ? (t ? t[1] : "?") : e.fl[0]).fl++; } }
+    if (isT) for (const e of gp) { const seen = new Set(e.res.map(r => r[1])); seen.forEach(t => acc[t] && acc[t].races++); }
+    for (const e of spr) for (const r of e.res) { const o = get(isT ? r[1] : r[0]); o.pts += r[4]; if (r[3] === 1) o.sw++; }
+    for (const e of q) for (const r of e.res) if (r[2] === 1) get(isT ? r[1] : r[0]).fq++;
+    const rows = Object.values(acc).filter(o => o.races > 0);
+    const nameCell = o => isT ? `<i class="sdot" style="background:${esc(D.teams[o.k] || "#888")}"></i>${esc(o.k)}` : `<i class="sdot" style="background:${esc(statsCol(o.k))}"></i><b>${esc(o.k)}</b> ${esc(statsName(o.k))}`;
+    const cols = [{h: isT ? "Team" : "Driver", v: o => o.k, f: nameCell, asc: true}];
+    if (!isT) cols.push({h: "Team", v: o => o.team, asc: true});
+    cols.push({h: "GPs", v: o => o.races, tip: "Grands Prix started"}, {h: "Wins", v: o => o.wins}, {h: "Podiums", v: o => o.pod},
+      {h: "Poles", v: o => o.poles, tip: "Started the Grand Prix from P1 (official pole, after grid penalties)"}, {h: "Fastest in Q", v: o => o.fq, tip: "Quickest in Grand Prix qualifying (before grid penalties)"},
+      {h: "Sprint wins", v: o => o.sw}, {h: "Fastest laps", v: o => o.fl}, {h: "Points", v: o => o.pts, f: o => fx1(o.pts), def: true, tip: "Grand Prix and sprint points"});
+    if (isT) cols.push({h: "1–2s", v: o => o.one2, tip: "Grands Prix where the team finished first and second"}, {h: "Drivers", v: o => o.drivers.size, f: o => [...o.drivers].join(", "), asc: true});
+    else cols.push({h: "Avg finish", v: o => o.fin.length ? o.fin.reduce((a, b) => a + b, 0) / o.fin.length : null, f: o => o.fin.length ? fx1(o.fin.reduce((a, b) => a + b, 0) / o.fin.length) : "–", asc: true, tip: "Average finishing position when classified"},
+      {h: "Best", v: o => o.best < 99 ? o.best : null, f: o => o.best < 99 ? "P" + o.best : "–", asc: true}, {h: "Places gained", v: o => o.gain, tip: "Grid position minus finishing position, summed over classified finishes"});
+    cols.push({h: "DNFs", v: o => o.dnf});
+    html = statsTable(cols, rows, STATS.tab) + `<p class="anote">${gp.length} Grands Prix, ${spr.length} sprints. Points include sprints. Data from OpenF1; 2023 points for Saudi Arabia and the United States were recomputed from positions.</p>`;
+  } else if (STATS.tab === "mate") {
+    const pairs = {}, key = (y, t) => y + "|" + t;
+    for (const e of gp) { const byT = {}; for (const r of e.res) (byT[r[1]] = byT[r[1]] || []).push(r);
+      for (const t in byT) { const p = pairs[key(e.y, t)] || (pairs[key(e.y, t)] = {y: e.y, t, starts: {}, qa: {}, ra: {}, pts: {}});
+        for (const r of byT[t]) { p.starts[r[0]] = (p.starts[r[0]] || 0) + 1; p.pts[r[0]] = (p.pts[r[0]] || 0) + r[4]; } } }
+    for (const e of spr) for (const r of e.res) { const p = pairs[key(e.y, r[1])]; if (p) p.pts[r[0]] = (p.pts[r[0]] || 0) + r[4]; }
+    const cards = [];
+    for (const p of Object.values(pairs)) { const ds = Object.entries(p.starts).sort((a, b) => b[1] - a[1]); if (ds.length < 2) continue; const [A, B] = [ds[0][0], ds[1][0]];
+      let qa = 0, qb = 0, ra = 0, rb = 0;
+      for (const e of q.filter(e => e.y === p.y)) { const a = e.res.find(r => r[0] === A && r[1] === p.t), b = e.res.find(r => r[0] === B && r[1] === p.t); if (a && b && a[2] && b[2]) a[2] < b[2] ? qa++ : qb++; }
+      for (const e of gp.filter(e => e.y === p.y)) { const a = e.res.find(r => r[0] === A && r[1] === p.t), b = e.res.find(r => r[0] === B && r[1] === p.t); if (a && b && a[3] && b[3] && !a[5] && !b[5]) a[3] < b[3] ? ra++ : rb++; }
+      const others = ds.slice(2).map(d => d[0]);
+      const bar = (x, y2) => { const t = x + y2 || 1; return `<div class="hbar"><i style="width:${x / t * 100}%;background:${esc(statsCol(A))}"></i><i style="width:${y2 / t * 100}%;background:${esc(statsCol(B))};opacity:.38"></i></div>`; };
+      cards.push({y: p.y, t: p.t, html: `<div class="mcard"><div class="mhd"><b>${p.y} · ${esc(p.t)}</b>${others.length ? ` <span class="anote">(also: ${others.map(esc).join(", ")})</span>` : ""}</div>
+        <div class="mrow"><span style="color:${esc(statsCol(A))}"><b>${esc(A)}</b></span><span>QUALIFYING ${qa}–${qb}</span><span style="color:${esc(statsCol(B))};opacity:.75"><b>${esc(B)}</b></span></div>${bar(qa, qb)}
+        <div class="mrow"><span></span><span>RACES ${ra}–${rb}</span><span></span></div>${bar(ra, rb)}
+        <div class="mrow"><span>${fx1(p.pts[A] || 0)} pts</span><span>POINTS</span><span>${fx1(p.pts[B] || 0)} pts</span></div>${bar(p.pts[A] || 0, p.pts[B] || 0)}</div>`}); }
+    cards.sort((a, b) => b.y - a.y || a.t.localeCompare(b.t));
+    html = `<div class="mgrid">${cards.map(c => c.html).join("")}</div><p class="anote">Head-to-heads count Grand Prix qualifying sessions and races where both team-mates were classified. Pairs are the two drivers with the most starts for the team that season.</p>`;
+  } else if (STATS.tab === "track") {
+    const circ = [...new Map(D.events.filter(e => e.kind === "gp").map(e => [e.circuit, e])).values()].sort((a, b) => a.circuit.localeCompare(b.circuit));
+    if (!STATS.circuit || !circ.some(c => c.circuit === STATS.circuit)) STATS.circuit = (st.meta && circ.some(c => c.circuit === st.meta.circuit)) ? st.meta.circuit : circ[0].circuit;
+    ctl = `<label>Track <select id="stTrack">${circ.map(c => `<option value="${esc(c.circuit)}" ${c.circuit === STATS.circuit ? "selected" : ""}>${esc(c.circuit)} · ${esc(c.name)}</option>`).join("")}</select></label>`;
+    const ev = D.events.filter(e => e.circuit === STATS.circuit), ys = [...new Set(ev.map(e => e.y))].sort((a, b) => b - a), wins = {};
+    const rows = ys.map(y => { const g = ev.find(e => e.y === y && e.kind === "gp"), qq = ev.find(e => e.y === y && e.kind === "quali"), sp = ev.find(e => e.y === y && e.kind === "sprint");
+      const w = g && g.res.find(r => r[3] === 1), pole = g && g.res.find(r => r[2] === 1), fq = qq && qq.res.find(r => r[2] === 1), sw = sp && sp.res.find(r => r[3] === 1); if (w) wins[w[0]] = (wins[w[0]] || 0) + 1;
+      const c = x => x ? `<span style="color:${esc(statsCol(x[0]))}"><b>${esc(x[0])}</b></span> ${esc(statsName(x[0]))}` : "–";
+      return `<tr><td><b>${y}</b></td><td>${c(w)}</td><td>${c(pole)}</td><td>${fq && fq[3] ? `${esc(fq[0])} ${fmtLap(fq[3])}` : "–"}</td><td>${g && g.fl ? `${esc(g.fl[0])} ${fmtLap(g.fl[1])}` : "–"}</td><td>${c(sw)}</td></tr>`; });
+    const top = Object.entries(wins).sort((a, b) => b[1] - a[1]);
+    html = `<h4 class="sh">${esc(ev[0] ? ev[0].name : "")} · ${esc(STATS.circuit)}</h4><table class="stbl"><thead><tr><th>Year</th><th>Winner</th><th>Pole (grid P1)</th><th>Fastest in qualifying</th><th>Fastest race lap</th><th>Sprint winner</th></tr></thead><tbody>${rows.join("")}</tbody></table>` +
+      (top.length ? `<p class="anote">${top[0][1] === 1 && top.length > 1 ? `A different winner every year since ${ys[ys.length - 1]}.` : `Most wins here since ${ys[ys.length - 1]}: ${top.filter(([, n]) => n === top[0][1]).map(([k, n]) => `${esc(statsName(k))} (${n})`).join(", ")}.`}</p>` : "");
+  } else if (STATS.tab === "pit") {
+    const all = []; for (const e of gp.concat(spr)) for (const p of e.pits) all.push({c: p[0], t: p[1], s: p[2], lap: p[3], e});
+    if (!all.length) html = '<p class="anote">No pit-stop times were published for this season (OpenF1 has stop times only for some races, from late 2024 on).</p>';
+    else { all.sort((a, b) => a.s - b.s); const byT = {};
+      for (const p of all) (byT[p.t] = byT[p.t] || []).push(p.s);
+      const med = a => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
+      const teamRows = Object.entries(byT).map(([t, v]) => ({t, n: v.length, med: med(v), best: Math.min(...v)}));
+      html = `<div class="scols"><div><h4 class="sh">Fastest stops</h4><table class="stbl"><thead><tr><th>#</th><th>Driver</th><th>Stop</th><th>Race</th><th>Lap</th></tr></thead><tbody>${all.slice(0, 20).map((p, i) => `<tr><td>${i + 1}</td><td><i class="sdot" style="background:${esc(statsCol(p.c))}"></i>${esc(p.c)} <span class="anote">${esc(p.t)}</span></td><td><b>${p.s.toFixed(1)} s</b></td><td>${p.e.y} ${esc(p.e.name.replace(" Grand Prix", " GP"))}${p.e.kind === "sprint" ? " sprint" : ""}</td><td>${p.lap}</td></tr>`).join("")}</tbody></table></div>` +
+        `<div><h4 class="sh">Teams (median stop)</h4>${statsTable([{h: "Team", v: o => o.t, f: o => `<i class="sdot" style="background:${esc(D.teams[o.t] || "#888")}"></i>${esc(o.t)}`, asc: true}, {h: "Median", v: o => o.med, f: o => o.med.toFixed(2) + " s", asc: true, def: true}, {h: "Best", v: o => o.best, f: o => o.best.toFixed(1) + " s", asc: true}, {h: "Stops", v: o => o.n}], teamRows, "pit")}</div></div>` +
+        `<p class="anote">Stationary time as published by OpenF1, which only has stop times for some races (from late 2024 on). Stops over 15 s are left out as problems or penalties.</p>`; }
+  }
+  $("#statsCtl").innerHTML = ctl; $("#statsBody").innerHTML = html;
+  const ys = $("#stYear"); if (ys) ys.onchange = e => { STATS.year = e.target.value; renderStats(); };
+  const tr = $("#stTrack"); if (tr) tr.onchange = e => { STATS.circuit = e.target.value; renderStats(); };
+  $("#statsBody").querySelectorAll("th[data-si]").forEach(th => th.onclick = () => { const i = +th.dataset.si, s = STATS.sort && STATS.sort.tab === STATS.tab ? STATS.sort : null; STATS.sort = {tab: STATS.tab, i, dir: s && s.i === i ? -s.dir : -1}; renderStats(); });
+}
+$("#statsBtn").addEventListener("click", () => $("#stats").hidden ? openStats() : closeStats());
+$("#statsClose").addEventListener("click", closeStats);
+$("#statsTabs").addEventListener("click", e => { const b = e.target.closest("[data-st]"); if (!b) return; STATS.tab = b.dataset.st; renderStats(); });
 
 /* ---------------- stewards ---------------- */
 const STEW = {

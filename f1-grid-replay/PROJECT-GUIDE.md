@@ -21,7 +21,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 
 | What | Where |
 | --- | --- |
-| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 35) |
+| Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 36) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
 | Offline version | `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip` (unzip all into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
@@ -75,6 +75,14 @@ put on hold.
   zones, sector and top-speed table, braking-point comparison (only differences of 5–35 m are shown; more is
   treated as measurement error). Qualifying commentary now calls the speed trap and braking points
   (1,110 qualifying lines). Data: `tools/fetch_qtele.py` → `tele/<sk>.json` → `tools/merge_tele.py`.
+
+- **STATS hub** (STATS button): drivers and teams tables (GP starts, wins, podiums, poles, fastest in
+  qualifying, sprint wins, fastest laps, points incl. sprints, average/best finish, places gained, DNFs, 1–2s),
+  team-mate head-to-heads (qualifying, races, points), track history (winner, pole, fastest qualifying lap,
+  fastest race lap, sprint winner per year) and pit stops (fastest stops, team medians). Season filter or all
+  seasons. **Poles = started the GP from P1** (official pole after grid penalties; matches the official counts,
+  e.g. 2023 VER 12, LEC 5); "Fastest in Q" counts who was quickest in qualifying. Data: `tools/build_stats.py pub`
+  → `stats.json` (217 KB; embedded in F1_Unleashed.html offline). Rebuild it after new races are added.
 
 ## 4. How it is built (architecture)
 
