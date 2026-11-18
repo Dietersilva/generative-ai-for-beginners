@@ -17,6 +17,28 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 2
+
+- **Cars:** sculpted bodywork instead of boxes: a tapered nose, a raised cockpit and airbox, sidepods that narrow towards the back, and a shark-fin engine cover. Tyres have rounded shoulders, and the paint is glossier, with stronger sky reflections.
+- **Trees and ground cover:**
+  - Conifers are built from five drooping, uneven tiers.
+  - Broadleaf trees have leafy multi-lobed crowns, shaded darker underneath.
+  - About 2,600 bushes and 900 boulders are scattered over the hills.
+- **Water:** the lake has a moving, rippled surface that reflects the real sky.
+- **Atmosphere:**
+  - Soft, sunlit clouds.
+  - Sun glare with lens ghosts when you look towards the sun.
+  - Dust floating in the sunlight around the camera.
+- **Faster fast-forward:** at 2× and above, the physics runs 60 steps a second instead of 120, which halves the work. In tests at 4×, races were stable (11 of 22 finished, the normal range).
+- **RACE SETUP menu (⚙):**
+  - Pick the drop, day or night, and any special features: chaos, stampede, showers, rain, turbo, moon, giant car, backwards and kicker jump.
+  - **🎲 RANDOMIZE** picks a fresh mix of 1 to 3 specials, plus random drop and time of day.
+  - **SAVE & SET UP RACE** sets up the race. A NEXT RACE banner shows the mix, and Rex and Priya announce it.
+  - **Surprise me every race** randomizes automatically each time you start the next race.
+  - The last setup is remembered in this browser.
+- **DRIVER button:** in the camera bar. It opens the driver view of the selected car, or of the leader. Clicking any car still works too.
+- **LIVE pop-up:** now sits in the bottom-right corner, below the full-screen standings and above the driver view when that is open.
+
 ---
 
 # F1 Bezerk
