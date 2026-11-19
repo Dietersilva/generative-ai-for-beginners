@@ -1,4 +1,4 @@
-<title>Grid Replay 2026</title>
+<title>Pit Wall Redux</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -196,6 +196,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .speeds button{padding:5px 8px;border-radius:7px;font-family:var(--f-mono);font-size:12px;color:var(--muted)}
 .speeds button[aria-pressed="true"]{background:var(--text);color:var(--ink)}
 .toggles{display:flex;gap:6px;flex:0 0 auto}
+@media (max-width:760px){.top{flex-wrap:wrap;gap:8px}.top .race-sel{flex:1 1 100%;min-width:0}.top .season-sel{flex:0 0 auto}.toggles{flex-wrap:wrap;flex:1 1 100%}}
 .tg{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;border:1px solid var(--line-2);font-family:var(--f-display);font-weight:700;font-size:12.5px;letter-spacing:.08em;color:var(--muted)}
 .tg::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--dim)}
 .tg[aria-pressed="true"]{color:var(--text)}
@@ -442,7 +443,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 <div class="app" id="app">
   <header class="top">
     <div class="brand" aria-hidden="true"><span class="mark"></span>
-      <div><div class="brand-name">GRID REPLAY</div><div class="brand-sub" id="brandSub">2026 season · telemetry replay</div></div>
+      <div><div class="brand-name">PIT WALL REDUX</div><div class="brand-sub" id="brandSub">2026 season · telemetry replay</div></div>
     </div>
     <select class="race-sel season-sel" id="seasonSel" aria-label="Choose a season"></select>
     <select class="race-sel" id="raceSel" aria-label="Choose a race"><option>Loading season…</option></select>
@@ -1395,7 +1396,7 @@ async function loadQuali(r){
   closeAnalysis();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
-  document.title = `${r.name} ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · Grid Replay ${st.year || ""}`;
+  document.title = `${r.name} ${r.kind === "squali" ? "Sprint qualifying" : "Qualifying"} · Pit Wall Redux ${st.year || ""}`;
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + (r.kind === "squali" ? "SPRINT QUALIFYING" : "QUALIFYING");
   try {
     const u8 = await fetchBytes(r.file); if (id !== st.loadingId) return;
@@ -2850,7 +2851,7 @@ async function loadRace(r){
   leaveQuali();
   const id = ++st.loadingId; setPlaying(false); stopRadio(); endDirector(); fx.length = 0;
   st.meta = r; $("#raceSel").value = String(r.session_key);
-  document.title = `${r.name} · Grid Replay ${st.year || ""}`;
+  document.title = `${r.name} · Pit Wall Redux ${st.year || ""}`;
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING " + r.name.toUpperCase();
   $("#podium").hidden = true;
   try {
@@ -2913,7 +2914,7 @@ async function loadSeason(y){
     if (e.missingSeason) { (window.__miss = window.__miss || new Set()).add(S.y);
       const nxt = !/^#\d{4}/.test(location.hash) && SEASONS.find(s => !window.__miss.has(s.y));
       if (nxt) { st.year = null; return loadSeason(nxt.y); }
-      $("#loadMsg").textContent = e.partsFound ? `THE ${S.y} SEASON IS MISSING PART ${e.partsFound + 1}: UNZIP F1_UNLEASHED-${S.y}-PART${e.partsFound + 1}.ZIP NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.` : `THE ${S.y} SEASON IS NOT IN THIS FOLDER. UNZIP ALL F1_UNLEASHED-${S.y} ZIP PARTS NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
+      $("#loadMsg").textContent = e.partsFound ? `THE ${S.y} SEASON IS MISSING PART ${e.partsFound + 1}: THE FILE GRID-REPLAY-${S.y}-${e.partsFound + 1}.JS (IN THE ${S.y} PART ${e.partsFound + 1} ZIP) MUST SIT NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.` : `THE ${S.y} SEASON IS NOT IN THIS FOLDER. UNZIP ALL ${S.y} ZIP PARTS NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
     $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 }
 function routeFromHash(){
@@ -2952,7 +2953,7 @@ requestAnimationFrame(frame);
 
 (async () => {
   try { routeFromHash(); await st.seasonLoading;
-  } catch (e) { if (e && e.missingSeason) return; $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN F1_UNLEASHED.HTML WITH ITS SEASON FILES UNZIPPED NEXT TO IT." : "COULDN'T LOAD THE SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+  } catch (e) { if (e && e.missingSeason) return; $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN PIT_WALL_REDUX.HTML WITH ITS SEASON FILES UNZIPPED NEXT TO IT." : "COULDN'T LOAD THE SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 })();
 })();
 </script>

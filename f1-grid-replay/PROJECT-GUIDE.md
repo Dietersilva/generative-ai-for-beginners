@@ -14,8 +14,10 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 - **Every file sent to the owner must be 25 MB or smaller.** Larger downloads fail in the Claude app
   ("artifact is too large to download"). Split seasons into pieces (`SPLIT_MB=32` in standalone.py gives
   ~20 MB zips) and split backups into parts of at most ~24 MB.
-- The offline version is called **F1 Unleashed**: `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip`
-  (built with `tools/launcher.py <page> F1_Unleashed.html "F1 Unleashed"`).
+- The project is called **Pit Wall Redux** (renamed 19 Nov 2026; earlier names: Grid Replay, F1 Unleashed).
+  Offline: `Pit_Wall_Redux.html` + `Pit_Wall_Redux-YYYY-partN.zip` (built with `tools/launcher.py pub/index.html
+  Pit_Wall_Redux.html`; the page itself carries the name). Avoid "F1" in the name: it is a Formula One trademark.
+  The season pieces inside the zips keep their file names (`grid-replay-YYYY-N.js`), so older zips still work.
 
 ## 1. Where everything is
 
@@ -23,7 +25,7 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
 | --- | --- |
 | Online version (private to you) | https://claude.ai/artifact/HpzTQcSf2n3zTQeMKndKRV (version 36) |
 | Source code | GitHub `dietersilva/generative-ai-for-beginners`, branch `claude/optimistic-dirac-orjjnb`, folder `f1-grid-replay/` |
-| Offline version | `F1_Unleashed.html` + `F1_Unleashed-YYYY-partN.zip` (unzip all into one folder, double-click the HTML) |
+| Offline version | `Pit_Wall_Redux.html` + `Pit_Wall_Redux-YYYY-partN.zip` (unzip all into one folder, double-click the HTML) |
 | Backup | `Grid-Replay-backup-1..5` (online files + tools), plus the extra parts listed in section 12 |
 
 ## 2. What's in it
@@ -82,7 +84,7 @@ put on hold.
   fastest race lap, sprint winner per year) and pit stops (fastest stops, team medians). Season filter or all
   seasons. **Poles = started the GP from P1** (official pole after grid penalties; matches the official counts,
   e.g. 2023 VER 12, LEC 5); "Fastest in Q" counts who was quickest in qualifying. Data: `tools/build_stats.py pub`
-  → `stats.json` (217 KB; embedded in F1_Unleashed.html offline). Rebuild it after new races are added, then
+  → `stats.json` (217 KB; embedded in Pit_Wall_Redux.html offline). Rebuild it after new races are added, then
   re-add overtakes with ovcollect.js + merge_ov.py (see the timing extras section).
 
 ### Added 18 November 2026 (later): official timing extras

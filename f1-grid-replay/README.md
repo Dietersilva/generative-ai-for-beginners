@@ -1,4 +1,4 @@
-# Grid Replay 2026
+# Pit Wall Redux (formerly Grid Replay)
 
 A private, fan-made replay of the 2026 season: every Grand Prix and sprint as an animated
 running order (linear view) or track map, plus qualifying fastest laps as ghost cars.
