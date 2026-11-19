@@ -268,7 +268,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .app.maxi #stage{--ft:0px}
 .app.maxi #stage .ticker,.app.maxi #stage::before{display:none}
 .minibar{position:absolute;left:12px;bottom:12px;z-index:6;display:none;gap:6px;align-items:center}
-.app.maxi .minibar{display:flex}
+.app.maxi .minibar,.app.rcbig .minibar{display:flex}
+/* race control reading mode: strip expanded upward, controls bar hidden (minibar keeps play/pause and brings it back) */
+.app.rcbig{grid-template-rows:auto minmax(0,1fr);grid-template-areas:"top top" "stage tower"}
+.app.rcbig.lin,.app.rcbig.qmode{grid-template-areas:"top" "stage"}
+.app.rcbig .transport{display:none}
+.app.rcbig #stage{--ft:clamp(170px,36%,380px)}
+.app.rcbig .minibar{bottom:calc(var(--ft) + 10px)}
+.app.rcbig #stage .ticker .tk{font-size:14.5px;padding:4px 8px 4px 0;margin-bottom:3px}
+.app.rcbig #stage .ticker .tk span{white-space:normal;overflow:visible}
+.app.rcbig #stage .ticker .lg-hd{font-size:10.5px}
+#stage .ticker .lg-hd .rcx{pointer-events:auto;font:700 9.5px var(--f-mono);letter-spacing:.12em;color:var(--text);background:var(--panel-2);border:1px solid var(--line);border-radius:5px;padding:1px 7px;margin-left:10px;cursor:pointer}
+#stage .ticker .lg-hd .rcx:hover{border-color:var(--muted)}
 .minibar button{font:700 12px var(--f-display,sans-serif);letter-spacing:.08em;color:var(--text);background:rgba(10,14,24,.82);border:1px solid var(--line);border-radius:9px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(6px)}
 .minibar button:hover{border-color:var(--muted)}
 .minibar .mtime{font:500 11.5px var(--f-mono,monospace);color:var(--muted);background:rgba(10,14,24,.82);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
@@ -546,7 +557,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="tg rad" id="tgRadio" aria-pressed="true" title="Play team radio as it happens">RADIO</button>
       <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the race view to a video file">● REC</button>
     </div>
-    <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>M</b> bigger track</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
+    <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>M</b> bigger track</span><span><b>E</b> expand race control</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
   </footer>
 </div>
 
@@ -2016,7 +2027,7 @@ function updateHUD(){
   const wxEl = $("#wx"); if (wxEl.dataset.h !== wh) { wxEl.dataset.h = wh; wxEl.innerHTML = wh; }
   // ticker: last 4 events
   const n = ub(R.evT, t); const evs = R.events.slice(Math.max(0, n - 60), n).reverse();
-  const th = `<div class="lg-hd"><span>RACE CONTROL · ${n} MESSAGES${st.radio && st.radio.items.some(c => c.text) ? " · RADIO AUTO-TRANSCRIBED, MAY CONTAIN ERRORS" : ""}</span><span>NEWEST FIRST</span></div>` + (evs.length ? "" : `<div class="tk"><span style="color:var(--dim)">Waiting for lights out…</span></div>`) + evs.map(e => `<div class="tk${e.rad ? " rad" : ""}${e.x || e.ov ? " clk" : ""}" data-et="${e.t}" data-ek="${e.k}"${e.x ? ` data-tip="Click to watch a slow-motion replay of this incident"` : e.ov ? ` data-tip="Click to jump to this pass"` : ""}><i style="background:${e.c}"></i><b style="color:${e.c}">${esc(e.label)}</b><span>${esc(e.text)}</span><em>L${Math.max(1, leaderLap(R, e.t))}</em></div>`).join("");
+  const th = `<div class="lg-hd"><span>RACE CONTROL · ${n} MESSAGES${st.radio && st.radio.items.some(c => c.text) ? " · RADIO AUTO-TRANSCRIBED, MAY CONTAIN ERRORS" : ""}</span><span>NEWEST FIRST<button class="rcx" data-rcx title="${$("#app").classList.contains("rcbig") ? "Shrink race control and show the controls bar (E)" : "Expand race control and hide the controls bar, for reading during the race (E)"}">${$("#app").classList.contains("rcbig") ? "▾ SHRINK" : "▴ EXPAND"}</button></span></div>` + (evs.length ? "" : `<div class="tk"><span style="color:var(--dim)">Waiting for lights out…</span></div>`) + evs.map(e => `<div class="tk${e.rad ? " rad" : ""}${e.x || e.ov ? " clk" : ""}" data-et="${e.t}" data-ek="${e.k}"${e.x ? ` data-tip="Click to watch a slow-motion replay of this incident"` : e.ov ? ` data-tip="Click to jump to this pass"` : ""}><i style="background:${e.c}"></i><b style="color:${e.c}">${esc(e.label)}</b><span>${esc(e.text)}</span><em>L${Math.max(1, leaderLap(R, e.t))}</em></div>`).join("");
   const tk = $("#ticker"); if (tk.dataset.h !== th) { tk.dataset.h = th; tk.innerHTML = th; }
   // timeline
   const pct = (t / R.T * 100).toFixed(3) + "%"; $("#tlHead").style.left = pct; $("#tlDone").style.width = pct;
@@ -2845,11 +2856,15 @@ setToggle("#tgCrash", "crashCam"); setToggle("#tgRadio", "radioOn"); setToggle("
 $("#fsBtn").addEventListener("click", () => { const el = $("#app");
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   else if (el.requestFullscreen) el.requestFullscreen().catch(() => { $("#fsBtn").textContent = "FULL SCREEN BLOCKED HERE"; }); });
-function setMaxi(on){ $("#app").classList.toggle("maxi", on); document.querySelectorAll(".maxbtn").forEach(b => b.setAttribute("aria-pressed", String(on))); try { localStorage.setItem("gr_maxi", on ? "1" : ""); } catch (e) {} requestAnimationFrame(() => { resize(); if (st.cam === "overview") Object.assign(cam, fit); }); }
+function setRcBig(on){ if (on) setMaxi(false); $("#app").classList.toggle("rcbig", on); try { localStorage.setItem("gr_rcbig", on ? "1" : ""); } catch (e) {}
+  const b = document.querySelector("#ticker [data-rcx]"); if (b) b.textContent = on ? "▾ SHRINK" : "▴ EXPAND"; requestAnimationFrame(() => { resize(); if (st.cam === "overview") Object.assign(cam, fit); }); }
+$("#ticker").addEventListener("click", e => { if (e.target.closest("[data-rcx]")) setRcBig(!$("#app").classList.contains("rcbig")); });
+try { if (localStorage.getItem("gr_rcbig")) setTimeout(() => setRcBig(true), 0); } catch (e) {}
+function setMaxi(on){ if (on && $("#app").classList.contains("rcbig")) setRcBig(false); $("#app").classList.toggle("maxi", on); document.querySelectorAll(".maxbtn").forEach(b => b.setAttribute("aria-pressed", String(on))); try { localStorage.setItem("gr_maxi", on ? "1" : ""); } catch (e) {} requestAnimationFrame(() => { resize(); if (st.cam === "overview") Object.assign(cam, fit); }); }
 document.querySelectorAll(".maxbtn").forEach(b => b.addEventListener("click", () => setMaxi(!$("#app").classList.contains("maxi"))));
-$("#miniShow").addEventListener("click", () => setMaxi(false));
+$("#miniShow").addEventListener("click", () => { setMaxi(false); if ($("#app").classList.contains("rcbig")) setRcBig(false); });
 $("#miniPlay").addEventListener("click", () => $("#play").click());
-setInterval(() => { if (!$("#app").classList.contains("maxi")) return; const t = st.playing ? "❚❚ PAUSE" : "▶ PLAY"; if ($("#miniPlay").textContent !== t) $("#miniPlay").textContent = t;
+setInterval(() => { if (!$("#app").classList.contains("maxi") && !$("#app").classList.contains("rcbig")) return; const t = st.playing ? "❚❚ PAUSE" : "▶ PLAY"; if ($("#miniPlay").textContent !== t) $("#miniPlay").textContent = t;
   const lc = $("#lapCur").textContent, lt = $("#lapTot").textContent, ck = $("#clock").textContent.split("·")[0].trim(); const m = st.Q ? $("#clock").textContent.split("·")[0].trim() : `LAP ${lc}${lt.replace(/\s/g, "")} · ${ck}`; if ($("#miniTime").textContent !== m) $("#miniTime").textContent = m; }, 250);
 try { if (localStorage.getItem("gr_maxi")) setMaxi(true); } catch (e) {}
 document.addEventListener("fullscreenchange", () => { $("#fsBtn").textContent = document.fullscreenElement ? "✕ EXIT FULL SCREEN" : "⛶ FULL SCREEN"; });
@@ -2884,6 +2899,7 @@ document.addEventListener("keydown", e => {
   else if (e.key === "o" || e.key === "O") setCam("overview");
   else if (e.key === "h" || e.key === "H") { st.hl ? stopHighlights() : startHighlights(); }
   else if (e.key === "m" || e.key === "M") setMaxi(!$("#app").classList.contains("maxi"));
+  else if (e.key === "e" || e.key === "E") setRcBig(!$("#app").classList.contains("rcbig"));
   else if (e.key === "l" || e.key === "L") setCam("linear");
   else if (e.key === "f" || e.key === "F") setCam("follow");
   else if (e.key === "c" || e.key === "C") setCam("chase");

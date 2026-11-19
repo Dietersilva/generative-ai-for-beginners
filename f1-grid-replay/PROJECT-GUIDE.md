@@ -19,6 +19,12 @@ Status as of 17 November 2026. Personal, non-commercial use only — see "Licenc
   Pit_Wall_Redux.html`; the page itself carries the name). Avoid "F1" in the name: it is a Formula One trademark.
   The season pieces inside the zips keep their file names (`grid-replay-YYYY-N.js`), so older zips still work.
 
+- **Owner's plan (19 Nov 2026):** this artifact and these offline files stay as the **2023–2026 edition** and are
+  "locked": no new seasons are added to them (the remaining 2026 rounds and their scheduled tasks still finish 2026).
+  **2027 will be its own stand-alone edition** (new artifact + its own offline HTML and zips). **2018–2022** go in
+  separate edition(s), split as size requires; they are *estimated* replays from Jolpica lap data (no GPS/radio exists
+  without an F1 login). Raw download: `tools/fetch_jolpica.py old/jolpica` (resumable, ~450 requests/hour).
+
 ## 1. Where everything is
 
 | What | Where |
@@ -126,6 +132,9 @@ put on hold.
 - **LAP COMPARE** tab: any two race laps; speed along the lap worked out from car positions (≈4 Hz, approximate) and
   the running gap by lap distance; lap times are official.
 - **Race summary** on the podium screen: biggest climb, most overtakes, fastest stop, fastest lap, championship lead.
+
+- **Expandable race control** (▴ EXPAND on the strip, or key **E**): strip grows to ~36% of the stage with larger,
+  wrapping text; controls bar hidden; floating mini bar keeps play/pause and ▴ CONTROLS. Exclusive with bigger-track (M).
 
 ## 4. How it is built (architecture)
 
