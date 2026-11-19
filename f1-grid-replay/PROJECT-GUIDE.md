@@ -151,6 +151,27 @@ put on hold.
   Points are as awarded (dropped scores before 1991 not removed; noted on screen). stats.json is now ~1.7 MB.
 - **2023–2026 edition LOCKED** after this (owner's decision), except the scheduled job that adds the last 2026 races.
 
+### Pit Wall Redux CLASSIC (2018–2022) — started 19 Nov 2026
+- Online: https://claude.ai/artifact/4VxQ4oFjoyVSpd38Q6xc72 (separate artifact; downloads capability declared for REC).
+  Offline: `Pit_Wall_Redux_Classic.html` + `Pit_Wall_Redux_Classic-YYYY.zip` (one zip per season, ~13 MB), in their own folder.
+- Same page code as the main edition; `tools/make_classic_site.py pub/index.html classic` injects
+  `window.__EDITION = {seasons, sub}` (seasons found under classic/YYYY/), the CLASSIC badge and title, and copies stats.json.
+- Season build: `tools/fetch_jolpica.py old/jolpica <years>` (laps/pits/results/quali/sprint per round, resumable) then
+  `tools/build_classic.py old/jolpica <year> classic [rounds]` → classic/YYYY/{data/*.mp3, index.json, season.json, extra.mp3}.
+  ESTIMATED replays: each lap follows a reference lap stretched to the real lap time. Reference = fastest clean lap of the
+  latest 2023+ race at the circuit, or for circuits not raced since (Paul Ricard, Sochi, Hockenheim, Istanbul, Portimão,
+  Mugello, Nürburgring) the MIT-licensed f1-circuits outline (© Tomislav Bacinger, old/circuits/) with a speed profile from
+  its curvature. Known layout differences are noted on the race (Albert Park pre-2022, Yas Marina pre-2021, Singapore
+  pre-2023, Barcelona chicane pre-2023, Sakhir 2020 outer loop shown on the GP layout).
+- Pit stops: cars leave the line ~3.5% before the start/finish, run down a lane 7 m to the side for the pit-lane time.
+  Safety cars/red flags: laps whose median is >12% over the race median AND the leader→P5 gap shrinks (or is <6 s);
+  >3× median = red flag. VSCs (no bunching) are usually missed; noted on screen. Checked on 2022 (Bahrain SC laps 46–50,
+  Monaco red flag, no false SC for Monaco's wet start or Hungary).
+- Extras per race: standings before/after (computed from results + sprints, countback on positions), Q1/Q2/Q3, retirement
+  reasons, official fastest lap. Page shows QUALIFYING tab, RETIREMENTS list; hides LAP COMPARE, SPEED & SECTORS and an empty
+  WEATHER tab on fully estimated races. No radio, no tyre compounds, no sprint replays (sprint points do count).
+- 2022 verified: all 22 winners, final standings VER 454 / LEC 308 / PER 305.
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,

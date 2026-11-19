@@ -1677,6 +1677,18 @@ function renderTraps(info){
   info.innerHTML = statsTable(cols, rows, "trap") + `<p class="anote">Official OpenF1 timing. Speeds in km/h; purple = best in the race. <b>Ideal lap</b> adds a driver's best three sectors (lap 1 left out). The coloured bars under each code in the timing tower are the live sectors: <b style="color:var(--purple)">purple</b> fastest so far, <b style="color:#38e383">green</b> personal best, <b style="color:#ffd400">yellow</b> slower. Click a column to sort.</p>`;
   info.querySelectorAll("[data-si]").forEach(th => th.onclick = () => { const i = +th.dataset.si, o = STATS.sort; STATS.sort = {tab: "trap", i, dir: o && o.tab === "trap" && o.i === i ? -o.dir : -1}; renderTraps(info); });
 }
+// qualifying classification (Q1/Q2/Q3 times) for races that come with it (the Classic edition's archive data)
+function renderQualiResults(info){
+  const R = st.R, q = R.h.ext && R.h.ext.q;
+  if (!q || !q.length) { info.innerHTML = `<p class="empty">Qualifying times for this race are in the qualifying session itself (pick it in the race list).</p>`; return; }
+  const sec = v => { if (!v) return null; const p = v.split(":"); return p.length === 2 ? +p[0] * 60 + +p[1] : +p[0]; };
+  const best = r => Math.min(...[r[2], r[3], r[4]].map(sec).filter(v => v)), pole = Math.min(...q.map(best).filter(isFinite));
+  const n3 = q.filter(r => r[4]).length, n2 = q.filter(r => r[3]).length;
+  const rows = q.slice().sort((a, b) => a[1] - b[1]).map(r => { const D = R.byNum[r[0]], b = best(r), out = !r[3] && n2 ? "Q1" : !r[4] && n3 ? "Q2" : "";
+    return `<tr><td>${r[1]}</td><td>${D ? `<b style="color:${D.css}">${esc(D.code)}</b> ${esc(D.first + " " + D.last)}` : esc(r[5] || "#" + r[0])}</td><td>${esc(r[2] || "–")}</td><td>${esc(r[3] || "–")}</td><td>${esc(r[4] || "–")}</td><td>${isFinite(b) && b > pole ? "+" + (b - pole).toFixed(3) : r[1] === 1 ? "POLE" : "–"}</td><td>${out ? `<span class="anote">out in ${out}</span>` : ""}</td></tr>`; }).join("");
+  info.innerHTML = `<table class="stbl"><thead><tr><th>POS</th><th>DRIVER</th><th>Q1</th><th>Q2</th><th>Q3</th><th>GAP</th><th></th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="anote">Official qualifying classification (Jolpica / Ergast archive). The grid can differ because of penalties; the race starts from the official grid.</p>`;
+}
 function renderChamp(info){
   const R = st.R, x = R.h.ext;
   if (!x || !x.cd || !x.cd.length) { info.innerHTML = `<p class="empty">Championship standings aren't published for this session${st.meta && st.meta.kind === "sprint" ? " (OpenF1 only updates them after the main race)" : ""}.</p>`; return; }
@@ -1733,12 +1745,12 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tyre", "TYRE WEAR"], ["cmp", "LAP COMPARE"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["trap", "SPEED & SECTORS"], ["champ", "CHAMPIONSHIP"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tyre", "TYRE WEAR"], ["cmp", "LAP COMPARE"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["trap", "SPEED & SECTORS"], ["champ", "CHAMPIONSHIP"], ["qres", "QUALIFYING"], ["season", "SEASON"]];
 st.anaTab = "h2h";
 function openAnalysis(){ if (!st.R && !(st.Q && (st.Q.q.all || st.Q.hasTele))) return; if (st.Q && !["pos", "laps", "tele"].includes(st.anaTab)) st.anaTab = st.Q.q.all ? "pos" : "tele"; if (st.Q && st.anaTab === "tele" && !st.Q.hasTele) st.anaTab = "pos"; if (st.R && st.anaTab === "tele") st.anaTab = "h2h"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
 function buildAnaTabs(){
-  $("#anaTabs").innerHTML = ANA_TABS.filter(([k]) => st.Q ? ((k === "pos" || k === "laps") && st.Q.q.all) || (k === "tele" && st.Q.hasTele) : k !== "tele").map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
+  $("#anaTabs").innerHTML = ANA_TABS.filter(([k]) => st.Q ? ((k === "pos" || k === "laps") && st.Q.q.all) || (k === "tele" && st.Q.hasTele) : k !== "tele" && (k !== "qres" || (st.R && st.R.h.ext && st.R.h.ext.q && st.R.h.ext.q.length)) && (k !== "trap" || (st.R && st.R.sec)) && !(st.R && st.R.h.est && st.R.h.est[0] && st.R.h.est[0][0] === 0 && (k === "cmp" || (k === "wx" && !(st.R.h.weather || []).length)))).map(([k, l]) => `<button class="tab" data-ana="${k}" aria-selected="${k === st.anaTab}">${l}</button>`).join("");
 }
 $("#anaBtn").addEventListener("click", () => $("#ana").hidden ? openAnalysis() : closeAnalysis());
 $("#anaClose").addEventListener("click", closeAnalysis);
@@ -1799,6 +1811,8 @@ function renderAna(){
       return `<li><span class="k k-${x.kind}">${x.kind === "crash" ? "CRASH" : x.kind === "contact" ? "INCIDENT" : "STOPPED"}</span><b>${esc(who)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, x.t))}</span>${R.noTrack ? "" : `<button class="btn" data-rec="${i}">▶ WATCH</button>`}</li>`; }).join("");
     info.innerHTML = `<ul class="inclist">${items || '<li class="none">No crashes, stops or contacts were detected in this race.</li>'}</ul>
       <p class="anote">Crashes and stops are inferred from the car-position data; incidents are those race control noted between two cars. <b>Watch</b> replays each one on the track map in slow motion.</p>
+      ${R.h.ext && R.h.ext.st && Object.keys(R.h.ext.st).length ? `<h4>RETIREMENTS · ${Object.keys(R.h.ext.st).length}</h4><ul class="inclist">${Object.entries(R.h.ext.st).map(([n, why]) => { const D = R.byNum[n]; const lap = D && D.lapN.length ? D.lapN[D.lapN.length - 1] : 0;
+        return `<li><span class="k k-stopped">OUT</span><b style="color:${D ? D.css : "#fff"}">${esc(D ? D.code : "#" + n)}</b> ${esc(why)}<span class="when">${lap ? "Lap " + lap : "Before the start"}</span></li>`; }).join("")}</ul>` : ""}
       <h4>OVERTAKES · ${(R.overtakes || []).length}</h4>${R.ovSrc ? `<p class="anote">From the official OpenF1 overtake feed: ${R.ovRaw} position swaps recorded, of which ${(R.overtakes || []).length} are on-track passes. Swaps caused by pit stops, retirements, safety-car or flag periods, and timing glitches are left out.</p>` : ``}<ul class="inclist ov">${(R.overtakes || []).map((o, i) => `<li><span class="k k-ov">P${o.pos}</span><b style="color:${o.a.css}">${esc(o.a.code)}</b> passes <b style="color:${o.b.css}">${esc(o.b.code)}</b><span class="when">Lap ${Math.max(1, leaderLap(R, o.t))}</span><button class="btn" data-jump="${o.t}">JUMP</button></li>`).join("") || '<li class="none">No on-track passes found (position changes from pit stops are left out).</li>'}</ul>`;
     info.querySelectorAll("[data-rec]").forEach(b => b.onclick = () => recreate(R.incidents[+b.dataset.rec]));
     info.querySelectorAll("[data-jump]").forEach(b => b.onclick = () => { closeAnalysis(); setTime(+b.dataset.jump - 6); setPlaying(true); });
@@ -1844,6 +1858,8 @@ function renderAna(){
     $("#anaCv").hidden = true; renderTraps(info);
   } else if (st.anaTab === "champ") {
     $("#anaCv").hidden = true; renderChamp(info);
+  } else if (st.anaTab === "qres") {
+    $("#anaCv").hidden = true; renderQualiResults(info);
   }
 }
 function leaderLapF(R, t){ const i = ub(R.lapStarts, t) - 1; if (i < 0) return 0; const a = R.lapStarts[i], b = R.lapStarts[i+1] ?? a + 90; return clamp(i + 1 + (t - a)/(b - a) - 1, 0, R.total); }
@@ -3029,7 +3045,8 @@ function raceSummary(R){
   let ps = null; for (const D of R.drivers) for (const p of D.pits) if (p[3] && p[3] > 1.5 && p[3] < 10 && (!ps || p[3] < ps.v)) ps = {D, v: +p[3]};
   if (ps) out.push(card("FASTEST STOP", `<span style="color:${ps.D.css}">${esc(ps.D.code)}</span> ${ps.v.toFixed(1)} s`, "stationary time"));
   let fl = null; for (const D of R.drivers) for (const l of lapTimesOf(D)) if (l.lap > 1 && l.dur > 30 && (!fl || l.dur < fl.v)) fl = {D, v: l.dur, lap: l.lap};
-  if (fl) out.push(card("FASTEST LAP", `<span style="color:${fl.D.css}">${esc(fl.D.code)}</span> ${fmtLap(fl.v)}`, `lap ${fl.lap}`));
+  const fo = R.h.ext && R.h.ext.flo; if (fo && R.byNum[fo[0]]) { const D = R.byNum[fo[0]]; out.push(card("FASTEST LAP", `<span style="color:${D.css}">${esc(D.code)}</span> ${esc(fo[2])}`, `lap ${fo[1]}${fo[3] ? ` · ${(+fo[3]).toFixed(1)} km/h average` : ""}`)); }
+  else if (fl) out.push(card("FASTEST LAP", `<span style="color:${fl.D.css}">${esc(fl.D.code)}</span> ${fmtLap(fl.v)}`, `lap ${fl.lap}`));
   const x = R.h.ext && R.h.ext.cd; if (x && x.length) { const s = x.slice().sort((a, b) => (a[2] || 99) - (b[2] || 99)), l = R.byNum[s[0][0]];
     if (s[1] && s[0][4] != null && s[1][4] != null) out.push(card("CHAMPIONSHIP", `${l ? `<span style="color:${l.css}">${esc(l.code)}</span>` : "#" + s[0][0]} +${Math.round((s[0][4] - s[1][4]) * 10) / 10}`, `leads with ${Math.round(s[0][4] * 10) / 10} pts`)); }
   return out.length ? `<div class="summ">${out.join("")}</div>` : "";
@@ -3047,7 +3064,8 @@ function showPodium(){
 }
 
 /* ---------------- seasons ---------------- */
-const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}, {y: 2023, p: "2023/"}].filter(s => window.__SPLIT || !window.__EMBED || window.__EMBED[s.p + "index.json"]);
+// each edition sets window.__EDITION = {seasons: [...], sub: "..."} (the Classic 2018-2022 edition does); default: 2023-2026
+const SEASONS = ((window.__EDITION && window.__EDITION.seasons) || [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"}, {y: 2023, p: "2023/"}]).filter(s => window.__SPLIT || !window.__EMBED || window.__EMBED[s.p + "index.json"]);
 // split offline mode: Grid-Replay.html plus one grid-replay-YYYY.js per season in the same folder, loaded when picked
 function loadScriptFile(src){ return new Promise(ok => { const el = document.createElement("script"); el.src = src; el.onload = () => ok(true); el.onerror = () => { el.remove(); ok(false); }; document.head.appendChild(el); }); }
 // a season is one file (grid-replay-YYYY.js) or several pieces (grid-replay-YYYY-1.js, -2.js, ...) so each download stays small
@@ -3065,7 +3083,7 @@ if (SEASONS.length < 2) $("#seasonSel").hidden = true;
 $("#seasonSel").addEventListener("change", e => { const def = e.target.value === String(SEASONS[0].y); location.hash = def ? "" : e.target.value; if (def) routeFromHash(); e.target.blur(); });
 async function loadSeason(y){
   const S = SEASONS.find(s => s.y === y) || SEASONS[0]; st.year = S.y; st.prefix = S.p; st.season = null; st.seasonK = null; st.idx = null; st.meta = null;
-  $("#seasonSel").value = String(S.y); $("#brandSub").textContent = S.y + " season · telemetry replay";
+  $("#seasonSel").value = String(S.y); $("#brandSub").textContent = S.y + " season · " + ((window.__EDITION && window.__EDITION.sub) || "telemetry replay");
   $("#loading").hidden = false; $("#loadMsg").textContent = "LOADING THE " + S.y + " SEASON";
   st.seasonLoading = (async () => {
     const key = S.p + "index.json";
