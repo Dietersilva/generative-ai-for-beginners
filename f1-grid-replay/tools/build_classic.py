@@ -235,6 +235,7 @@ for R in sched:
     finally: sys.stdout = sys.__stdout__
     p = f"{OUT}/{sk}.bin"; b = gzip.decompress(open(p, "rb").read()); hl = struct.unpack("<I", b[:4])[0]; h = json.loads(b[4:4 + hl])
     h["est"] = [[0, h["n"] * h["dt"]]]
+    if len(h["outline"]) < 20: h["outline"] = [[int(a) // h["scale"], int(c) // h["scale"]] for a, c in ref[::max(1, len(ref) // 400)]]   # e.g. Spa 2021: no full racing lap
     h["lap_note"] = "Estimated replay: positions come from official lap times (no car GPS exists for this season)" + (f"; {note}" if note else "") + ". Safety cars and red flags are worked out from lap times (virtual safety cars may be missed); tyre compounds aren't recorded."
     h["lap_note_until"] = 0
     hb = json.dumps(h, separators=(",", ":")).encode(); raw = gzip.compress(struct.pack("<I", len(hb)) + hb + b[4 + hl:], 9)
