@@ -170,7 +170,11 @@ put on hold.
 - Extras per race: standings before/after (computed from results + sprints, countback on positions), Q1/Q2/Q3, retirement
   reasons, official fastest lap. Page shows QUALIFYING tab, RETIREMENTS list; hides LAP COMPARE, SPEED & SECTORS and an empty
   WEATHER tab on fully estimated races. No radio, no tyre compounds, no sprint replays (sprint points do count).
-- 2022 verified: all 22 winners, final standings VER 454 / LEC 308 / PER 305.
+- All five seasons built and verified 19 Nov 2026 (every race winner and the final top 3 match the official results):
+  2022 (22 races) VER 454 / LEC 308 / PER 305; 2021 (22) VER 395.5 / HAM 387.5 / BOT 226; 2020 (17) HAM 347 / BOT 223 /
+  VER 214; 2019 (21) HAM 413 / BOT 326 / VER 278; 2018 (21) HAM 408 / VET 320 / RAI 251. Online artifact ≈ 60 MB.
+  Offline zips 9.7–13.1 MB each. Quirks handled: Spa 2021 (no full lap → reference outline), Monza 2018 (lap rows without
+  positions). `tools/package_classic.sh YYYY` builds the offline zip + HTML and tests it from disk.
 
 ## 4. How it is built (architecture)
 

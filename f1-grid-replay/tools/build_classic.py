@@ -124,7 +124,7 @@ for R in sched:
     drv_laps = {}
     for Lp in laps_j:
         for t in Lp["Timings"]:
-            if t["driverId"] in num_of: drv_laps.setdefault(num_of[t["driverId"]], []).append((int(Lp["number"]), secs(t["time"]), int(t["position"])))
+            if t["driverId"] in num_of: drv_laps.setdefault(num_of[t["driverId"]], []).append((int(Lp["number"]), secs(t["time"]), int(t.get("position") or 0)))
     lapst = {}
     for n, v in drv_laps.items():
         v.sort(); t = start; lapst[n] = {}
