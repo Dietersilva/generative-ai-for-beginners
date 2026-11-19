@@ -256,6 +256,18 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .fs-btn{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;border:1px solid var(--line-2);font-family:var(--f-display);font-weight:700;font-size:12.5px;letter-spacing:.08em;color:var(--muted);flex:0 0 auto}
 .fs-btn:hover{color:var(--text)}
 .app:fullscreen{background:var(--ink)}
+/* bigger track: controls bar and race-control strip collapsed, track refitted to the freed space */
+.app.maxi{grid-template-rows:auto minmax(0,1fr);grid-template-areas:"top top" "stage tower"}
+.app.maxi.lin,.app.maxi.qmode{grid-template-areas:"top" "stage"}
+.app.maxi .transport{display:none}
+.app.maxi #stage{--ft:0px}
+.app.maxi #stage .ticker,.app.maxi #stage::before{display:none}
+.minibar{position:absolute;left:12px;bottom:12px;z-index:6;display:none;gap:6px;align-items:center}
+.app.maxi .minibar{display:flex}
+.minibar button{font:700 12px var(--f-display,sans-serif);letter-spacing:.08em;color:var(--text);background:rgba(10,14,24,.82);border:1px solid var(--line);border-radius:9px;padding:7px 11px;cursor:pointer;backdrop-filter:blur(6px)}
+.minibar button:hover{border-color:var(--muted)}
+.minibar .mtime{font:500 11.5px var(--f-mono,monospace);color:var(--muted);background:rgba(10,14,24,.82);border:1px solid var(--line);border-radius:9px;padding:7px 10px}
+.maxbtn[aria-pressed="true"]{background:var(--text);color:var(--ink)}
 .stage.lin #cv{top:60px;height:calc(100% - 60px)}
 .stew{left:50%;bottom:22%;transform:translateX(-50%);min-width:min(420px,calc(100% - 32px));max-width:calc(100% - 32px);display:grid;grid-template-columns:6px 1fr;background:color-mix(in srgb,#0b101b 94%,transparent);border:1px solid var(--line-2);border-radius:10px;overflow:hidden;box-shadow:0 18px 50px #000a;animation:stewIn .35s cubic-bezier(.2,.8,.2,1)}
 .stew i{background:var(--sc)}
@@ -416,6 +428,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 
 #towerFold{border:0;padding:2px 6px;font-size:12px}
 .app.tfold{grid-template-columns:minmax(0,1fr) 168px}
+.app.tfold.qmode,.app.tfold.lin{grid-template-columns:minmax(0,1fr)}   /* no tower in these views: no empty column */
 .app.tfold .tabs,.app.tfold .tlab,.app.tfold .row .tyre,.app.tfold .row .dl,.app.tfold .row .cd .chip,.app.tfold .row .cd .bt,.app.tfold .row .cd .fl,.app.tfold .row .cd .mic{display:none}
 .app.tfold .row{grid-template-columns:24px 4px 1fr 64px;gap:5px;padding-right:6px}
 .app.tfold .thead{padding-inline:6px}
@@ -454,6 +467,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="seg" id="qZoom" aria-pressed="true" title="Follow the cars zoomed in (click a driver on the board to follow just them)">ZOOM</button>
       <button class="seg zbtn" data-zoom="-1" aria-label="Zoom out">−</button>
       <button class="seg zbtn" data-zoom="1" aria-label="Zoom in close">+</button>
+      <button class="seg maxbtn" aria-pressed="false" title="Bigger track: hide the controls bar so the track fills the screen (M)" aria-label="Bigger track">⤢</button>
     </div>
     <div class="hud hud-tr" id="camBtns" role="group" aria-label="Camera">
       <button class="seg" data-cam="linear" aria-pressed="false" title="Running order by gap to leader (L)">LINEAR</button>
@@ -462,7 +476,9 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="seg" data-cam="chase" aria-pressed="false" title="Rotating chase cam (C)">CHASE</button>
       <button class="seg zbtn" data-zoom="-1" title="Zoom out (mouse wheel)" aria-label="Zoom out">−</button>
       <button class="seg zbtn" data-zoom="1" title="Zoom in close to see the cars (mouse wheel)" aria-label="Zoom in">+</button>
+      <button class="seg maxbtn" id="maxBtn" aria-pressed="false" title="Bigger track: hide the controls bar and race-control strip so the track fills the screen (M)" aria-label="Bigger track">⤢</button>
     </div>
+    <div class="minibar" id="miniBar" role="group" aria-label="Playback"><button id="miniPlay" aria-label="Play or pause">▶ PLAY</button><span class="mtime" id="miniTime">–</span><button id="miniShow" title="Show the controls bar again (M)">▴ CONTROLS</button></div>
     <div class="hud director" id="director" hidden>CRASH CAM · SLOW-MO</div>
     <div class="hud lights" id="lights" hidden></div>
     <div class="hud lights-out" id="lightsOut" hidden>LIGHTS OUT</div>
@@ -525,7 +541,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="tg rad" id="tgRadio" aria-pressed="true" title="Play team radio as it happens">RADIO</button>
       <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the race view to a video file">● REC</button>
     </div>
-    <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
+    <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>M</b> bigger track</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
   </footer>
 </div>
 
@@ -851,7 +867,7 @@ function computeFit(){
   const R = st.R || st.Q; if (!R || !R.outline) return;
   const Wf = W; if (st.Q) W = W - qPanelW();
   const pts = R.outline; let best = null;
-  const mx = Math.min(70, W*0.1), my = Math.min(70, H*0.12);
+  const big = document.getElementById("app").classList.contains("maxi"), mx = big ? Math.min(28, W*0.04) : Math.min(70, W*0.1), my = big ? Math.min(28, H*0.05) : Math.min(70, H*0.12);
   for (let a = 0; a < Math.PI; a += Math.PI/36) {
     const c = Math.cos(a), s = Math.sin(a); let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
     for (const [x, y] of pts) { const rx = x*c - y*s, ry = x*s + y*c; if (rx < x0) x0 = rx; if (rx > x1) x1 = rx; if (ry < y0) y0 = ry; if (ry > y1) y1 = ry; }
@@ -2743,6 +2759,13 @@ setToggle("#tgCrash", "crashCam"); setToggle("#tgRadio", "radioOn"); setToggle("
 $("#fsBtn").addEventListener("click", () => { const el = $("#app");
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   else if (el.requestFullscreen) el.requestFullscreen().catch(() => { $("#fsBtn").textContent = "FULL SCREEN BLOCKED HERE"; }); });
+function setMaxi(on){ $("#app").classList.toggle("maxi", on); document.querySelectorAll(".maxbtn").forEach(b => b.setAttribute("aria-pressed", String(on))); try { localStorage.setItem("gr_maxi", on ? "1" : ""); } catch (e) {} requestAnimationFrame(() => { resize(); if (st.cam === "overview") Object.assign(cam, fit); }); }
+document.querySelectorAll(".maxbtn").forEach(b => b.addEventListener("click", () => setMaxi(!$("#app").classList.contains("maxi"))));
+$("#miniShow").addEventListener("click", () => setMaxi(false));
+$("#miniPlay").addEventListener("click", () => $("#play").click());
+setInterval(() => { if (!$("#app").classList.contains("maxi")) return; const t = st.playing ? "❚❚ PAUSE" : "▶ PLAY"; if ($("#miniPlay").textContent !== t) $("#miniPlay").textContent = t;
+  const lc = $("#lapCur").textContent, lt = $("#lapTot").textContent, ck = $("#clock").textContent.split("·")[0].trim(); const m = st.Q ? $("#clock").textContent.split("·")[0].trim() : `LAP ${lc}${lt.replace(/\s/g, "")} · ${ck}`; if ($("#miniTime").textContent !== m) $("#miniTime").textContent = m; }, 250);
+try { if (localStorage.getItem("gr_maxi")) setMaxi(true); } catch (e) {}
 document.addEventListener("fullscreenchange", () => { $("#fsBtn").textContent = document.fullscreenElement ? "✕ EXIT FULL SCREEN" : "⛶ FULL SCREEN"; });
 $("#towerFold").addEventListener("click", () => { st.tfold = !st.tfold; applyFold(); save(); });
 function applyFold(){ $("#app").classList.toggle("tfold", !!st.tfold); $("#towerFold").textContent = st.tfold ? "▸" : "◂"; $("#towerFold").setAttribute("aria-label", st.tfold ? "Expand timing tower" : "Collapse timing tower"); }
@@ -2774,6 +2797,7 @@ document.addEventListener("keydown", e => {
   else if (R.noTrack && /^[ofcOFC]$/.test(e.key)) return;
   else if (e.key === "o" || e.key === "O") setCam("overview");
   else if (e.key === "h" || e.key === "H") { st.hl ? stopHighlights() : startHighlights(); }
+  else if (e.key === "m" || e.key === "M") setMaxi(!$("#app").classList.contains("maxi"));
   else if (e.key === "l" || e.key === "L") setCam("linear");
   else if (e.key === "f" || e.key === "F") setCam("follow");
   else if (e.key === "c" || e.key === "C") setCam("chase");
@@ -2864,9 +2888,11 @@ const SEASONS = [{y: 2026, p: ""}, {y: 2025, p: "2025/"}, {y: 2024, p: "2024/"},
 function loadScriptFile(src){ return new Promise(ok => { const el = document.createElement("script"); el.src = src; el.onload = () => ok(true); el.onerror = () => { el.remove(); ok(false); }; document.head.appendChild(el); }); }
 // a season is one file (grid-replay-YYYY.js) or several pieces (grid-replay-YYYY-1.js, -2.js, ...) so each download stays small
 async function loadSeasonScript(y){
-  if (await loadScriptFile(`grid-replay-${y}.js`)) return;
+  // pieces first (grid-replay-YYYY-1.js, -2.js, ...): they are the newer format, so an old one-file season left in the folder is ignored
   let n = 0; while (await loadScriptFile(`grid-replay-${y}-${n + 1}.js`)) { n++; $("#loadMsg").textContent = `LOADING THE ${y} SEASON · PART ${n}`; }
   const key = (SEASONS.find(s => s.y === y) || {p: ""}).p + "index.json";
+  if (n && !(window.__EMBED && window.__EMBED[key])) { const e = new Error("missing season file"); e.missingSeason = y; e.partsFound = n; throw e; }
+  if (!n && await loadScriptFile(`grid-replay-${y}.js`)) return;
   if (!n || !(window.__EMBED && window.__EMBED[key])) { const e = new Error("missing season file"); e.missingSeason = y; throw e; }
 }
 st.year = null; st.prefix = "";
@@ -2887,7 +2913,7 @@ async function loadSeason(y){
     if (e.missingSeason) { (window.__miss = window.__miss || new Set()).add(S.y);
       const nxt = !/^#\d{4}/.test(location.hash) && SEASONS.find(s => !window.__miss.has(s.y));
       if (nxt) { st.year = null; return loadSeason(nxt.y); }
-      $("#loadMsg").textContent = `THE ${S.y} SEASON IS NOT COMPLETE IN THIS FOLDER. UNZIP ALL GRID-REPLAY-${S.y} ZIP PARTS NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
+      $("#loadMsg").textContent = e.partsFound ? `THE ${S.y} SEASON IS MISSING PART ${e.partsFound + 1}: UNZIP F1_UNLEASHED-${S.y}-PART${e.partsFound + 1}.ZIP NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.` : `THE ${S.y} SEASON IS NOT IN THIS FOLDER. UNZIP ALL F1_UNLEASHED-${S.y} ZIP PARTS NEXT TO THIS PAGE AND RELOAD, OR PICK ANOTHER YEAR.`; $("#loading .spin").style.display = "none"; return; }
     $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. OPEN THE SINGLE-FILE VERSION INSTEAD." : "COULDN'T LOAD THE " + S.y + " SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 }
 function routeFromHash(){
@@ -2926,7 +2952,7 @@ requestAnimationFrame(frame);
 
 (async () => {
   try { routeFromHash(); await st.seasonLoading;
-  } catch (e) { $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN GRID-REPLAY-2026-SEASON.HTML (THE SINGLE-FILE VERSION) INSTEAD." : "COULDN'T LOAD THE SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
+  } catch (e) { if (e && e.missingSeason) return; $("#loadMsg").textContent = location.protocol === "file:" ? "THIS VERSION NEEDS ITS DATA FILES FROM A WEB SERVER. TO WATCH OFFLINE, OPEN F1_UNLEASHED.HTML WITH ITS SEASON FILES UNZIPPED NEXT TO IT." : "COULDN'T LOAD THE SEASON. RELOAD THE PAGE TO TRY AGAIN."; $("#loading .spin").style.display = "none"; console.error(e); }
 })();
 })();
 </script>

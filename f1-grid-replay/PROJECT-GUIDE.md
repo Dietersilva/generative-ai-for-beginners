@@ -109,6 +109,14 @@ put on hold.
 - New sessions added by the weekend updater have no extras until fetch_extras + pack_extras are run again (the
   page then falls back to the old overtake detection and hides the sector bars and new tabs' data).
 
+### Added 19 November 2026
+- **Bigger track** (⤢ button next to the camera/qualifying buttons, or key **M**): hides the controls bar and the
+  race-control strip, refits the track with smaller margins; a small floating bar keeps play/pause, lap/clock and
+  "▴ CONTROLS". Remembered per browser (localStorage `gr_maxi`).
+- Fix: with the timing tower folded, qualifying and the LINEAR view left an empty column on the right.
+- Offline loader now tries the season pieces (`grid-replay-YYYY-1.js`, …) before an old one-file
+  `grid-replay-YYYY.js`, so stale one-file seasons left in the folder are ignored; a missing piece is named on screen.
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,
