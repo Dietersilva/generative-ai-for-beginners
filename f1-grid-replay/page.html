@@ -30,6 +30,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .mark{width:34px;height:22px;background:
   conic-gradient(var(--text) 0 25%,var(--ink) 0 50%,var(--text) 0 75%,var(--ink) 0) 0 0/11px 11px;
   transform:skewX(-14deg);border-radius:2px;box-shadow:0 0 0 1px var(--line-2)}
+.brand-name .rx{color:var(--purple);text-shadow:0 0 14px color-mix(in srgb,var(--purple) 45%,transparent)}
 .brand-name{font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.06em;line-height:1;font-style:italic}
 .brand-sub{font-size:11px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase}
 .race-sel{appearance:none;-webkit-appearance:none;min-width:0;max-width:min(520px,52vw);padding:7px 38px 7px 12px;border-radius:10px;border:1px solid var(--line-2);color:var(--text);cursor:pointer;
@@ -129,6 +130,9 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .step .blk{width:100%;border-radius:8px 8px 0 0;display:grid;place-items:center;font-family:var(--f-display);font-weight:800;font-size:34px;font-style:italic;color:#0008;background:var(--tc)}
 .step .gap{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .podium .acts{display:flex;gap:8px}
+.podium .summ{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;width:min(860px,92vw)}
+.podium .sm{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:2px;text-align:left}
+.podium .sm span{font-size:10.5px;letter-spacing:.12em;color:var(--muted)}.podium .sm b{font-family:var(--f-display);font-size:20px;font-weight:800}.podium .sm i{font-style:normal;font-size:11px;color:var(--dim)}
 .btn{padding:8px 14px;border-radius:9px;background:var(--panel-2);border:1px solid var(--line-2);font-family:var(--f-display);font-weight:700;letter-spacing:.08em}
 .btn.pri{background:var(--text);color:var(--ink);border-color:var(--text)}
 
@@ -443,7 +447,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 <div class="app" id="app">
   <header class="top">
     <div class="brand" aria-hidden="true"><span class="mark"></span>
-      <div><div class="brand-name">PIT WALL REDUX</div><div class="brand-sub" id="brandSub">2026 season · telemetry replay</div></div>
+      <div><div class="brand-name">PIT WALL <span class="rx">REDUX</span></div><div class="brand-sub" id="brandSub">2026 season · telemetry replay</div></div>
     </div>
     <select class="race-sel season-sel" id="seasonSel" aria-label="Choose a season"></select>
     <select class="race-sel" id="raceSel" aria-label="Choose a race"><option>Loading season…</option></select>
@@ -1545,6 +1549,83 @@ function secNow(D, t){
   if (!done) { const P = D.sec[lap - 1]; if (P && P.t0 != null && t - D.lapT[Math.max(0, D.lapN.indexOf(lap))] < 8) return {L: P, n: 3}; }
   return L ? {L, n: done} : null;
 }
+// ---- TYRE WEAR: clean-air lap time against tyre age for every stint, with the trend (seconds lost per lap)
+function cleanLaps(R, D){
+  const lt = lapTimesOf(D).filter(l => l.lap > 1 && l.dur > 30 && l.dur < 400); if (!lt.length) return [];
+  const flag = l => R.segs.some(g => l.t < g.b + 5 && l.t + l.dur > g.a - 5);
+  const pit = l => D.pits.some(p => p[0] - (p[4] || 22) - 5 < l.t + l.dur + 2 && p[0] + 25 > l.t);
+  const ok = lt.filter(l => !flag(l) && !pit(l)); if (!ok.length) return [];
+  const med = ok.map(l => l.dur).sort((a, b) => a - b)[ok.length >> 1];
+  return ok.filter(l => l.dur < med * 1.05);
+}
+function fitLine(pts){ const n = pts.length; if (n < 4) return null; let sx = 0, sy = 0, sxx = 0, sxy = 0;
+  for (const [a, b] of pts) { sx += a; sy += b; sxx += a*a; sxy += a*b; } const d = n*sxx - sx*sx; if (!d) return null;
+  const m = (n*sxy - sx*sy) / d; return {m, c: (sy - m*sx) / n}; }
+function renderTyreWear(ctl, info){
+  const R = st.R; const ord = R.drivers.slice().sort((a, b) => (a.res && a.res.position || 99) - (b.res && b.res.position || 99));
+  st.twA = st.twA && R.byNum[st.twA] ? st.twA : ord[0].num; st.twB = st.twB && R.byNum[st.twB] ? st.twB : ord[1].num;
+  ctl.innerHTML = `<label>Driver A <select id="twA">${drvOptions(st.twA)}</select></label><label>Driver B <select id="twB"><option value="0">none</option>${drvOptions(st.twB)}</select></label>`;
+  $("#twA").onchange = e => { st.twA = +e.target.value; renderAna(); }; $("#twB").onchange = e => { st.twB = +e.target.value; renderAna(); };
+  const sets = [];
+  for (const [D, shape] of [[R.byNum[st.twA], "o"], [R.byNum[st.twB], "s"]]) { if (!D) continue; const cl = cleanLaps(R, D);
+    for (const s of stintRows(R, D)) { const pts = cl.filter(l => l.lap >= s.from && l.lap <= s.to).map(l => [s.age + (l.lap - s.from), l.dur]);
+      if (pts.length) sets.push({D, shape, s, pts, f: fitLine(pts)}); } }
+  if (!sets.length) { $("#anaCv").hidden = true; info.innerHTML = `<p class="empty">Not enough clean laps to measure tyre wear in this session.</p>`; return; }
+  const all = sets.flatMap(z => z.pts), ax = all.map(p => p[0]), ay = all.map(p => p[1]);
+  const {x, w, h} = anaCanvas(320), lo = Math.min(...ay) - 0.3, hi = Math.max(...ay) + 0.3;
+  const {X, Y} = axes(x, 62, 22, 12, 24, w, h, 0, Math.max(...ax) + 1, lo, hi, "TYRE AGE (LAPS)", "LAP TIME", false, v => fmtLap(v).replace(/\.\d+$/, ""));
+  for (const z of sets) { const c = (COMP[z.s.comp] || ["?", "#888"])[1];
+    for (const [a, b] of z.pts) { x.fillStyle = c; x.globalAlpha = 0.85; if (z.shape === "o") { x.beginPath(); x.arc(X(a), Y(b), 3.4, 0, 7); x.fill(); } else x.fillRect(X(a) - 3, Y(b) - 3, 6, 6); }
+    x.globalAlpha = 1;
+    if (z.f) { const a0 = Math.min(...z.pts.map(p => p[0])), a1 = Math.max(...z.pts.map(p => p[0]));
+      x.strokeStyle = z.D.css; x.lineWidth = 2.2; x.setLineDash(z.shape === "o" ? [] : [6, 4]); x.beginPath(); x.moveTo(X(a0), Y(z.f.m*a0 + z.f.c)); x.lineTo(X(a1), Y(z.f.m*a1 + z.f.c)); x.stroke(); x.setLineDash([]); } }
+  const rows = sets.map(z => { const avg = z.pts.reduce((a, p) => a + p[1], 0) / z.pts.length, c = COMP[z.s.comp] || ["?", "#888"];
+    return `<tr><td><b style="color:${z.D.css}">${esc(z.D.code)}</b> ${z.shape === "o" ? "●" : "■"}</td><td><span style="color:${c[1]}">${esc(z.s.comp.charAt(0) + z.s.comp.slice(1).toLowerCase())}</span></td><td>L${z.s.from}–${z.s.to}</td><td>${z.pts.length}</td><td>${fmtLap(avg)}</td><td>${z.f ? (z.f.m >= 0 ? "+" : "") + z.f.m.toFixed(3) + " s/lap" : "–"}</td></tr>`; }).join("");
+  info.innerHTML = `<table class="stbl"><thead><tr><th>DRIVER</th><th>TYRE</th><th>STINT</th><th>CLEAN LAPS</th><th>AVERAGE</th><th>TREND</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="anote">Each dot is a clean lap (no pit stop, safety car or flag, and not a slow outlier), placed by how old the tyre was. The line is the trend through each stint: <b>+0.080 s/lap</b> means the driver lost 0.08 s per lap as the tyre wore. The trend also includes fuel burning off (cars get roughly 0.03–0.06 s per lap faster as they get lighter), so the real tyre wear is a little worse than shown. Lines: solid = driver A, dashed = driver B.</p>`;
+}
+// ---- LAP COMPARE: two drivers' race laps overlaid by distance (speed from car positions) with the running time gap
+function lapTrace(R, D, lap){
+  const i = D.lapN.indexOf(lap); if (i < 0 || i + 1 >= D.lapT.length) return null; const t0 = D.lapT[i], t1 = D.lapT[i + 1]; if (t1 - t0 > 400) return null;
+  const q = [0, 0], pts = []; let d = 0, px = null, py = null;
+  for (let t = t0; t <= t1 + 1e-6; t += 0.25) { if (!carXY(R, D, t, q)) continue; if (px != null) d += Math.hypot(q[0] - px, q[1] - py); px = q[0]; py = q[1]; pts.push({t: t - t0, d, v: kmhAt(R, D, t)}); }
+  if (pts.length < 20 || d <= 0) return null; for (const p of pts) p.f = p.d / d; return {pts, dur: t1 - t0, lap};
+}
+function bestLapOf(D){ const lt = lapTimesOf(D).filter(l => l.lap > 1 && l.dur > 30 && l.dur < 400); return lt.length ? lt.reduce((a, b) => b.dur < a.dur ? b : a).lap : 2; }
+function renderLapCompare(ctl, info){
+  const R = st.R; if (R.noTrack) { $("#anaCv").hidden = true; info.innerHTML = `<p class="empty">Lap compare needs car position data, which wasn't published for this race.</p>`; return; }
+  const ord = R.drivers.slice().sort((a, b) => (a.res && a.res.position || 99) - (b.res && b.res.position || 99));
+  st.lcA = st.lcA && R.byNum[st.lcA] ? st.lcA : ord[0].num; st.lcB = st.lcB && R.byNum[st.lcB] ? st.lcB : ord[1].num;
+  const A = R.byNum[st.lcA], B = R.byNum[st.lcB];
+  if (st.lcAl == null || st.lcKey !== R) { st.lcAl = bestLapOf(A); st.lcBl = bestLapOf(B); st.lcKey = R; }
+  const lapOpts = (D, sel) => D.lapN.slice(0, -1).map(n => `<option value="${n}" ${n === sel ? "selected" : ""}>Lap ${n}${n === bestLapOf(D) ? " (fastest)" : ""}</option>`).join("");
+  ctl.innerHTML = `<label>Driver A <select id="lcA">${drvOptions(st.lcA)}</select></label><label><select id="lcAl">${lapOpts(A, st.lcAl)}</select></label><label>Driver B <select id="lcB">${drvOptions(st.lcB)}</select></label><label><select id="lcBl">${lapOpts(B, st.lcBl)}</select></label>`;
+  $("#lcA").onchange = e => { st.lcA = +e.target.value; st.lcAl = bestLapOf(R.byNum[st.lcA]); renderAna(); }; $("#lcB").onchange = e => { st.lcB = +e.target.value; st.lcBl = bestLapOf(R.byNum[st.lcB]); renderAna(); };
+  $("#lcAl").onchange = e => { st.lcAl = +e.target.value; renderAna(); }; $("#lcBl").onchange = e => { st.lcBl = +e.target.value; renderAna(); };
+  const a = lapTrace(R, A, st.lcAl), b = lapTrace(R, B, st.lcBl);
+  if (!a || !b) { $("#anaCv").hidden = true; info.innerHTML = `<p class="empty">One of these laps has no usable position data. Pick another lap.</p>`; return; }
+  $("#anaCv").hidden = false; const {x, w, h} = anaCanvas(380), split = 250;
+  const tAt = (tr, f) => { const p = tr.pts; let i = 1; while (i < p.length - 1 && p[i].f < f) i++; const u = (f - p[i-1].f) / ((p[i].f - p[i-1].f) || 1); return p[i-1].t + (p[i].t - p[i-1].t) * Math.max(0, Math.min(1, u)); };
+  // speed panel
+  const vmax = Math.max(...a.pts.map(p => p.v), ...b.pts.map(p => p.v)) + 10;
+  const L = 52, Rr = 12, Xf = f => L + f * (w - L - Rr), Yv = v => 22 + (1 - v / vmax) * (split - 40);
+  x.strokeStyle = "rgba(140,160,210,0.14)"; x.fillStyle = "#56607a"; x.font = '500 10px "JetBrains Mono", monospace'; x.textAlign = "right";
+  for (const v of niceTicks(0, vmax, 5)) { x.beginPath(); x.moveTo(L, Yv(v)); x.lineTo(w - Rr, Yv(v)); x.stroke(); x.fillText(v, L - 6, Yv(v) + 3); }
+  x.textAlign = "left"; x.fillText("KM/H", 4, 14);
+  for (const [tr, D, dash] of [[a, A, []], [b, B, [5, 3]]]) { x.strokeStyle = D.css; x.lineWidth = 1.8; x.setLineDash(dash); x.beginPath(); tr.pts.forEach((p, i) => i ? x.lineTo(Xf(p.f), Yv(p.v)) : x.moveTo(Xf(p.f), Yv(p.v))); x.stroke(); x.setLineDash([]); }
+  // delta panel: B's time minus A's time at the same point of the lap
+  const del = []; for (let f = 0; f <= 1.0001; f += 0.005) del.push([f, tAt(b, f) - tAt(a, f)]);
+  const dm = Math.max(0.3, ...del.map(d => Math.abs(d[1]))) * 1.1, T2 = split + 14, H2 = h - 26 - T2, Yd = v => T2 + (1 - (v + dm) / (2 * dm)) * H2;
+  x.strokeStyle = "rgba(140,160,210,0.14)"; x.textAlign = "right"; for (const v of niceTicks(-dm, dm, 4)) { x.beginPath(); x.moveTo(L, Yd(v)); x.lineTo(w - Rr, Yd(v)); x.stroke(); x.fillText((v > 0 ? "+" : "") + v, L - 6, Yd(v) + 3); }
+  x.textAlign = "left"; x.fillText("GAP s", 4, T2 + 4); x.strokeStyle = "rgba(255,255,255,.35)"; x.beginPath(); x.moveTo(L, Yd(0)); x.lineTo(w - Rr, Yd(0)); x.stroke();
+  x.lineWidth = 2; for (let i = 1; i < del.length; i++) { x.strokeStyle = del[i][1] >= 0 ? A.css : B.css; x.beginPath(); x.moveTo(Xf(del[i-1][0]), Yd(del[i-1][1])); x.lineTo(Xf(del[i][0]), Yd(del[i][1])); x.stroke(); }
+  x.fillStyle = "#56607a"; x.textAlign = "right"; x.fillText("LAP DISTANCE →", w - Rr, h - 6); x.textAlign = "left";
+  const fin = b.dur - a.dur, ahead = fin >= 0 ? A : B;
+  const top = tr => Math.round(Math.max(...tr.pts.map(p => p.v)));
+  info.innerHTML = `<table class="h2h"><tr><td style="color:${A.css}"><b>${esc(A.code)} · L${a.lap}</b></td><th></th><td style="color:${B.css}"><b>${esc(B.code)} · L${b.lap}</b></td></tr>
+    <tr><td>${fmtLap(a.dur)}</td><th>Lap time</th><td>${fmtLap(b.dur)}</td></tr><tr><td>${top(a)}</td><th>Top speed (km/h)</th><td>${top(b)}</td></tr></table>
+    <p class="anote"><b style="color:${ahead.css}">${esc(ahead.code)}</b> was ${Math.abs(fin).toFixed(3)} s quicker over these laps. Top: speed along the lap (solid = ${esc(A.code)}, dashed = ${esc(B.code)}). Bottom: the running gap; above the line ${esc(A.code)} is ahead at that point of the lap, below it ${esc(B.code)} is. Speeds are worked out from the car positions (about four per second), so they're smoothed and approximate; lap times are official.</p>`;
+}
 function renderTraps(info){
   const R = st.R; if (!R.sec) { info.innerHTML = `<p class="empty">Sector times and speed traps aren't available for this session.</p>`; return; }
   const rows = R.drivers.map(D => { const L = Object.values(D.sec || {}); const mx = k => { const v = L.map(l => l.sp[k]).filter(x => x > 0 && x < 400); return v.length ? Math.max(...v) : null; };
@@ -1618,7 +1699,7 @@ function endRecreate(){
 }
 
 /* ---------------- analysis panel ---------------- */
-const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["trap", "SPEED & SECTORS"], ["champ", "CHAMPIONSHIP"], ["season", "SEASON"]];
+const ANA_TABS = [["h2h", "HEAD TO HEAD"], ["inc", "INCIDENTS"], ["pos", "POSITIONS"], ["laps", "LAP TIMES"], ["strat", "STRATEGY"], ["tyre", "TYRE WEAR"], ["cmp", "LAP COMPARE"], ["tele", "TELEMETRY"], ["bt", "BATTLES"], ["wx", "WEATHER"], ["trap", "SPEED & SECTORS"], ["champ", "CHAMPIONSHIP"], ["season", "SEASON"]];
 st.anaTab = "h2h";
 function openAnalysis(){ if (!st.R && !(st.Q && (st.Q.q.all || st.Q.hasTele))) return; if (st.Q && !["pos", "laps", "tele"].includes(st.anaTab)) st.anaTab = st.Q.q.all ? "pos" : "tele"; if (st.Q && st.anaTab === "tele" && !st.Q.hasTele) st.anaTab = "pos"; if (st.R && st.anaTab === "tele") st.anaTab = "h2h"; $("#ana").hidden = false; buildAnaTabs(); renderAna(); }
 function closeAnalysis(){ $("#ana").hidden = true; }
@@ -1713,6 +1794,10 @@ function renderAna(){
     nowLine(x, X, 22, h, 22, leaderLapF(R, st.t));
     const best = Math.min(...lt.map(l => l.dur));
     info.innerHTML = `<p class="anote"><b>${esc(D.first + " " + D.last)}</b> · fastest lap ${fmtLap(best)}. Dots are coloured by tyre (${Object.entries(COMP).map(([k, v]) => `<span style="color:${v[1]}">${k.charAt(0) + k.slice(1).toLowerCase()}</span>`).join(", ")}). Slow laps behind the safety car or through the pits are shown as ▲ at the top; shaded areas are safety-car periods.</p>`;
+  } else if (st.anaTab === "tyre") {
+    renderTyreWear(ctl, info);
+  } else if (st.anaTab === "cmp") {
+    renderLapCompare(ctl, info);
   } else if (st.anaTab === "strat") {
     renderStrategy(info);
   } else if (st.anaTab === "bt") {
@@ -2872,11 +2957,27 @@ async function loadRace(r){
     $("#loading").querySelector(".spin").style.display = "none";
   }
 }
+function raceSummary(R){
+  const card = (k, v, sub) => `<div class="sm"><span>${k}</span><b>${v}</b>${sub ? `<i>${sub}</i>` : ""}</div>`, out = [];
+  const cls = R.drivers.filter(D => D.res && D.res.position && !D.res.dnf && D.grid < 99);
+  const g = cls.map(D => ({D, n: D.grid - D.res.position})).sort((a, b) => b.n - a.n)[0];
+  if (g && g.n > 0) out.push(card("BIGGEST CLIMB", `<span style="color:${g.D.css}">${esc(g.D.code)}</span> +${g.n}`, `P${g.D.grid} → P${g.D.res.position}`));
+  const ov = {}; for (const o of R.overtakes || []) ov[o.a.num] = (ov[o.a.num] || 0) + 1; const om = Object.entries(ov).sort((a, b) => b[1] - a[1])[0];
+  if (om) { const D = R.byNum[om[0]]; out.push(card("MOST OVERTAKES", `<span style="color:${D.css}">${esc(D.code)}</span> ${om[1]}`, `${(R.overtakes || []).length} passes in the race`)); }
+  let ps = null; for (const D of R.drivers) for (const p of D.pits) if (p[3] && p[3] > 1.5 && p[3] < 10 && (!ps || p[3] < ps.v)) ps = {D, v: +p[3]};
+  if (ps) out.push(card("FASTEST STOP", `<span style="color:${ps.D.css}">${esc(ps.D.code)}</span> ${ps.v.toFixed(1)} s`, "stationary time"));
+  let fl = null; for (const D of R.drivers) for (const l of lapTimesOf(D)) if (l.lap > 1 && l.dur > 30 && (!fl || l.dur < fl.v)) fl = {D, v: l.dur, lap: l.lap};
+  if (fl) out.push(card("FASTEST LAP", `<span style="color:${fl.D.css}">${esc(fl.D.code)}</span> ${fmtLap(fl.v)}`, `lap ${fl.lap}`));
+  const x = R.h.ext && R.h.ext.cd; if (x && x.length) { const s = x.slice().sort((a, b) => (a[2] || 99) - (b[2] || 99)), l = R.byNum[s[0][0]];
+    if (s[1] && s[0][4] != null && s[1][4] != null) out.push(card("CHAMPIONSHIP", `${l ? `<span style="color:${l.css}">${esc(l.code)}</span>` : "#" + s[0][0]} +${Math.round((s[0][4] - s[1][4]) * 10) / 10}`, `leads with ${Math.round(s[0][4] * 10) / 10} pts`)); }
+  return out.length ? `<div class="summ">${out.join("")}</div>` : "";
+}
 function showPodium(){
   const R = st.R; const top = R.drivers.filter(D => D.res && D.res.position >= 1 && D.res.position <= 3).sort((a, b) => a.res.position - b.res.position);
   if (top.length < 3) return;
   const h = {1: 120, 2: 88, 3: 66}; const ord = [top[1], top[0], top[2]];
   $("#podium").innerHTML = `<div class="wrap"><h2>${esc(st.meta.name.toUpperCase())}</h2><div class="steps">${ord.map(D => `<div class="step" style="--tc:${D.css}"><span class="code">${esc(D.code)}</span><span class="team">${esc(D.team)}</span><span class="gap">${D.res.position === 1 ? (D.res.duration ? fmtClock(D.res.duration) : "") : (typeof D.res.gap_to_leader === "number" ? "+" + D.res.gap_to_leader.toFixed(3) + " s" : esc(D.res.gap_to_leader || ""))}</span><div class="blk" style="height:${h[D.res.position]}px">${D.res.position}</div></div>`).join("")}</div>
+    ${raceSummary(R)}
     <div class="acts"><button class="btn pri" id="pdReplay">WATCH AGAIN</button><button class="btn" id="pdPick">PICK ANOTHER RACE</button></div></div>`;
   $("#podium").hidden = false;
   $("#pdReplay").onclick = () => { setTime(0); setPlaying(true); };

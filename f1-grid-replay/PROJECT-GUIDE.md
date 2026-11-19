@@ -119,6 +119,14 @@ put on hold.
 - Offline loader now tries the season pieces (`grid-replay-YYYY-1.js`, …) before an old one-file
   `grid-replay-YYYY.js`, so stale one-file seasons left in the folder are ignored; a missing piece is named on screen.
 
+### Added 19 November 2026 (later)
+- Logo: "PIT WALL" white + "REDUX" in sector purple.
+- **TYRE WEAR** tab: clean laps (no pit, SC/VSC/red, not >5% over the driver's median) against tyre age per stint,
+  with a least-squares trend in s/lap. The trend includes fuel burn (~0.03–0.06 s/lap faster as cars lighten); noted on screen.
+- **LAP COMPARE** tab: any two race laps; speed along the lap worked out from car positions (≈4 Hz, approximate) and
+  the running gap by lap distance; lap times are official.
+- **Race summary** on the podium screen: biggest climb, most overtakes, fastest stop, fastest lap, championship lead.
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,
