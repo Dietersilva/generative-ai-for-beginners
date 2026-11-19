@@ -440,7 +440,8 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
 .recbanner span{font-size:12.5px} .recbanner .btn{padding:4px 10px;font-size:11.5px}
 .tl .mk.ov{background:var(--gain);height:7px;bottom:0;top:auto;width:2px;opacity:.7}
 .tl .band.rain{background:repeating-linear-gradient(90deg,#3fd8ff33 0 3px,transparent 3px 6px);top:auto;height:9px;bottom:0}
-#recBtn[aria-pressed="true"]{color:var(--red);border-color:var(--red)}
+#recBtn[aria-pressed="true"],.minibar .minirec[aria-pressed="true"]{color:var(--red);border-color:var(--red)}
+.minibar .minirec{color:#ff6b7a}
 
 #towerFold{border:0;padding:2px 6px;font-size:12px}
 .app.tfold{grid-template-columns:minmax(0,1fr) 168px}
@@ -494,7 +495,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="seg zbtn" data-zoom="1" title="Zoom in close to see the cars (mouse wheel)" aria-label="Zoom in">+</button>
       <button class="seg maxbtn" id="maxBtn" aria-pressed="false" title="Bigger track: hide the controls bar and race-control strip so the track fills the screen (M)" aria-label="Bigger track">⤢</button>
     </div>
-    <div class="minibar" id="miniBar" role="group" aria-label="Playback"><button id="miniPlay" aria-label="Play or pause">▶ PLAY</button><span class="mtime" id="miniTime">–</span><button id="miniShow" title="Show the controls bar again (M)">▴ CONTROLS</button></div>
+    <div class="minibar" id="miniBar" role="group" aria-label="Playback"><button id="miniPlay" aria-label="Play or pause">▶ PLAY</button><span class="mtime" id="miniTime">–</span><button id="miniRec" class="minirec" hidden title="Record the whole screen with sound to a video file">● REC</button><button id="miniShow" title="Show the controls bar again (M)">▴ CONTROLS</button></div>
     <div class="hud director" id="director" hidden>CRASH CAM · SLOW-MO</div>
     <div class="hud lights" id="lights" hidden></div>
     <div class="hud lights-out" id="lightsOut" hidden>LIGHTS OUT</div>
@@ -555,7 +556,7 @@ table.h2h td:first-child{text-align:right;font-family:var(--f-mono)} table.h2h t
       <button class="tg rad" id="tgSound" aria-pressed="true" title="Engine sound, start lights and impacts">SOUND</button>
       <button class="tg rad" id="tgComm" aria-pressed="false" title="Spoken race commentary: start, overtakes, incidents, safety cars, pit stops and the finish, read by a British voice built into your device">COMMENTARY</button>
       <button class="tg rad" id="tgRadio" aria-pressed="true" title="Play team radio as it happens">RADIO</button>
-      <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the race view to a video file">● REC</button>
+      <button class="tg" id="recBtn" aria-pressed="false" hidden title="Record the whole replay screen with sound to a video file (your browser asks which tab to share: pick this one, with tab audio on)">● REC</button>
     </div>
     <div class="kbd"><span><b>Space</b> play</span><span><b>← →</b> 10 s</span><span><b>Shift ← →</b> 1 lap</span><span><b>1–5</b> speed</span><span><b>L O F C</b> view</span><span><b>M</b> bigger track</span><span><b>E</b> expand race control</span><span><b>[ ]</b> prev/next car</span><span>Click a car to open its driver cam</span></div>
   </footer>
@@ -1850,24 +1851,35 @@ function stepSeason(wdt){ if (!st.seasonPlay || !st.season) return; st.seasonK =
 
 /* ---------------- recording (offline file only) ---------------- */
 let recorder = null;
-function toggleRec(){
+// Records the whole browser tab (track, timing tower, race control, and the sound: commentary, radio, engine) via screen
+// capture; the browser asks which tab to share. Where that isn't allowed, it falls back to recording just the track canvas.
+function recLabel(txt, on){ for (const b of [$("#recBtn"), $("#miniRec")]) { b.textContent = txt; b.setAttribute("aria-pressed", String(!!on)); } }
+async function toggleRec(){
   if (recorder) { recorder.stop(); return; }
-  if (!cv.captureStream || typeof MediaRecorder === "undefined") { alertRec("This browser can't record the canvas."); return; }
-  const chunks = []; const type = ["video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t)) || "";
-  recorder = new MediaRecorder(cv.captureStream(30), type ? {mimeType: type, videoBitsPerSecond: 6e6} : undefined);
+  if (typeof MediaRecorder === "undefined") { alertRec("This browser can't record."); return; }
+  let stream = null, whole = false;
+  if (navigator.mediaDevices && navigator.mediaDevices.getDisplayMedia) {
+    try { stream = await navigator.mediaDevices.getDisplayMedia({video: {frameRate: 30, displaySurface: "browser"}, audio: true, preferCurrentTab: true, selfBrowserSurface: "include", systemAudio: "include"}); whole = true; }
+    catch (e) { if (e && e.name === "NotAllowedError" && !/policy|permission/i.test(e.message || "")) { recLabel("● REC", false); return; } stream = null; }   // user pressed Cancel: do nothing
+  }
+  if (!stream) { if (!cv.captureStream) { alertRec("This browser can't record."); return; } stream = cv.captureStream(30); }
+  const chunks = []; const type = ["video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm;codecs=vp9", "video/webm"].find(t => MediaRecorder.isTypeSupported(t)) || "";
+  recorder = new MediaRecorder(stream, type ? {mimeType: type, videoBitsPerSecond: whole ? 8e6 : 6e6} : undefined);
   recorder.ondataavailable = e => e.data.size && chunks.push(e.data);
+  stream.getVideoTracks().forEach(tr => tr.addEventListener("ended", () => recorder && recorder.state !== "inactive" && recorder.stop()));   // "Stop sharing" in the browser bar
   recorder.onstop = async () => {
-    const blob = new Blob(chunks, {type: "video/webm"}), name = `grid-replay-${(st.meta && st.meta.name || "clip").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\W+/g, "-").toLowerCase()}.webm`;
-    recorder = null; $("#recBtn").setAttribute("aria-pressed", "false"); $("#recBtn").textContent = "● REC";
-    if (dl) { try { await dl.save({filename: name, data: blob}); $("#recBtn").textContent = "● REC (saved)"; } catch (e) { $("#recBtn").textContent = e && e.code === "declined" ? "● REC" : "● REC (couldn't save)"; } return; }
+    stream.getTracks().forEach(tr => tr.stop());
+    const blob = new Blob(chunks, {type: "video/webm"}), name = `pit-wall-redux-${(st.meta && st.meta.name || "clip").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/\W+/g, "-").toLowerCase()}.webm`;
+    recorder = null; recLabel("● REC", false);
+    if (dl) { try { await dl.save({filename: name, data: blob}); recLabel("● REC (saved)", false); } catch (e) { recLabel(e && e.code === "declined" ? "● REC" : "● REC (couldn't save)", false); } return; }
     const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); a.remove(); };
-  recorder.start(500); $("#recBtn").setAttribute("aria-pressed", "true"); $("#recBtn").textContent = "■ STOP REC";
+  recorder.start(500); recLabel(whole ? "■ STOP REC" : "■ STOP REC (track only)", true);
 }
-function alertRec(m){ $("#recBtn").textContent = m; }
+function alertRec(m){ recLabel(m, false); }
 let dl = null;
-$("#recBtn").onclick = toggleRec;
-if (location.protocol === "file:") $("#recBtn").hidden = false;
-else (async () => { try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; } if (dl && cv.captureStream && typeof MediaRecorder !== "undefined") $("#recBtn").hidden = false; })();
+$("#recBtn").onclick = toggleRec; $("#miniRec").onclick = toggleRec;
+if (location.protocol === "file:") { $("#recBtn").hidden = false; $("#miniRec").hidden = false; }
+else (async () => { try { dl = window.claude && window.claude.use ? await window.claude.use("downloads") : null; } catch (e) { dl = null; } if (dl && cv.captureStream && typeof MediaRecorder !== "undefined") { $("#recBtn").hidden = false; $("#miniRec").hidden = false; } })();
 /* ---------------- qualifying analysis: live order through Q1/Q2/Q3, and every lap time ---------------- */
 function qOrderSeries(Q){
   const q = Q.q, all = q.all || [], ph = (q.phases || []).map(p => p[1]), byNum = {}; for (const d of q.drivers) byNum[d.num] = d;

@@ -136,6 +136,9 @@ put on hold.
 - **Expandable race control** (▴ EXPAND on the strip, or key **E**): strip grows to ~36% of the stage with larger,
   wrapping text; controls bar hidden; floating mini bar keeps play/pause and ▴ CONTROLS. Exclusive with bigger-track (M).
 
+- **REC** is also on the floating mini bar (expanded race control / bigger track) and now records the whole tab with
+  sound via getDisplayMedia (tested: VP9 video + Opus audio, full page).
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,
@@ -242,7 +245,8 @@ every radio and commentary clip in Chromium, and spot checks of standings and sc
 
 ## 10. Known limitations
 
-- Commentary audio cannot be captured in video export (browser restriction).
+- REC records the whole browser tab with sound (screen capture: the browser asks which tab to share; tick tab audio).
+  Where screen capture isn't allowed it falls back to the track canvas only, without sound.
 - Online past-season races (2023–2025) use the device voice (size limit); qualifying and everything offline has natural voices.
 - Very large single files (over ~250 MB) failed to download in the Claude app; everything is split
   into files under 80 MB.
