@@ -9,7 +9,11 @@ st["events"] = [e for e in st["events"] if e["y"] >= 2023]; st["champs"] = []
 norm = lambda s: unicodedata.normalize("NFD", s).encode("ascii", "ignore").decode().lower().replace("-", " ")
 modern = {k: v for k, v in st["drivers"].items()}
 TEAM = {"red_bull": "Red Bull Racing", "haas": "Haas F1 Team", "alpine": "Alpine", "aston_martin": "Aston Martin", "alphatauri": "AlphaTauri", "alfa": "Alfa Romeo"}
-team = lambda c: TEAM.get(c["constructorId"], c["name"])
+def team(c):   # early constructors are listed as chassis-engine ("Lotus-Climax"): use the chassis maker
+    i = c["constructorId"]
+    if i in TEAM: return TEAM[i]
+    n = c["name"].split("-")[0].strip() if "-" in i else c["name"]
+    return {"Lotus": "Team Lotus"}.get(n, n)
 keys = {}
 def key(d):
     i = d["driverId"]
@@ -44,6 +48,12 @@ for y in range(1950, 2023):
                 rows.append([k, team(x["Constructor"]), int(x["grid"]) or None, int(pt) if pt.isdigit() else None, float(x["points"]),
                              1 if pt == "R" or pt == "N" else 0, 1 if pt == "D" else 0, int(x["laps"])])
                 if x.get("FastestLap", {}).get("rank") == "1": fl = [k, secs(x["FastestLap"].get("Time", {}).get("time"))]
+            best = {}   # shared drives (1950s): one row per driver, best finish, points added up
+            for x in rows:
+                o = best.get(x[0])
+                if not o: best[x[0]] = x; continue
+                pts = o[4] + x[4]; keep = x if (x[3] or 999) < (o[3] or 999) else o; keep = keep[:]; keep[4] = pts; keep[2] = min([g for g in (o[2], x[2]) if g] or [None]); best[x[0]] = keep
+            rows = list(best.values())
             hist.append({"y": y, "rd": int(r["round"]), "kind": kind, "name": r["raceName"], "circuit": cname(r), "date": r["date"], "res": rows, "fl": fl, "pits": []})
     qf = f"{A}/{y}_qualifying.json"
     if os.path.exists(qf):

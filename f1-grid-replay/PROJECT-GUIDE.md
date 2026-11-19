@@ -143,6 +143,14 @@ put on hold.
   sideways (odd places one side, even the other) along the track direction and blends back to GPS over 6 s after lights
   out (inside `carXY`; raw positions are `carXY0`). Pit-lane starters and cars without pre-start GPS are left as is.
 
+- **All-time STATS (1950–2026)** — version 45, 19 Nov 2026: `tools/fetch_alltime.py old/alltime` (Jolpica, ~1.5 h)
+  then `tools/merge_alltime.py pub/stats.json old/alltime` (run AFTER build_stats.py and merge_ov.py). Adds 1,533 historic
+  events, 790 drivers, a CHAMPIONS tab and a Titles column. Shared 1950s drives are merged per driver; chassis-engine
+  names are folded to the maker (Lotus-Climax → Team Lotus). Checked: Hamilton 103 wins to 2022, Schumacher 91 wins /
+  7 titles, Senna 41 wins / 65 poles, Prost 51, Fangio 51 starts / 24 wins, Ferrari 16, Lotus 7, Williams 9 titles.
+  Points are as awarded (dropped scores before 1991 not removed; noted on screen). stats.json is now ~1.7 MB.
+- **2023–2026 edition LOCKED** after this (owner's decision), except the scheduled job that adds the last 2026 races.
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,
@@ -205,7 +213,7 @@ The lines are original; no real commentator's voice or catchphrases are imitated
 
 ## 7. Size budget (online)
 
-The artifact allows 256 MB and **511 files** per version. Current total ≈ 252.8 MB in 493 files (version 37, 18 Nov 2026) (2026 data + radio + commentary,
+The artifact allows 256 MB and **511 files** per version. Current total ≈ 254.3 MB in 493 files (version 45, 19 Nov 2026) (2026 data + radio + commentary,
 2023–2025 data + radio). That is why race data is binary, radio is 24 kbps, and past-season commentary
 audio is offline only. The three remaining 2026 races add ~6 MB plus ~2 MB of commentary. A 2027
 season would need room to be made (e.g. moving a past season to a second artifact).
