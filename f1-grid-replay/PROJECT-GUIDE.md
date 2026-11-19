@@ -176,6 +176,15 @@ put on hold.
   Offline zips 9.7–13.1 MB each. Quirks handled: Spa 2021 (no full lap → reference outline), Monza 2018 (lap rows without
   positions). `tools/package_classic.sh YYYY` builds the offline zip + HTML and tests it from disk.
 
+### 2027 edition (stand-alone) — prepared 19 Nov 2026
+- `PRE_START=330 python3 tools/build_race.py ...` (env read in build_race.build) keeps 5.5 min of car data before lights out,
+  which includes the formation lap: checked on São Paulo 2026 — cars sit on the grid until ~5 min before lap 1, then drive
+  the formation lap. Default stays 25 s, so 2023–2026 files are unchanged.
+- The page applies the two-by-two grid only while a car is within 30 m of its grid slot, so a formation lap drives normally.
+- Edition page: same code with `window.__EDITION = {seasons: [{y: 2027, p: ""}], sub: "telemetry replay"}` (see
+  make_classic_site.py for how the Classic page is made); new artifact; weekend update tasks created once the 2027 calendar is
+  confirmed (scheduled set-up task on 20 Feb 2027).
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,

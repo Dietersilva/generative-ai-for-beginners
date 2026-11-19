@@ -51,7 +51,9 @@ def build(session_key, meeting, rnd, out_dir):
         d1 = sorted(l["lap_duration"] for l in laps if l["lap_number"] == 1 and l["lap_duration"]) or [100.0]
         if not lap2: print("  no lap timing, skip"); return None
         lap1 = [min(lap2) - d1[0]]
-    T0 = min(lap1) - 25.0
+    # PRE_START: seconds of car data kept before lights out (default 25 s; 360 s takes in the formation lap, used from 2027)
+    import os as _os
+    T0 = min(lap1) - float(_os.environ.get("PRE_START", "25"))
     ends = []
     for l in laps:
         if l["date_start"] and l["lap_duration"]:

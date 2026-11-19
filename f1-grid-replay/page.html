@@ -853,7 +853,9 @@ function leaderLap(R, t){ return clamp(ub(R.lapStarts, t), 0, R.total); }
 function carXY(R, D, t, out){
   if (!carXY0(R, D, t, out)) return false;
   if (t < R.lightsOut + 6 && R.drivers) { const g = gridSlots(R), s0 = g && g[D.num];
-    if (s0) { const k = t < R.lightsOut ? 1 : 1 - (t - R.lightsOut) / 6; out[0] += s0.ox * k; out[1] += s0.oy * k; } }
+    if (s0) { let k = t < R.lightsOut ? 1 : 1 - (t - R.lightsOut) / 6;
+      if (t < R.lightsOut) { const d = Math.hypot(out[0] - s0.gx, out[1] - s0.gy); k = Math.max(0, 1 - d / 300); }   // only while the car is at its grid slot (not during a formation lap)
+      out[0] += s0.ox * k; out[1] += s0.oy * k; } }
   return true;
 }
 function carXY0(R, D, t, out){
@@ -1094,7 +1096,7 @@ function gridSlots(R){
     if (bd > 450 * 450) continue;   // far from the track line (e.g. pit-lane start): leave as is
     const a = o[(bi + o.length - 3) % o.length], b = o[(bi + 3) % o.length], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
     const side = D.grid % 2 ? 1 : -1, w = 42;   // either side of the centre line (cars are drawn larger than life, so a little wider than the real ~3 m)
-    out[D.num] = {ox: -dy / l * w * side, oy: dx / l * w * side, ang: Math.atan2(dy, dx)}; }
+    out[D.num] = {ox: -dy / l * w * side, oy: dx / l * w * side, ang: Math.atan2(dy, dx), gx: q[0], gy: q[1]}; }
   R.gridOff = out; return out;
 }
 function renderTrackScene(now, wdt, pip){
@@ -1117,7 +1119,7 @@ function renderTrackScene(now, wdt, pip){
     }
     let ang = D.ang;
     if (t < R.lightsOut + 6) { const g = gridSlots(R), s0 = g && g[D.num];
-      if (s0 && t < R.lightsOut) { D.ang = s0.ang; ang = s0.ang; } }
+      if (s0 && t < R.lightsOut) { const q0 = [0, 0]; if (carXY0(R, D, t, q0) && Math.hypot(q0[0] - s0.gx, q0[1] - s0.gy) < 150) { D.ang = s0.ang; ang = s0.ang; } } }
     if (D.ev && D.ev.kind === "crash" && t >= D.ev.t - 0.4) {
       const u = clamp((t - D.ev.t + 0.4)/1.6, 0, 1); ang = D.crashAng + (1 - Math.pow(1-u, 3)) * Math.PI * 2.6 * (D.num % 2 ? 1 : -1);
     }
