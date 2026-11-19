@@ -139,6 +139,10 @@ put on hold.
 - **REC** is also on the floating mini bar (expanded race control / bigger track) and now records the whole tab with
   sound via getDisplayMedia (tested: VP9 video + Opus audio, full page).
 
+- **Starting grid two by two:** GPS (≈1 m accuracy) shows the grid as a single file, so `gridSlots()` offsets each car
+  sideways (odd places one side, even the other) along the track direction and blends back to GPS over 6 s after lights
+  out (inside `carXY`; raw positions are `carXY0`). Pit-lane starters and cars without pre-start GPS are left as is.
+
 ## 4. How it is built (architecture)
 
 **Data source:** OpenF1 API (`api.openf1.org/v1`): sessions, meetings, drivers, laps, location (GPS,

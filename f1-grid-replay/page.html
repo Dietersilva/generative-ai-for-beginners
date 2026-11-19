@@ -851,6 +851,12 @@ function leaderLap(R, t){ return clamp(ub(R.lapStarts, t), 0, R.total); }
 
 // Catmull-Rom position at race time t -> writes into out, returns false if hidden
 function carXY(R, D, t, out){
+  if (!carXY0(R, D, t, out)) return false;
+  if (t < R.lightsOut + 6 && R.drivers) { const g = gridSlots(R), s0 = g && g[D.num];
+    if (s0) { const k = t < R.lightsOut ? 1 : 1 - (t - R.lightsOut) / 6; out[0] += s0.ox * k; out[1] += s0.oy * k; } }
+  return true;
+}
+function carXY0(R, D, t, out){
   const f = t / R.DT; const i = Math.floor(f); const u = f - i;
   if (i < 0 || i >= R.N - 1) return false;
   const v = D.vis, P = D.P; if (!v[i] || !v[i+1]) return false;
@@ -1077,6 +1083,20 @@ function render(now, wdt){
   renderTrackScene(now, wdt, false); drawRain(now);
   renderPip(now, wdt);
 }
+// starting grid: cars sit two by two (odd places on one side, even on the other), facing down the track. The car GPS is
+// only accurate to about a metre, so on the grid it shows a single file; this spreads them to the real staggered layout
+// and blends back to the GPS line over the first seconds after lights out.
+function gridSlots(R){
+  if (R.gridOff !== undefined) return R.gridOff; R.gridOff = null; if (R.noTrack || !R.outlineW || R.outlineW.length < 20) return null;
+  const o = R.outlineW, q = [0, 0], out = {};
+  for (const D of R.drivers) { if (!(D.grid < 99) || !carXY0(R, D, Math.max(0, R.lightsOut - 2), q)) continue;
+    let bi = 0, bd = Infinity; for (let i = 0; i < o.length; i++) { const d = (o[i][0] - q[0]) ** 2 + (o[i][1] - q[1]) ** 2; if (d < bd) { bd = d; bi = i; } }
+    if (bd > 450 * 450) continue;   // far from the track line (e.g. pit-lane start): leave as is
+    const a = o[(bi + o.length - 3) % o.length], b = o[(bi + 3) % o.length], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1;
+    const side = D.grid % 2 ? 1 : -1, w = 42;   // either side of the centre line (cars are drawn larger than life, so a little wider than the real ~3 m)
+    out[D.num] = {ox: -dy / l * w * side, oy: dx / l * w * side, ang: Math.atan2(dy, dx)}; }
+  R.gridOff = out; return out;
+}
 function renderTrackScene(now, wdt, pip){
   const R = st.R;
   if (pip) { shakeX = shakeY = 0; } else { shakeX = (Math.random()-.5)*shake*14; shakeY = (Math.random()-.5)*shake*14; }
@@ -1096,6 +1116,8 @@ function renderTrackScene(now, wdt, pip){
       if (dx*dx + dy*dy > 400) { const a = Math.atan2(dy, dx); D.ang += angDiff(D.ang, a) * Math.min(1, wdt*14 + (st.playing ? 0 : 1)); }
     }
     let ang = D.ang;
+    if (t < R.lightsOut + 6) { const g = gridSlots(R), s0 = g && g[D.num];
+      if (s0 && t < R.lightsOut) { D.ang = s0.ang; ang = s0.ang; } }
     if (D.ev && D.ev.kind === "crash" && t >= D.ev.t - 0.4) {
       const u = clamp((t - D.ev.t + 0.4)/1.6, 0, 1); ang = D.crashAng + (1 - Math.pow(1-u, 3)) * Math.PI * 2.6 * (D.num % 2 ? 1 : -1);
     }
@@ -2525,6 +2547,8 @@ async function openStats(){
 }
 function closeStats(){ $("#stats").hidden = true; }
 function statsEvents(kind){ const y = STATS.year; return STATS.data.events.filter(e => (y === "all" || e.y === +y) && (!kind || kind.includes(e.kind))); }
+function statsLabel(k){ const d = STATS.data.drivers[k]; return d && d.code ? d.code : k; }   // historic drivers are keyed by id; show their 3-letter code
+function titlesOf(k, team){ return (STATS.data.champs || []).filter(c => c.final && (team ? c.team === k : c.d === k)).length; }
 function statsName(code){ const d = STATS.data.drivers[code]; return d ? d.name : code; }
 function statsCol(code){ const d = STATS.data.drivers[code]; return d ? d.colour : "#8590a8"; }
 function statsTable(cols, rows, key){
@@ -2536,11 +2560,11 @@ function statsTable(cols, rows, key){
 }
 const fx1 = v => v == null ? "–" : (Math.round(v * 10) / 10).toString();
 function renderStats(){
-  const D = STATS.data; if (!D) return; const tabs = [["drv", "DRIVERS"], ["team", "TEAMS"], ["mate", "TEAMMATES"], ["track", "TRACKS"], ["pit", "PIT STOPS"]];
+  const D = STATS.data; if (!D) return; const tabs = [["drv", "DRIVERS"], ["team", "TEAMS"], ["champ", "CHAMPIONS"], ["mate", "TEAMMATES"], ["track", "TRACKS"], ["pit", "PIT STOPS"]];
   $("#statsTabs").innerHTML = tabs.map(([k, l]) => `<button class="tab" data-st="${k}" aria-selected="${k === STATS.tab}">${l}</button>`).join("");
   const years = [...new Set(D.events.map(e => e.y))].sort((a, b) => b - a);
   let ctl = `<label>Season <select id="stYear"><option value="all">All seasons (${years[years.length - 1]}–${years[0]})</option>${years.map(y => `<option value="${y}" ${String(y) === STATS.year ? "selected" : ""}>${y}</option>`).join("")}</select></label>`;
-  const gp = statsEvents(["gp"]), spr = statsEvents(["sprint"]), q = statsEvents(["quali"]); let html = "";
+  let gp = statsEvents(["gp"]); const spr = statsEvents(["sprint"]), q = statsEvents(["quali"]); let html = "";
   if (STATS.tab === "drv" || STATS.tab === "team") {
     const isT = STATS.tab === "team", acc = {}, get = (k, extra) => acc[k] || (acc[k] = {k, races: 0, wins: 0, pod: 0, poles: 0, fq: 0, sw: 0, fl: 0, pts: 0, dnf: 0, fin: [], best: 99, gain: 0, ovm: 0, ovl: 0, ovn: 0, team: null, one2: 0, drivers: new Set(), ...extra});
     for (const e of gp) { const p1 = e.res.filter(r => r[3] === 1 || r[3] === 2);
@@ -2555,21 +2579,23 @@ function renderStats(){
       for (const c in e.ov) { const o = get(isT ? (tm[c] || "?") : c); o.ovm += e.ov[c][0]; o.ovl += e.ov[c][1]; } }
     for (const e of q) for (const r of e.res) if (r[2] === 1) get(isT ? r[1] : r[0]).fq++;
     const rows = Object.values(acc).filter(o => o.races > 0);
-    const nameCell = o => isT ? `<i class="sdot" style="background:${esc(D.teams[o.k] || "#888")}"></i>${esc(o.k)}` : `<i class="sdot" style="background:${esc(statsCol(o.k))}"></i><b>${esc(o.k)}</b> ${esc(statsName(o.k))}`;
+    const nameCell = o => isT ? `<i class="sdot" style="background:${esc(D.teams[o.k] || "#888")}"></i>${esc(o.k)}` : `<i class="sdot" style="background:${esc(statsCol(o.k))}"></i><b>${esc(statsLabel(o.k))}</b> ${esc(statsName(o.k))}`;
     const cols = [{h: isT ? "Team" : "Driver", v: o => o.k, f: nameCell, asc: true}];
     if (!isT) cols.push({h: "Team", v: o => o.team, asc: true});
     cols.push({h: "GPs", v: o => o.races, tip: "Grands Prix started"}, {h: "Wins", v: o => o.wins}, {h: "Podiums", v: o => o.pod},
       {h: "Poles", v: o => o.poles, tip: "Started the Grand Prix from P1 (official pole, after grid penalties)"}, {h: "Fastest in Q", v: o => o.fq, tip: "Quickest in Grand Prix qualifying (before grid penalties)"},
-      {h: "Sprint wins", v: o => o.sw}, {h: "Fastest laps", v: o => o.fl}, {h: "Points", v: o => o.pts, f: o => fx1(o.pts), def: true, tip: "Grand Prix and sprint points"});
+      {h: "Titles", v: o => titlesOf(o.k, isT), tip: "World championships won (constructors' title from 1958)"}, {h: "Sprint wins", v: o => o.sw}, {h: "Fastest laps", v: o => o.fl}, {h: "Points", v: o => o.pts, f: o => fx1(o.pts), def: true, tip: "Grand Prix and sprint points"});
     if (isT) cols.push({h: "1–2s", v: o => o.one2, tip: "Grands Prix where the team finished first and second"}, {h: "Drivers", v: o => o.drivers.size, f: o => [...o.drivers].join(", "), asc: true});
     else cols.push({h: "Avg finish", v: o => o.fin.length ? o.fin.reduce((a, b) => a + b, 0) / o.fin.length : null, f: o => o.fin.length ? fx1(o.fin.reduce((a, b) => a + b, 0) / o.fin.length) : "–", asc: true, tip: "Average finishing position when classified"},
       {h: "Best", v: o => o.best < 99 ? o.best : null, f: o => o.best < 99 ? "P" + o.best : "–", asc: true}, {h: "Places gained", v: o => o.gain, tip: "Grid position minus finishing position, summed over classified finishes"});
     cols.push({h: "Overtakes", v: o => o.ovm, tip: "On-track passes made in Grands Prix and sprints (official OpenF1 overtake feed, without pit-stop, safety-car and glitch swaps)"},
       {h: "Passed by", v: o => o.ovl, tip: "Times passed on track by another car"}, {h: "Net", v: o => o.ovm - o.ovl, f: o => (o.ovm - o.ovl > 0 ? "+" : "") + (o.ovm - o.ovl), tip: "Overtakes minus times passed"});
     cols.push({h: "DNFs", v: o => o.dnf});
-    html = statsTable(cols, rows, STATS.tab) + `<p class="anote">${gp.length} Grands Prix, ${spr.length} sprints. Points include sprints. Overtakes are on-track passes from the official OpenF1 overtake feed, with swaps caused by pit stops, safety cars and timing glitches left out, so they won't match other published counts exactly. Data from OpenF1; 2023 points for Saudi Arabia and the United States were recomputed from positions.</p>`;
+    html = statsTable(cols, rows, STATS.tab) + `<p class="anote">${gp.length} Grands Prix, ${spr.length} sprints. Points are as awarded at the time (the scoring system changed many times since 1950) and include sprints. 1950–2022 results come from the Jolpica (Ergast) archive; fastest laps there are recorded from 2004, qualifying from 1994, so "Fastest in Q" and "Fastest laps" start then. Overtakes are on-track passes from the official OpenF1 overtake feed, with swaps caused by pit stops, safety cars and timing glitches left out, so they won't match other published counts exactly. Data from OpenF1; 2023 points for Saudi Arabia and the United States were recomputed from positions.</p>`;
   } else if (STATS.tab === "mate") {
-    const pairs = {}, key = (y, t) => y + "|" + t;
+    const mYear = STATS.year === "all" ? years[0] : +STATS.year;
+    if (STATS.year === "all") ctl = ctl.replace(/<option value="all"[^>]*>[^<]*<\/option>/, "").replace(`value="${mYear}"`, `value="${mYear}" selected`);
+    const pairs = {}, key = (y, t) => y + "|" + t; const inY = e => e.y === mYear; gp = gp.filter(inY); spr.splice(0, spr.length, ...spr.filter(inY)); q.splice(0, q.length, ...q.filter(inY));
     for (const e of gp) { const byT = {}; for (const r of e.res) (byT[r[1]] = byT[r[1]] || []).push(r);
       for (const t in byT) { const p = pairs[key(e.y, t)] || (pairs[key(e.y, t)] = {y: e.y, t, starts: {}, qa: {}, ra: {}, pts: {}});
         for (const r of byT[t]) { p.starts[r[0]] = (p.starts[r[0]] || 0) + 1; p.pts[r[0]] = (p.pts[r[0]] || 0) + r[4]; } } }
@@ -2594,14 +2620,22 @@ function renderStats(){
     const ev = D.events.filter(e => e.circuit === STATS.circuit), ys = [...new Set(ev.map(e => e.y))].sort((a, b) => b - a), wins = {};
     const rows = ys.map(y => { const g = ev.find(e => e.y === y && e.kind === "gp"), qq = ev.find(e => e.y === y && e.kind === "quali"), sp = ev.find(e => e.y === y && e.kind === "sprint");
       const w = g && g.res.find(r => r[3] === 1), pole = g && g.res.find(r => r[2] === 1), fq = qq && qq.res.find(r => r[2] === 1), sw = sp && sp.res.find(r => r[3] === 1); if (w) wins[w[0]] = (wins[w[0]] || 0) + 1;
-      const c = x => x ? `<span style="color:${esc(statsCol(x[0]))}"><b>${esc(x[0])}</b></span> ${esc(statsName(x[0]))}` : "–";
-      return `<tr><td><b>${y}</b></td><td>${c(w)}</td><td>${c(pole)}</td><td>${fq && fq[3] ? `${esc(fq[0])} ${fmtLap(fq[3])}` : "–"}</td><td>${g && g.fl ? `${esc(g.fl[0])} ${fmtLap(g.fl[1])}` : "–"}</td><td>${c(sw)}</td></tr>`; });
+      const c = x => x ? `<span style="color:${esc(statsCol(x[0]))}"><b>${esc(statsLabel(x[0]))}</b></span> ${esc(statsName(x[0]))}` : "–";
+      return `<tr><td><b>${y}</b></td><td>${c(w)}</td><td>${c(pole)}</td><td>${fq && fq[3] ? `${esc(statsLabel(fq[0]))} ${fmtLap(fq[3])}` : "–"}</td><td>${g && g.fl ? `${esc(statsLabel(g.fl[0]))} ${g.fl[1] ? fmtLap(g.fl[1]) : ""}` : "–"}</td><td>${c(sw)}</td></tr>`; });
     const top = Object.entries(wins).sort((a, b) => b[1] - a[1]);
     html = `<h4 class="sh">${esc(ev[0] ? ev[0].name : "")} · ${esc(STATS.circuit)}</h4><table class="stbl"><thead><tr><th>Year</th><th>Winner</th><th>Pole (grid P1)</th><th>Fastest in qualifying</th><th>Fastest race lap</th><th>Sprint winner</th></tr></thead><tbody>${rows.join("")}</tbody></table>` +
       (top.length ? `<p class="anote">${top[0][1] === 1 && top.length > 1 ? `A different winner every year since ${ys[ys.length - 1]}.` : `Most wins here since ${ys[ys.length - 1]}: ${top.filter(([, n]) => n === top[0][1]).map(([k, n]) => `${esc(statsName(k))} (${n})`).join(", ")}.`}</p>` : "");
+  } else if (STATS.tab === "champ") {
+    const ch = (D.champs || []).slice().sort((a, b) => b.y - a.y).filter(c => STATS.year === "all" || c.y === +STATS.year);
+    const dc = {}, tc = {}; for (const c of D.champs || []) if (c.final) { dc[c.d] = (dc[c.d] || 0) + 1; if (c.team) tc[c.team] = (tc[c.team] || 0) + 1; }
+    const nm = k => `<span style="color:${esc(statsCol(k))}"><b>${esc(statsLabel(k))}</b></span> ${esc(statsName(k))}`;
+    const top = (o, f) => Object.entries(o).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([k, n]) => `<tr><td>${f(k)}</td><td>${n}</td></tr>`).join("");
+    html = `<div class="scols"><div><h4 class="sh">World champions</h4><table class="stbl"><thead><tr><th>Year</th><th>Drivers' champion</th><th>Pts</th><th>Wins</th><th>Constructors' champion</th><th>Pts</th></tr></thead><tbody>${ch.map(c => `<tr><td><b>${c.y}</b>${c.final ? "" : ' <span class="anote">so far</span>'}</td><td>${nm(c.d)}</td><td>${fx1(c.pts)}</td><td>${c.wins}</td><td>${c.team ? esc(c.team) : '<span class="anote">no title before 1958</span>'}</td><td>${c.team ? fx1(c.tpts) : "–"}</td></tr>`).join("")}</tbody></table></div>
+      <div><h4 class="sh">Most drivers' titles</h4><table class="stbl"><tbody>${top(dc, nm)}</tbody></table><h4 class="sh">Most constructors' titles</h4><table class="stbl"><tbody>${top(tc, k => esc(k))}</tbody></table></div></div>
+      <p class="anote">Final standings from the Jolpica (Ergast) archive for 1950–2022, and from the official results in this app for 2023 onward. "So far" marks a season that isn't finished.</p>`;
   } else if (STATS.tab === "pit") {
     const all = []; for (const e of gp.concat(spr)) for (const p of e.pits) all.push({c: p[0], t: p[1], s: p[2], lap: p[3], e});
-    if (!all.length) html = '<p class="anote">No pit-stop times were published for this season (OpenF1 has stop times only for some races, from late 2024 on).</p>';
+    if (!all.length) html = '<p class="anote">No pit-stop times for this selection: OpenF1 has stop times only for some races, from late 2024 on, and the older archive has none.</p>';
     else { all.sort((a, b) => a.s - b.s); const byT = {};
       for (const p of all) (byT[p.t] = byT[p.t] || []).push(p.s);
       const med = a => { const b = a.slice().sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
