@@ -1,8 +1,10 @@
 name:  Welcome to the Microsoft Generative AI
+# Disabled for this fork: inherited from microsoft/generative-ai-for-beginners.
+# Runs only when started by hand (Actions tab > Run workflow).
+# To re-enable, restore the original trigger from git history.
 on:
-  # Trigger the workflow on new issue
-  issues:
-    types: [opened]
+  workflow_dispatch:
+
 jobs:
   asses-issue:
     runs-on: ubuntu-latest

@@ -1,8 +1,10 @@
 name: Lock closed issue
 
-on: 
-  issues:
-    types: [closed]
+# Disabled for this fork: inherited from microsoft/generative-ai-for-beginners.
+# Runs only when started by hand (Actions tab > Run workflow).
+# To re-enable, restore the original trigger from git history.
+on:
+  workflow_dispatch:
 
 jobs:
   lock:
