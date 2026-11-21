@@ -1,8 +1,10 @@
 name:  Welcome to the Microsoft Generative AI
+# Disabled for this fork: inherited from microsoft/generative-ai-for-beginners and
+# fails on every PR here. Runs only when started by hand (Actions tab > Run workflow).
+# To re-enable, restore the original trigger from git history.
 on:
-  # Trigger the workflow on pull request
-  pull_request_target:
-    types: [opened]
+  workflow_dispatch:
+
 jobs:
   asses-pull-request:
     runs-on: ubuntu-latest
