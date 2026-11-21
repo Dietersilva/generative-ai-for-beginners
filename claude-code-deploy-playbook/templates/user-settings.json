@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "disableBypassPermissionsMode": "disable",
+    "deny": [
+      "Read(.env)",
+      "Read(.env.*)",
+      "Read(!.env.example)",
+      "Read(*.pem)",
+      "Read(*.key)",
+      "Read(~/.ssh/**)"
+    ],
+    "ask": [
+      "Bash(ssh *)",
+      "Bash(scp *)",
+      "Bash(rsync *)",
+      "Bash(git push *)",
+      "Bash(hcloud *)",
+      "Bash(tailscale *)",
+      "PowerShell(ssh *)",
+      "PowerShell(scp *)",
+      "PowerShell(git push *)",
+      "PowerShell(hcloud *)",
+      "PowerShell(tailscale *)"
+    ]
+  }
+}

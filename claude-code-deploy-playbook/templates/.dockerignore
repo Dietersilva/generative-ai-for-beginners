@@ -1,0 +1,16 @@
+# Keep secrets and local junk out of the Docker build context (and out of image layers)
+.git
+.gitignore
+node_modules
+.next
+dist
+coverage
+npm-debug.log*
+.claude
+
+# Secrets: never send to the build
+.env
+.env.*
+!.env.example
+*.pem
+*.key
