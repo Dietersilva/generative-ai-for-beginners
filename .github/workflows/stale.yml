@@ -5,9 +5,11 @@
 # https://github.com/actions/stale
 name: Mark stale issues and pull requests
 
+# Disabled for this fork: inherited from microsoft/generative-ai-for-beginners.
+# Runs only when started by hand (Actions tab > Run workflow).
+# To re-enable, restore the original trigger from git history.
 on:
-  schedule:
-  - cron: '35 8 * * *'
+  workflow_dispatch:
 
 jobs:
   stale:
