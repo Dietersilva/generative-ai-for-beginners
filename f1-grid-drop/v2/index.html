@@ -392,6 +392,7 @@ body.watch .stage .hud:not(.wh):not(.banner){display:none!important}
       <button class="seg" data-cam="onboard" aria-pressed="false">CHASE</button>
       <button class="seg" data-cam="crow" aria-pressed="false" title="Crow's view: flying behind and above the leader (4)">CROW</button>
       <button class="seg" data-cam="drone" aria-pressed="false" title="Drone view: straight overhead, following the pack (5)">DRONE</button>
+      <button class="seg dir-btn" id="dirBtn" aria-pressed="false" title="Director: cuts between cameras by itself, like TV (7)">🎬 DIRECTOR</button>
       <button class="seg" data-cam="giant" aria-pressed="false" title="From the giant car's driver's seat (6)" hidden>GIANT</button>
       <button class="seg" id="drvBtn" aria-pressed="false" title="Driver view window: the selected car, or the leader (click any car to switch)">DRIVER</button>
       <button class="seg" id="zoomOut" aria-label="Zoom out" title="Zoom out (−)">−</button>
@@ -2835,7 +2836,7 @@ function overtakes(o) {
   o.forEach((c, i) => {
     const was = before.indexOf(c.d.code); if (c.status !== "race" || was < 0 || was <= i || now - lastOv < 1.2 || i > 9) return;
     const passed = o[i + 1]; if (!passed || passed.status !== "race") return;
-    if (before.indexOf(passed.d.code) === i) { lastOv = now; event("OVERTAKE", `${c.d.code} passes ${passed.d.code} for P${i + 1}`, "#38e383", c); if (i === 0) { C.lead(c, passed); lowerThird("NEW LEADER", `${c.d.name}`, c.d.colour); } }
+    if (before.indexOf(passed.d.code) === i) { lastOv = now; DIR.hot = { car: c, pos: i + 1, t: performance.now()/1000 }; event("OVERTAKE", `${c.d.code} passes ${passed.d.code} for P${i + 1}`, "#38e383", c); if (i === 0) { C.lead(c, passed); lowerThird("NEW LEADER", `${c.d.name}`, c.d.colour); } }
   });
   prevOrder = o.map(c => c.d.code);
 }
@@ -2942,6 +2943,7 @@ function syncVisuals() {
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3(), wantPos = new THREE.Vector3(), wantLook = new THREE.Vector3();
 function focusCar() {
   if (selected) return selected;
+  if (DIR.on && DIR.car && cars.includes(DIR.car) && !DIR.car.hidden && DIR.car.status !== "out") return DIR.car; // the director's chosen car
   const live = cars.filter(c => c.status === "race");
   const pool = live.length ? live : cars;
   return pool.reduce((a, c) => c.s > a.s ? c : a, pool[0]);
@@ -3012,9 +3014,32 @@ function updateCamera(dt) {
   camPos.lerp(wantPos, k); camLook.lerp(wantLook, k); applyCam();
 }
 function setCam(m) {
-  opts.cam = m; document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cam === m)));
+  if (DIR.on) toggleDirector(false); opts.cam = m; document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.cam === m)));
 }
 
+/* ---------- v2.0 DIRECTOR: cuts between cameras like a TV director ---------- */
+const DIR = { on: false, car: null, next: 0, cutAt: 0, rot: 0, slowUntil: 0, slowDone: false, label: "" };
+function toggleDirector(v) { DIR.on = v === undefined ? !DIR.on : v; $("#dirBtn").setAttribute("aria-pressed", String(DIR.on));
+  if (DIR.on) { document.querySelectorAll("[data-cam]").forEach(b => b.setAttribute("aria-pressed", "false")); DIR.next = 0; DIR.slowDone = false; } else DIR.car = null; }
+function dirCut(shot, car, hold) { const now = performance.now()/1000; if (opts.cam === shot && DIR.car === car) { DIR.next = now + hold; return; }
+  opts.cam = shot; DIR.car = car || null; DIR.cutAt = now; DIR.next = now + hold; snapCamera(); } // a hard cut, like TV
+function directorTick() {
+  if (!DIR.on || !race || RP.active) return; const now = performance.now()/1000;
+  if (race.phase === "grid" || race.phase === "lights") { if (opts.cam !== "tv") dirCut("tv", null, 3); DIR.slowDone = false; return; }
+  const o = order(), lead = o.find(c => c.status === "race"), canCut = now - DIR.cutAt > 2.6;
+  if (!lead) { if (now > DIR.next) dirCut("tv", null, 6); return; }
+  const lx = lead.body.position.x, toLine = track.finX - lx;
+  if (toLine < 95 && toLine > -5) { if (opts.cam !== "tv" || DIR.car !== lead) { if (canCut) dirCut("tv", lead, 6); } // the finish
+    if (toLine < 14 && !DIR.slowDone) { DIR.slowDone = true; DIR.slowUntil = now + 2.4; } return; }
+  const pk = pieceAt(lx).k;
+  const drop = pk === "crest" || pk === "steep" ? 1 : pk === "crest2" || pk === "steep2" ? 2 : 0;
+  if (drop && DIR.drop !== drop + race.rid && canCut) { DIR.drop = drop + race.rid; dirCut("side", null, 4.5); return; } // over the drops: the wide side shot
+  if (DIR.hot && now - DIR.hot.t < 1.2 && DIR.hot.pos <= 6 && canCut && DIR.hot.car.status === "race") { const c = DIR.hot.car; DIR.hot = null; dirCut("onboard", c, 4); return; } // an overtake: ride with the attacker
+  if (now < DIR.next) return;
+  if (race.btKey && race.simT - race.btSince > 1.5) { const ch = cars.find(c => c.d.code === race.btKey.slice(3, 6)); if (ch && ch.status === "race" && DIR.rot % 2 === 0) { DIR.rot++; dirCut("onboard", ch, 4.5); return; } } // a close battle: onboard with the chaser
+  const seq = ["tv", "crow", "drone", "tv", "side", "crow"]; dirCut(seq[DIR.rot++ % seq.length], null, 5.5 + Math.random()*2.5);
+}
+$("#dirBtn").addEventListener("click", () => toggleDirector());
 /* ---------- loop ---------- */
 function resize() {
   const w = stageEl.clientWidth, h = stageEl.clientHeight; if (!w || !h) return;
@@ -3074,13 +3099,13 @@ function frame(now) {
   const raw = Math.min(.25, (now - last)/1000), dt = Math.min(.05, raw); last = now; LASTRAW = Math.min(.05, raw); adaptQuality(raw);
   if (WATCH) { /* the phone only draws: the race screen runs the race */ }
   else if (RP.active) { /* the race waits while the replay plays */ }
-  else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1)*opts.speed); // SPEED fast-forwards the race; replays keep their own pace
+  else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow || (DIR.on && performance.now()/1000 < DIR.slowUntil) ? .3 : 1)*opts.speed); // the director slows the finish // SPEED fast-forwards the race; replays keep their own pace
   else if (race) simulate(dt);
   const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
   FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position); SND.update(fdt);
   if ((opts.rain || WEATHER.wet) && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
   if (race) {
-    if (WATCH) watchFrame(dt); else if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
+    if (WATCH) watchFrame(dt); else if (RP.active) replayFrame(dt); else { syncVisuals(); directorTick(); updateCamera(dt); }
     hudT += dt; if (hudT > .12) { hudT = 0; updateTower(); updateCard();
       const t = race.phase === "race" ? race.simT - race.goAt : race.phase === "done" ? race.endAt - race.goAt : 0;
       $("#clock").textContent = t.toFixed(3); }
@@ -3333,7 +3358,7 @@ addEventListener("keydown", e => {
   if ((e.code === "Space" || e.key === "Enter") && RP.active) { e.preventDefault(); stopReplay(); }
   else if (e.code === "Space" && !e.target.closest("button,[role=button]")) { e.preventDefault(); if (race.phase === "grid") startRace(); else if (race.phase === "done") nextRace(); }
   else if (e.key === "r" || e.key === "R") rebuild();
-  else if (e.key === "1") setCam("tv"); else if (e.key === "2") setCam("side"); else if (e.key === "3") setCam("onboard"); else if (e.key === "4") setCam("crow"); else if (e.key === "5") setCam("drone"); else if (e.key === "6" && opts.giant) setCam("giant");
+  else if (e.key === "1") setCam("tv"); else if (e.key === "2") setCam("side"); else if (e.key === "3") setCam("onboard"); else if (e.key === "4") setCam("crow"); else if (e.key === "5") setCam("drone"); else if (e.key === "6" && opts.giant) setCam("giant"); else if (e.key === "7") toggleDirector();
   else if (e.key === "s" || e.key === "S") toggleSlow();
   else if (e.key === "d" || e.key === "D") setTimeOfDay(opts.tod === "day" ? "night" : "day");
   else if (e.key === "x" || e.key === "X") $("#chaosTog").click();
