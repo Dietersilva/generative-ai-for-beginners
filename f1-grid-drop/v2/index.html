@@ -1769,14 +1769,15 @@ function commStop() { COMM.q.length = 0; COMM.busy = false; clearTimeout(COMM.ti
 function say(host, text, prio = 1) {
   if (!opts.comm) return;
   const now = performance.now(), cx = COMM.ctx && now - COMM.ctx.t < 60 ? COMM.ctx : null; // the car this line is about, from the event that triggered it
-  COMM.q.push({ host, text, prio, t: now, car: cx && cx.car, pop: cx && cx.pop });
+  if (RP.active && !COMM.inReplay && prio < 3) return; // the hosts talk about the replay while it plays
+  COMM.q.push({ host, text, prio, t: now, car: cx && cx.car, pop: cx && cx.pop, rp: !!COMM.inReplay });
   if (COMM.q.length > 6) { COMM.q.sort((a, b) => b.prio - a.prio || a.t - b.t); COMM.q.length = 6; COMM.q.sort((a, b) => a.t - b.t); }
   pump();
 }
 function pump() {
   if (COMM.busy || !COMM.q.length) return;
   const now = performance.now(); COMM.q = COMM.q.filter(x => now - x.t < (x.prio >= 3 ? 6000 : 3500)); if (!COMM.q.length) return; // drop lines that are no longer about what's on screen
-  let i = COMM.q.findIndex(x => x.prio >= 3); if (i < 0) i = 0;
+  let i = RP.active ? COMM.q.findIndex(x => x.rp) : -1; if (i < 0) i = COMM.q.findIndex(x => x.prio >= 3); if (i < 0) i = 0;
   const x = COMM.q.splice(i, 1)[0], h = HOSTS[x.host]; COMM.busy = true;
   if (x.car && x.pop && !x.car.hidden && !onMainScreen(x.car)) showPop(x.car, x.pop, 1, 3600); // talking about a car you can't see? show it
   const cap = $("#caption"); cap.style.setProperty("--hc", h.col); $("#capWho").textContent = h.tag; $("#capTxt").textContent = x.text; cap.classList.remove("fade"); clearTimeout(COMM.hideT);
@@ -1881,13 +1882,13 @@ const C = { // plain-English commentary: Rex calls the action, Priya explains it
     const last = r[r.length - 1]; if (r.length > 3) opts2.push(["pri", `Spare a thought for ${sur(last)}, in last place but still going.`]);
     opts2.push(["pri", pick("fill", ["Fun fact: these cars have no engines today, just gravity.", "Up above, the pterodactyls are following the race too.", "The long-necked dinosaurs by the lake haven't looked up once."])]);
     const [who, text] = opts2[Math.floor(Math.random()*opts2.length)]; say(who, text, 0); },
-  replay(kind, car, intro) {
+  replay(kind, car, intro, car2) {
     if (intro) say("rex", pick("hl", ["Here are the highlights!", "Let's watch the best moments again."]), 3);
     else say("rex", pick("rp", ["Let's see that again!", "Here's the replay.", "Roll the replay!", "Let's have another look at that."]), 3);
     const s2 = car ? sur(car) : "";
     const lines = { flip: ["Watch the front dig in, and over it goes.", "In slow motion you can see exactly where it went wrong."],
       off: [`There goes ${s2}, over the barrier and down the mountain.`, "That's a long way to fall."],
-      contact: ["Slow it down and it looks even worse.", "See the gap close? Neither driver backed off."],
+      contact: car2 ? [`Watch ${s2} and ${sur(car2)}. Neither of them backed off.`, `Here's ${s2} coming across on ${sur(car2)}.`] : ["Slow it down and it looks even worse.", "See the gap close? Neither driver backed off."],
       wall: ["Straight into the barrier. The wall didn't move an inch."], strike: ["Perfect line through the pins. Textbook bowling."],
       air: ["Look at the height on that!", "Cleared for take-off."], obst: ["Watch it come in from the side. Brutal.", "Wrong place, wrong time."],
       finish: [`Look at ${s2} at the line. Beautiful.`, "Every hundredth of a second counted there."] };
@@ -1910,13 +1911,15 @@ function recFrame() {
   REC.buf.push({ t: race.simT, a }); while (REC.buf.length && REC.buf[0].t < race.simT - 10) REC.buf.shift();
 }
 const RP = { active: false, pending: null, last: -99, count: 0, queue: [], cur: null, t: 0, i: 0, ang: 0, mode: "live", busy: false };
-function incident(kind, car, label, prio = 1) {
+function incident(kind, car, label, prio = 1, car2 = null) {
   if (!opts.replays || !race || race.phase !== "race" || RP.active) return;
   const lead = cars.reduce((m, c) => c.status === "race" ? Math.max(m, c.body.position.x) : m, -1e9);
   if (track.finX - lead < 130 || race.simT - RP.last < 9 || RP.count >= (opts.speed >= 2 ? 2 : 4)) return;
   if (opts.speed >= 2 && prio < 3) return; // fast-forwarding: only the biggest moments get a replay
   if (RP.pending && RP.pending.prio >= prio) return;
-  RP.pending = { kind, car, label, prio, at: race.simT + 1.4, from: race.simT - (kind === "flip" || kind === "off" ? 6 : 3.8) };
+  const hit = race.simT, before = kind === "flip" || kind === "off" ? 3.2 : kind === "air" ? 2.6 : 2.2; // replay from just before the moment it happened
+  const cx = COMM.ctx && COMM.ctx.car === car && performance.now() - COMM.ctx.t < 200 ? COMM.ctx.pop : null;
+  RP.pending = { kind, car, car2, label, head: cx, prio, hit, at: hit + 1.8, from: hit - before };
 }
 function checkPending() {
   const p = RP.pending; if (!p || race.simT < p.at) return; RP.pending = null;
@@ -1934,8 +1937,8 @@ function nextClip() {
     const item = RP.queue.shift();
     if (!item) { endReplayNow(); return; }
     RP.cur = item; RP.t = item.clip[0].t; RP.i = 0; RP.ang = Math.random()*Math.PI*2; RP.active = true;
-    stageEl.classList.add("replaying"); $("#rpHud").hidden = false; $("#rpWhat").textContent = item.label; $("#dcard").hidden = true;
-    C.replay(item.kind, item.car, RP.mode === "results" && RP.first); RP.first = false;
+    stageEl.classList.add("replaying"); $("#rpHud").hidden = false; $("#rpWhat").textContent = item.head || item.label; $("#dcard").hidden = true;
+    COMM.q = COMM.q.filter(x => x.rp); COMM.inReplay = true; try { C.replay(item.kind, item.car, RP.mode === "results" && RP.first, item.car2); } finally { COMM.inReplay = false; } RP.first = false;
   });
 }
 function endReplayNow() {
@@ -1948,7 +1951,7 @@ function stopReplay() { RP.queue = []; if (RP.active) nextClip(); }
 function stopReplayHard() { RP.queue = []; endReplayNow(); }
 const rq0 = new THREE.Quaternion(), rq1 = new THREE.Quaternion(), rv = new THREE.Vector3();
 function replayFrame(dt) {
-  const clip = RP.cur.clip; RP.t += dt*(RP.cur.kind === "finish" ? .3 : .42);
+  const clip = RP.cur.clip, nearHit = RP.cur.hit != null && Math.abs(RP.t - RP.cur.hit) < .7; RP.t += dt*(RP.cur.kind === "finish" ? .3 : nearHit ? .2 : .45); // extra slow at the moment itself
   if (RP.t >= clip[clip.length - 1].t) { if (!RP.busy) nextClip(); RP.t = clip[clip.length - 1].t - 1e-4; }
   while (RP.i < clip.length - 2 && clip[RP.i + 1].t <= RP.t) RP.i++;
   const A = clip[RP.i].a, B = clip[RP.i + 1].a, f = Math.min(1, Math.max(0, (RP.t - clip[RP.i].t)/(clip[RP.i + 1].t - clip[RP.i].t)));
@@ -1959,7 +1962,8 @@ function replayFrame(dt) {
     c.label.position.set(c.mesh.position.x, c.mesh.position.y + 2.1*c.sc, c.mesh.position.z); });
   props.forEach((q, j) => { put(q.m, cars.length*36 + j*7); if (q.after) q.after(); });
   // orbiting replay camera around the car involved
-  const fc = RP.cur.car && RP.cur.car.mesh ? RP.cur.car.mesh.position : cars[0].mesh.position, wide = RP.cur.kind === "off" ? 1.6 : 1, z = opts.zoom.replay;
+  let fc = RP.cur.car && RP.cur.car.mesh ? RP.cur.car.mesh.position : cars[0].mesh.position, wide = RP.cur.kind === "off" ? 1.6 : 1; const z = opts.zoom.replay;
+  if (RP.cur.car2 && RP.cur.car2.mesh) { const p2 = RP.cur.car2.mesh.position; rv.copy(fc).add(p2).multiplyScalar(.5); wide = Math.max(wide, Math.min(3, (fc.distanceTo(p2) + 6)/10)); fc = rv; } // both cars in shot
   camera.up.copy(camUp); RP.ang += dt*.28; const r = 12*wide*z;
   camPos.set(fc.x + Math.cos(RP.ang)*r, fc.y + 4*wide*z + 1, fc.z + Math.sin(RP.ang)*r); camLook.copy(fc); applyCam();
 }
@@ -2701,9 +2705,9 @@ function postStep(h) {
     }
   }
 }
-function out(c, why, quiet) { c.status = "out"; c.out = why; if (quiet) return; C.out(c, why);
-  if (why === "FLIPPED") incident("flip", c, `FLIP · ${c.d.code}`, 2); if (why === "OFF TRACK") incident("off", c, `OFF THE MOUNTAIN · ${c.d.code}`, 3);
-  event("OUT", `${c.d.code} ${why === "OFF TRACK" ? "goes over the fence and off the mountain" : why === "FLIPPED" ? "ends up upside down" : "comes to a stop"}`, "#ff2f45", c); }
+function out(c, why, quiet) { c.status = "out"; c.out = why; if (quiet) return;
+  event("OUT", `${c.d.code} ${why === "OFF TRACK" ? "goes over the fence and off the mountain" : why === "FLIPPED" ? "ends up upside down" : "comes to a stop"}`, "#ff2f45", c); C.out(c, why); // event first, so the replay picks up its headline
+  if (why === "FLIPPED") incident("flip", c, `FLIP · ${c.d.code}`, 2); if (why === "OFF TRACK") incident("off", c, `OFF THE MOUNTAIN · ${c.d.code}`, 3); }
 function onCollide(car, e) {
   if (!race || race.phase !== "race") return;
   if (car.status === "fin" && (!e.body.car || e.body.car.status === "fin")) return; // bumps on the run-off after the line don't count
@@ -2729,7 +2733,7 @@ function onCollide(car, e) {
   }
   if (other.car && iv > 4.5) {
     const a = car.d.code < other.car.d.code ? car : other.car, b = a === car ? other.car : car, key = b.d.code;
-    if (!a.lastHit[key] || now - a.lastHit[key] > 3) { a.lastHit[key] = now; event("CONTACT", `${a.d.code} and ${b.d.code} collide`, "#ffb61c", a); C.contact(a, b); if (iv > 9) incident("contact", a, `CONTACT · ${a.d.code} / ${b.d.code}`, 1); }
+    if (!a.lastHit[key] || now - a.lastHit[key] > 3) { a.lastHit[key] = now; event("CONTACT", `${a.d.code} and ${b.d.code} collide`, "#ffb61c", a); C.contact(a, b); if (iv > 9) incident("contact", a, `CONTACT · ${a.d.code} / ${b.d.code}`, 1, b); }
   } else if (other.tag === "wall" && iv > 7 && (!car.lastHit.wall || now - car.lastHit.wall > 3)) {
     car.lastHit.wall = now; event("WALL", `${car.d.code} hits the wall at ${Math.round(car.spd*3.6)} km/h`, "#ff8a3d", car); C.wall(car); if (iv > 13) incident("wall", car, `WALL · ${car.d.code}`, 1);
   }
@@ -2761,7 +2765,7 @@ function setFlag(txt, cls) { const f = $("#flag"); f.textContent = opts.slow && 
 const POP_PRIO = { EATEN: 3, SNATCHED: 3, STAMPEDE: 2, "T-REX": 2, "WRECKING BALL": 2, WINDMILL: 2, TYRE: 2, BOWLING: 2, OUT: 2, AIR: 1, WALL: 1, CONTACT: 1, HAY: 1, CONES: 1 };
 function event(kind, text, colour, car) {
   if (!race) return;
-  if (car && POP_PRIO[kind] != null) { const head = text.split(car.d.code).join(sur(car));
+  if (car && POP_PRIO[kind] != null) { const head = text.replace(/\b[A-Z]{3}\b/g, c => DBY[c] ? DBY[c].name.split(" ").slice(1).join(" ") : c); // every driver code becomes a surname
     COMM.ctx = { car, pop: head, t: performance.now() }; const pr = POP_PRIO[kind];
     if (pr >= 3 || (pr >= 1 && !onMainScreen(car) && (pr >= 2 || gate("popm", 5)))) showPop(car, head, pr, pr >= 3 ? 5200 : 3800, colour); }
   const t = Math.max(0, race.simT - race.goAt);
