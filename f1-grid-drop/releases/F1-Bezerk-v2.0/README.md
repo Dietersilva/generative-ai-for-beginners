@@ -17,6 +17,34 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 7
+
+1. **Replays match the action:**
+   - Each replay now starts about 2 seconds before the moment itself and ends about 2 seconds after.
+   - It slows right down at the moment of impact, and frames both cars in a collision.
+   - It shows a headline such as "Bottas is eaten by a T-rex".
+   - The hosts talk about the replay while it plays (other commentary waits).
+2. **Cars:**
+   - Original team liveries painted on: a diagonal sweep, twin stripes or a dark fade, chosen per team in its own colours.
+   - Lettering around the outer tyre walls.
+   - Slotted rear-wing endplates and a raised floor edge.
+3. **Sound (SOUND switch, key U):**
+   - Everything is generated in the browser.
+   - Wind rush that rises with speed, crash impacts scaled by how hard the hit was, and landing thumps.
+   - Crowd noise near the grandstands, with a roar at the finish.
+   - T-rex roars, rain, start-light beeps and firework pops.
+4. **TV graphics:**
+   - Live gaps to the leader in the running order and the full-screen standings.
+   - Lower-third graphics: BATTLE FOR P2, NEW LEADER, and SPEED TRAP · FASTEST.
+   - Full names on the podium.
+5. **🎬 DIRECTOR camera (key 7):** cuts between cameras like TV:
+   - the wide TV shot on the grid;
+   - one side shot over each big drop;
+   - onboard with the attacker in an overtake or with the chaser in a battle;
+   - a varied mix of shots in between;
+   - the TV camera, in slow motion, at the finish line.
+6. **Replays on phones:** when the race screen plays a replay, phones in the cockpit view play the same moment in slow motion from an orbiting camera, with the headline, then return to the live view.
+
 ## v2.0 round 6
 
 - **Progress page:** https://claude.ai/artifact/NoagHvUYA67fxdHe5G9syZ shows every round with before-and-after screenshots. It's also linked as "📈 What's new" under the race, and a copy is in `progress/`.

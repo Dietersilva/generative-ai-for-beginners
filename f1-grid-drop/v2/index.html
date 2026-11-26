@@ -1945,7 +1945,10 @@ function nextClip() {
     RP.busy = false;
     const item = RP.queue.shift();
     if (!item) { endReplayNow(); return; }
-    RP.cur = item; RP.t = item.clip[0].t; RP.i = 0; RP.ang = Math.random()*Math.PI*2; RP.active = true;
+    RP.cur = item; RP.t = item.clip[0].t;
+    if (RP.mode === "live" && POOL.on && POOL.host && POOL.room && !TEL.off && race) { const g = race.goAt; // phones watching the cockpit get the same replay
+      POOL.room.emit("tel", { k: "r", rid: race.rid, from: Math.round((item.clip[0].t - g)*100), to: Math.round((item.clip[item.clip.length - 1].t - g)*100), hit: item.hit != null ? Math.round((item.hit - g)*100) : null,
+        head: String(item.head || item.label || "").slice(0, 80), car: cars.indexOf(item.car), car2: item.car2 ? cars.indexOf(item.car2) : -1 }).catch(() => {}); } RP.i = 0; RP.ang = Math.random()*Math.PI*2; RP.active = true;
     stageEl.classList.add("replaying"); $("#rpHud").hidden = false; $("#rpWhat").textContent = item.head || item.label; $("#dcard").hidden = true;
     COMM.q = COMM.q.filter(x => x.rp); COMM.inReplay = true; try { C.replay(item.kind, item.car, RP.mode === "results" && RP.first, item.car2); } finally { COMM.inReplay = false; } RP.first = false;
   });
@@ -3132,7 +3135,7 @@ function telTick(now) { // race screen: send the setup every 2 s and every car's
   const ord = order(), t = race.phase === "race" ? race.simT - race.goAt : race.phase === "done" ? race.endAt - race.goAt : 0;
   send({ k: "t", rid: race.rid, ph: race.phase, t: Math.round(t*100), c: c9, rk: ord.map(c => cars.indexOf(c)) });
   if (props.length && (TEL.pt = !TEL.pt)) { const pc = []; for (const q of props) { const p = q.b.position, r = q.b.quaternion; pc.push(Math.round(p.x*100), Math.round(p.y*100), Math.round(p.z*100), Math.round(r.x*1000), Math.round(r.y*1000), Math.round(r.z*1000), Math.round(r.w*1000)); }
-    const msg = { k: "p", rid: race.rid, c: pc }; if (JSON.stringify(msg).length < 3900) send(msg); } // obstacles and creatures, every other update
+    const msg = { k: "p", rid: race.rid, t: Math.round(t*100), c: pc }; if (JSON.stringify(msg).length < 3900) send(msg); } // obstacles and creatures, every other update
 }
 function watchMsg(d) { // phone: everything that arrives is checked before use
   if (!d || typeof d !== "object") return;
@@ -3146,12 +3149,34 @@ function watchMsg(d) { // phone: everything that arrives is checked before use
     WATCH.propsOK = props.map(q => q.b.kind || "?").join(",") === WATCH.kinds; // same obstacles, same order, or none are shown
     if (!ord.includes(WATCH.code)) WATCH.code = ord[0]; watchHud(); return; }
   if (d.k === "p" && WATCH.propsOK && d.rid === WATCH.rid && Array.isArray(d.c) && d.c.length === props.length*7 && d.c.every(Number.isFinite)) {
-    WATCH.pbuf.push({ at: performance.now(), c: d.c }); if (WATCH.pbuf.length > 20) WATCH.pbuf.shift(); }
+    WATCH.pbuf.push({ at: performance.now(), t: +d.t || 0, c: d.c }); if (WATCH.pbuf.length > 50) WATCH.pbuf.shift(); }
+  if (d.k === "r" && d.rid === WATCH.rid && Number.isFinite(d.from) && Number.isFinite(d.to) && d.to > d.from && d.to - d.from < 1500) { // the race screen is showing a replay: play the same moment here
+    const clip = WATCH.buf.filter(b => b.t >= d.from - 20 && b.t <= d.to + 20); if (clip.length < 4) return;
+    const pclip = (WATCH.pbuf || []).filter(b => b.t >= d.from - 40 && b.t <= d.to + 40), ci = Number.isInteger(d.car) && d.car >= 0 && d.car < cars.length ? d.car : -1, c2 = Number.isInteger(d.car2) && d.car2 >= 0 && d.car2 < cars.length ? d.car2 : -1;
+    WATCH.rp = { clip, pclip, t: clip[0].t, end: clip[clip.length - 1].t, hit: Number.isFinite(d.hit) ? d.hit : null, car: ci >= 0 ? cars[ci] : null, car2: c2 >= 0 ? cars[c2] : null, head: typeof d.head === "string" ? d.head.slice(0, 80) : "", ang: Math.random()*6.28 }; return; }
   if (d.k === "t" && WATCH.order && d.rid === WATCH.rid && Array.isArray(d.c) && d.c.length === cars.length*9 && d.c.every(Number.isFinite)) {
-    WATCH.buf.push({ at: performance.now(), t: +d.t || 0, ph: String(d.ph || ""), c: d.c, rk: Array.isArray(d.rk) ? d.rk.slice(0, 22) : [] }); if (WATCH.buf.length > 40) WATCH.buf.shift(); }
+    WATCH.buf.push({ at: performance.now(), t: +d.t || 0, ph: String(d.ph || ""), c: d.c, rk: Array.isArray(d.rk) ? d.rk.slice(0, 22) : [] }); if (WATCH.buf.length > 80) WATCH.buf.shift(); }
 }
 const _wqa = new THREE.Quaternion(), _wqb = new THREE.Quaternion(), _wv = new THREE.Vector3(), WOFF = [[1.78, .92], [1.78, -.92], [-1.52, .9], [-1.52, -.9]];
+function watchReplay(dt) { // slow-motion replay on the phone, from the race screen's own data
+  const R = WATCH.rp, near = R.hit != null && Math.abs(R.t - R.hit) < 70; R.t += dt*100*(near ? .2 : .45);
+  if (R.t >= R.end) { WATCH.rp = null; return false; }
+  const at = (list, key) => { let i = 0; while (i < list.length - 2 && list[i + 1][key] <= R.t) i++; const a = list[i], b = list[Math.min(i + 1, list.length - 1)]; return [a, b, b[key] > a[key] ? Math.min(1, Math.max(0, (R.t - a[key])/(b[key] - a[key]))) : 1]; };
+  const [a, b, f] = at(R.clip, "t"), L = (x, y) => x + (y - x)*f;
+  cars.forEach((c, i) => { const k = i*9, A = a.c, C = b.c; c.mesh.position.set(L(A[k], C[k])/100, L(A[k + 1], C[k + 1])/100, L(A[k + 2], C[k + 2])/100);
+    _wqa.set(A[k + 3], A[k + 4], A[k + 5], A[k + 6]).normalize(); _wqb.set(C[k + 3], C[k + 4], C[k + 5], C[k + 6]).normalize(); c.mesh.quaternion.slerpQuaternions(_wqa, _wqb, f);
+    c.hidden = C[k + 8] === 4; c.mesh.visible = c.label.visible = !c.hidden; c.mesh.updateMatrixWorld(); c.wheels.forEach((w, j) => { w.visible = !c.hidden; w.position.set(WOFF[j][0]*c.sc, -.3*c.sc, WOFF[j][1]*c.sc).applyMatrix4(c.mesh.matrixWorld); w.quaternion.copy(c.mesh.quaternion); });
+    c.label.position.set(c.mesh.position.x, c.mesh.position.y + 2.1*c.sc, c.mesh.position.z); });
+  if (WATCH.propsOK && R.pclip.length > 1) { const [pa, pb, g] = at(R.pclip, "t"), M = (x, y) => x + (y - x)*g;
+    props.forEach((q, i) => { const k = i*7, A = pa.c, C = pb.c, y = M(A[k + 1], C[k + 1])/100; q.m.position.set(M(A[k], C[k])/100, y, M(A[k + 2], C[k + 2])/100);
+      _wqa.set(A[k + 3], A[k + 4], A[k + 5], A[k + 6]).normalize(); _wqb.set(C[k + 3], C[k + 4], C[k + 5], C[k + 6]).normalize(); q.m.quaternion.slerpQuaternions(_wqa, _wqb, g); if (q.setOn) q.setOn(y > -100, 20); if (q.after) q.after(); }); }
+  const P = (R.car || cars[0]).mesh.position; _wv.copy(P); let wide = /eaten|stampede|t-rex|snatch|wrecking|windmill/i.test(R.head) ? 2 : 1.4; /* big creatures need room */ if (R.car2) { _wv.add(R.car2.mesh.position).multiplyScalar(.5); wide = Math.max(wide, Math.min(3, (P.distanceTo(R.car2.mesh.position) + 6)/10)); }
+  R.ang += dt*.3; camera.position.set(_wv.x + Math.cos(R.ang)*12*wide, _wv.y + 5*wide, _wv.z + Math.sin(R.ang)*12*wide); camera.up.set(0, 1, 0); camera.lookAt(_wv);
+  if (camera.fov !== 55) { camera.fov = 55; camera.updateProjectionMatrix(); }
+  $("#whState").textContent = "⟲ REPLAY · " + (R.head || "").toUpperCase(); return true;
+}
 function watchFrame(dt) {
+  if (WATCH.rp && watchReplay(dt)) return;
   const B = WATCH.buf, me = cars.find(c => c.d.code === WATCH.code) || cars[0]; if (!me) return;
   if (B.length) {
     const rt = performance.now() - 280; let a = B[B.length - 1], b = a;

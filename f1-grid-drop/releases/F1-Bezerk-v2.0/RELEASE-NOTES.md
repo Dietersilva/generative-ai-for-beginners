@@ -18,7 +18,7 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **Progress page:** https://claude.ai/artifact/NoagHvUYA67fxdHe5G9syZ
 - **v1.0 live page (locked):** https://claude.ai/artifact/T78SFRzPEEh7yYV2BaSAXJ
 - **Source in git:** `f1-grid-drop/v2/` on branch `claude/youthful-cerf-49o4ha`.
-- **SHA-256 of `index.html`:** `abcfd0935e0a4b6e96c2174a9b3f8f9bec7fff76131fa3d39df1cbb101666a68`
+- **SHA-256 of `index.html`:** `d03f5f4a090046cf7db364649a9c310a3e299af9fa2694d87f5cada96f600aed`
 - **Libraries,** loaded from jsDelivr with pinned versions: three.js 0.160.0 (plus its add-ons) and cannon-es 0.20.0.
 
 ## What v2.0 adds over v1.0
