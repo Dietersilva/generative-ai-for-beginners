@@ -176,6 +176,12 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--cyan);outl
 .tab[aria-selected="true"]{background:var(--panel-2);color:var(--text);box-shadow:inset 0 0 0 1px var(--line-2)}
 .panel{flex:1;overflow-y:auto;min-height:0;padding:10px 12px;display:flex;flex-direction:column;gap:10px}
 .pn-note{margin:0;font-size:12px;line-height:1.5;color:var(--muted)}
+.lt{left:14px;top:150px;display:flex;align-items:stretch;gap:0;z-index:5;animation:ltIn .35s cubic-bezier(.2,1.2,.4,1)}
+.lt i{width:6px;background:var(--lc,#ff2f45);border-radius:4px 0 0 4px}
+.lt div{display:flex;flex-direction:column;padding:7px 14px 8px 12px;background:linear-gradient(90deg,#05070df0,#05070dc8);border-radius:0 8px 8px 0;min-width:220px}
+.lt b{font-family:var(--f-display);font-weight:800;font-size:15px;letter-spacing:.14em;color:var(--gold,#ffd23f)}
+.lt span{font-family:var(--f-display);font-weight:800;font-size:21px;letter-spacing:.03em;color:#fff;text-transform:uppercase;line-height:1.15}
+@keyframes ltIn{from{transform:translateX(-24px);opacity:0}}
 .bs-watch{font-family:var(--f-display);font-weight:800;font-size:16px;letter-spacing:.06em;padding:14px 16px;border-radius:12px;border:0;background:linear-gradient(90deg,#ff2f45,#ff6a13);color:#fff;box-shadow:0 6px 20px #ff2f4555}
 body.watch .app{display:block;height:100%}body.watch .app>*:not(.stage){display:none!important}
 body.watch .stage{position:fixed!important;inset:0!important;width:100%!important;height:100%!important;min-height:0!important;border-radius:0;border:0}
@@ -393,6 +399,7 @@ body.watch .stage .hud:not(.wh):not(.banner){display:none!important}
       <button class="seg fsbtn" id="fsBtn" aria-pressed="false" aria-label="Full screen" title="Full screen (F)"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="fsIcon" d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
     </div>
     <div class="hud ticker" id="ticker"></div>
+    <div class="hud lt" id="lt" hidden><i id="ltBar"></i><div><b id="ltT"></b><span id="ltS"></span></div></div>
     <div class="hud caption fade" id="caption" aria-live="polite"><b id="capWho">REX</b><span id="capTxt"></span></div>
     <div class="hud lights" id="lights" hidden>
       <div class="pod"><div class="bulb"></div><div class="bulb"></div></div>
@@ -1749,7 +1756,7 @@ function speedTrap(x, y) {
     if (code) { ctx.fillStyle = col; ctx.fillRect(22, 70, 10, 84); ctx.fillStyle = "#e8ecf6"; ctx.font = "italic 800 84px 'Saira Condensed', sans-serif"; ctx.fillText(code, 46, 150);
       ctx.font = "italic 800 84px 'Saira Condensed', sans-serif"; ctx.textAlign = "right"; ctx.fillText(`${kmh}`, 400, 150); ctx.font = "700 28px 'JetBrains Mono', monospace"; ctx.fillText("KM/H", 490, 150); ctx.textAlign = "left"; }
     tex.needsUpdate = true; },
-    hit(c, sp) { const kmh = Math.round(sp*3.6); const rec = !T2.best || kmh > T2.best.kmh; if (rec) T2.best = { code: c.d.code, kmh }; T2.draw(c.d.code, kmh, c.d.colour); if (rec && kmh > 60) C.trap(c, kmh, !!T2.first); T2.first = true; } };
+    hit(c, sp) { const kmh = Math.round(sp*3.6); const rec = !T2.best || kmh > T2.best.kmh; if (rec) T2.best = { code: c.d.code, kmh }; T2.draw(c.d.code, kmh, c.d.colour); if (rec && kmh > 60) { C.trap(c, kmh, !!T2.first); if (race.simT - (race.trapLT || -99) > 6) { race.trapLT = race.simT; lowerThird("SPEED TRAP · FASTEST", `${sur(c)} · ${kmh} km/h`, c.d.colour); } } T2.first = true; } };
   T2.draw(null); return T2;
 }
 
@@ -2828,10 +2835,15 @@ function overtakes(o) {
   o.forEach((c, i) => {
     const was = before.indexOf(c.d.code); if (c.status !== "race" || was < 0 || was <= i || now - lastOv < 1.2 || i > 9) return;
     const passed = o[i + 1]; if (!passed || passed.status !== "race") return;
-    if (before.indexOf(passed.d.code) === i) { lastOv = now; event("OVERTAKE", `${c.d.code} passes ${passed.d.code} for P${i + 1}`, "#38e383", c); if (i === 0) C.lead(c, passed); }
+    if (before.indexOf(passed.d.code) === i) { lastOv = now; event("OVERTAKE", `${c.d.code} passes ${passed.d.code} for P${i + 1}`, "#38e383", c); if (i === 0) { C.lead(c, passed); lowerThird("NEW LEADER", `${c.d.name}`, c.d.colour); } }
   });
   prevOrder = o.map(c => c.d.code);
 }
+let LT_T = 0;
+function lowerThird(title, sub, colour, ms = 3600) { // TV-style graphic: BATTLE FOR P3, NEW LEADER, SPEED TRAP
+  if (typeof WATCH !== "undefined" && WATCH) return; const el = $("#lt"); el.style.setProperty("--lc", colour || "#ff2f45"); $("#ltT").textContent = title; $("#ltS").textContent = sub;
+  if (el.hidden) el.hidden = false; else { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; } clearTimeout(LT_T); LT_T = setTimeout(() => el.hidden = true, ms); }
+const liveGap = (L, c) => Math.max(0, (L.s - c.s)/Math.max(8, c.spd || 0)); // seconds behind the car ahead, at this car's speed
 function updateTower() {
   const o = order(); overtakes(o); const total = track.finX ? progressS(track.finX) : 1, win = o.find(c => c.status === "fin");
   o.forEach((c, i) => {
@@ -2845,10 +2857,14 @@ function updateTower() {
     if (c.status === "fin") { inf.className = "inf fin"; inf.textContent = c === win ? `${c.finT.toFixed(3)}s` : `+${(c.finT - win.finT).toFixed(3)}`; }
     else if (c.status === "out") { inf.className = "inf out"; inf.textContent = c.out; }
     else if (c.status === "grid") { inf.className = "inf grid"; inf.textContent = `GRID P${c.gridPos}`; }
-    else { inf.className = "inf"; inf.textContent = `${Math.round(c.spd*3.6)} km/h`; }
+    else { inf.className = "inf"; const L = o[0]; inf.textContent = i === 0 || L.status !== "race" ? `${Math.round(c.spd*3.6)} km/h` : `+${liveGap(L, c).toFixed(1)}s`; } // gaps to the leader, like F1 TV
   });
+  if (race && race.phase === "race" && !RP.active) { // a close fight in the top ten gets a BATTLE graphic
+    let bt = null; for (let i = 0; i < Math.min(9, o.length - 1); i++) { const a = o[i], b = o[i + 1]; if (a.status === "race" && b.status === "race" && a.s - b.s < 9 && a.s - b.s >= 0) { bt = [a, b, i + 1]; break; } }
+    const key = bt ? bt[0].d.code + bt[1].d.code : ""; if (key !== race.btKey) { race.btKey = key; race.btSince = race.simT; }
+    const bk = bt ? key + bt[2] : ""; if (bt && race.simT - race.btSince > 1.5 && bk !== race.btShown && race.simT - (race.btAt || -99) > 8 && gate("battleLT", 8)) { race.btShown = bk; race.btAt = race.simT; lowerThird(`BATTLE FOR P${bt[2]}`, `${sur(bt[0])} vs ${sur(bt[1])} · ${liveGap(bt[0], bt[1]).toFixed(1)}s`, bt[1].d.colour); } }
   if (isFs()) { // compact tower for full screen
-    $("#mini").innerHTML = o.slice(0, 12).map((c, i) => { const inf = c.status === "fin" ? (c === win ? `${c.finT.toFixed(2)}s` : `+${(c.finT - win.finT).toFixed(2)}`) : c.status === "out" ? c.out : c.status === "grid" ? `P${c.gridPos}` : `${Math.round(c.spd*3.6)}`;
+    $("#mini").innerHTML = o.slice(0, 12).map((c, i) => { const inf = c.status === "fin" ? (c === win ? `${c.finT.toFixed(2)}s` : `+${(c.finT - win.finT).toFixed(2)}`) : c.status === "out" ? c.out : c.status === "grid" ? `P${c.gridPos}` : i === 0 || o[0].status !== "race" ? `${Math.round(c.spd*3.6)}` : `+${liveGap(o[0], c).toFixed(1)}`;
       return `<div class="m${c === selected ? " sel" : ""}"><b>${i + 1}</b><i style="background:${c.d.colour}"></i><span>${c.d.code}</span><em class="${c.status === "out" ? "out" : ""}">${inf}</em></div>`; }).join(""); }
   const fin = cars.filter(c => c.status === "fin").length, outN = cars.filter(c => c.status === "out").length;
   $("#towerSub").textContent = race.phase === "grid" || race.phase === "lights" ? "22 cars on the grid" : `${fin} finished · ${outN} out`;
@@ -2882,7 +2898,7 @@ function showResults() {
   const steps = wrap.querySelector(".steps"), hts = [130, 96, 72];
   [1, 0, 2].forEach(k => { const c = pod[k]; if (!c) return; const s = document.createElement("div"); s.className = "step"; s.style.setProperty("--tc", c.d.colour);
     s.innerHTML = `<span class="code"></span><span class="team"></span><span class="tm"></span><div class="blk" style="height:${hts[k]}px">${k + 1}</div>`;
-    s.querySelector(".code").textContent = c.d.code; s.querySelector(".team").textContent = c.d.team;
+    s.querySelector(".code").textContent = c.d.code; s.querySelector(".team").textContent = `${c.d.name} · ${c.d.team}`;
     s.querySelector(".tm").textContent = k === 0 ? `${c.finT.toFixed(3)}s` : `+${(c.finT - pod[0].finT).toFixed(3)}`; steps.append(s); });
   const aw = wrap.querySelector(".awards");
   for (const [lab, c, val] of [["TOP SPEED", ts, `${Math.round(ts.top*3.6)} km/h`], ["BIGGEST AIR", ai, `${ai.airMax.toFixed(2)} s airborne`], ["HARDEST HIT", hg, `${Math.min(99, hg.peakG).toFixed(1)} g`]]) {
