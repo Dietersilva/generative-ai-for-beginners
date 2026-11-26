@@ -2354,7 +2354,8 @@ function carParts(tc, ac) { // [geometry, x,y,z, rx,ry,rz, sx,sy,sz, colour] -- 
   for (const sz of [-1, 1]) {
     add(B, -.3, -.22, sz*.58, 0, 0, 0, 1.2, .1, .36, K); add(B, .5, -.06, sz*.6, 0, 0, 0, .04, .2, .34, K); // floor edge and dark sidepod inlet
     add(B, .55, .36, sz*.42, 0, 0, 0, .03, .2, .03, K); add(mirrorGeo, .58, .46, sz*.46, 0, 0, 0, 1, 1, 1, tc); add(B, 2.52, -.16, sz*.98, 0, 0, 0, .55, .2, .03, ac);
-    add(B, -2.38, .4, sz*.54, 0, 0, 0, .62, .54, .04, K);
+    add(B, -2.38, .4, sz*.54, 0, 0, 0, .62, .54, .04, K); for (let k = 0; k < 3; k++) add(B, -2.3 - k*.14, .5, sz*.565, 0, 0, .5, .05, .2, .012, ac); // slotted endplates
+    add(B, -.25, -.19, sz*.74, 0, 0, 0, 1.7, .07, .025, K); // raised floor edge
   }
   add(B, -.24, .38, 0, 0, 0, 0, .06, .2, .22, K); // dark airbox intake above the driver
   add(helmetGeo, .3, .3, 0, 0, 0, 0, 1, 1, 1, ac); // helmet in the team's lighter colour add(B, .45, .33, 0, 0, 0, 0, .06, .09, .24, C_VISOR); add(haloGeo, .3, .44, 0, 0, 0, 0, 1, 1, 1, K);
@@ -2373,12 +2374,31 @@ function codeDecal(code, colour) { // the driver's code on both sides of the eng
   g.setAttribute("uv", new THREE.Float32BufferAttribute([1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1], 2)); g.setIndex([0, 1, 2, 0, 2, 3, 4, 5, 6, 4, 6, 7]);
   const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ map: t, transparent: true, roughness: .4, polygonOffset: true, polygonOffsetFactor: -2 })); m.userData.own = true; return m;
 }
-function carMesh(colour, code) {
+const LIVERY = { tex: null };
+function liveryPaint(mat, accent, pat) { // v2.0: an original livery painted in the shader: a sweep, twin stripes or a dark fade, in the team's colours
+  mat.onBeforeCompile = sh => { Object.assign(sh.uniforms, { uAcc: { value: accent }, uPat: { value: pat }, uDark: { value: new THREE.Color(0x0c0e14) } });
+    sh.vertexShader = sh.vertexShader.replace("#include <common>", "#include <common>\nvarying vec3 vLP;").replace("#include <begin_vertex>", "#include <begin_vertex>\nvLP = position;");
+    sh.fragmentShader = sh.fragmentShader.replace("#include <common>", "#include <common>\nvarying vec3 vLP; uniform vec3 uAcc; uniform vec3 uDark; uniform float uPat;").replace("#include <color_fragment>", `#include <color_fragment>
+      float body = step(-2.2, vLP.x)*step(vLP.x, 2.25)*step(abs(vLP.z), .8)*step(-.2, vLP.y);
+      if (uPat < .5) { float d = vLP.x*.55 + vLP.y*1.6 + .1; diffuseColor.rgb = mix(diffuseColor.rgb, uAcc, body*(1. - smoothstep(.07, .1, abs(d)))); }
+      else if (uPat < 1.5) { float a = abs(abs(vLP.z) - .13); diffuseColor.rgb = mix(diffuseColor.rgb, uAcc, body*(1. - step(.03, a))*step(.0, vLP.y)); }
+      else { diffuseColor.rgb = mix(diffuseColor.rgb, uDark, body*smoothstep(-.4, -1.9, vLP.x)*.85); diffuseColor.rgb = mix(diffuseColor.rgb, uAcc, body*(1. - smoothstep(.015, .03, abs(vLP.x + .35)))); }`); };
+  mat.customProgramCacheKey = () => "livery";
+}
+function tyreLetters() { // white lettering around the outer tyre wall
+  if (LIVERY.tex) return LIVERY.tex; const cv = document.createElement("canvas"); cv.width = cv.height = 512; const x = cv.getContext("2d"), txt = "F1 BEZERK · SOAPBOX · F1 BEZERK · SOAPBOX · ";
+  x.translate(256, 256); x.fillStyle = "rgba(245,245,245,.92)"; x.font = "800 30px 'Saira Condensed', 'Arial Narrow', sans-serif"; x.textAlign = "center"; x.textBaseline = "middle";
+  const n = txt.length; for (let i = 0; i < n; i++) { const a = i/n*Math.PI*2; x.save(); x.rotate(a); x.translate(0, -212); x.fillText(txt[i], 0, 0); x.restore(); }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; return LIVERY.tex = t;
+}
+let TYRE_TXT_MAT = null; const TYRE_TXT_GEO = new THREE.RingGeometry(.21, .335, 48);
+function carMesh(colour, code, team) {
   const g = new THREE.Group(), tc = new THREE.Color(colour).offsetHSL(0, .08, -.03), ac = new THREE.Color(colour).lerp(new THREE.Color(0xffffff), .55);
   const parts = carParts(tc, ac), paintParts = parts.filter(p => p.c === tc || p.c === ac);
   if (!DARK_GEO) DARK_GEO = mergeParts(parts.filter(p => !paintParts.includes(p)));
   const paintMat = new THREE.MeshPhysicalMaterial({ vertexColors: true, roughness: .3, metalness: .15, clearcoat: 1, clearcoatRoughness: .06, envMapIntensity: .6 });
   paintMat.envMap = opts.tod === "day" ? (opts.rain ? null : LOOK.envDay) : LOOK.envNight || null; PAINT.push(paintMat);
+  { let hsh = 0; for (const ch of team || colour) hsh = (hsh*31 + ch.charCodeAt(0)) >>> 0; const acc = new THREE.Color(colour).getHSL({}).l > .55 ? new THREE.Color(0x10131c) : new THREE.Color(0xf2f4f8); liveryPaint(paintMat, acc, hsh % 3); }
   const paint = new THREE.Mesh(mergeParts(paintParts), paintMat); paint.castShadow = true; paint.userData.own = true;
   const dark = new THREE.Mesh(DARK_GEO, darkMat); dark.castShadow = true;
   const rl = new THREE.Mesh(REAR_GEO, REAR_MAT); rl.position.set(-2.33, .22, 0); // the red rear light real F1 cars run in the dark and the wet
@@ -2419,8 +2439,10 @@ function makeCar(d, slot, idx, sc = 1) {
   for (const [x, z] of [[1.78, .92], [1.78, -.92], [-1.52, .9], [-1.52, -.9]]) { wo.chassisConnectionPointLocal.set(x*sc, 0, z*sc); vehicle.addWheel(wo); }
   vehicle.addToWorld(world);
   setFrozen(body, true); // held in place until lights out (brakes make this vehicle model hop)
-  const mesh = carMesh(d.colour, d.code); mesh.scale.setScalar(sc); carGroup.add(mesh);
-  const wheels = [0,1,2,3].map(() => { const w = new THREE.Group(); const wm = wheelMesh(); wm.scale.set(1.06, 1.06, 1); w.add(wm); w.scale.setScalar(sc); carGroup.add(w); return w; }); // 2026 tyres are about 72 cm tall
+  const mesh = carMesh(d.colour, d.code, d.team); mesh.scale.setScalar(sc); carGroup.add(mesh);
+  if (!TYRE_TXT_MAT) TYRE_TXT_MAT = new THREE.MeshStandardMaterial({ map: tyreLetters(), transparent: true, alphaTest: .3, roughness: .8, polygonOffset: true, polygonOffsetFactor: -2 });
+  const wheels = [0,1,2,3].map(i => { const w = new THREE.Group(); const wm = wheelMesh(); wm.scale.set(1.06, 1.06, 1); w.add(wm);
+    const lt = new THREE.Mesh(TYRE_TXT_GEO, TYRE_TXT_MAT); lt.position.z = (i % 2 ? -1 : 1)*.197; if (i % 2) lt.rotation.y = Math.PI; wm.add(lt); /* lettering on the outer wall */ w.scale.setScalar(sc); carGroup.add(w); return w; }); // 2026 tyres are about 72 cm tall
   const label = labelSprite(d); if (sc > 1) label.scale.multiplyScalar(1.6); carGroup.add(label);
   const car = { d, idx, body, vehicle, mesh, wheels, label, status: "grid", out: "", finT: 0, s: 0, spd: 0, top: 0, airCur: 0, airMax: 0, peakG: 0,
     sc, slowT: 0, release: Math.random()*.22, cda: 1.05*sc*sc*(0.88 + Math.random()*.24), crr: .012*(0.85 + Math.random()*.3),
