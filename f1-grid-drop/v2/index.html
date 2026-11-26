@@ -431,6 +431,7 @@ body.watch .stage .hud:not(.wh):not(.banner){display:none!important}
       <span class="spd-real" id="spdReal" hidden title="Your computer can't run the physics any faster than this"></span>
     </div>
       <button class="tog" id="slowTog" aria-pressed="false"><i></i>SLOW-MO</button>
+      <button class="tog" id="sndTog" aria-pressed="true" title="Sound effects: wind, crashes, crowd, roars and rain, made in your browser (U)"><i></i>SOUND</button>
       <button class="tog" id="commTog" aria-pressed="true" title="Two hosts call the race out loud, using voices built into your device"><i></i>COMMENTARY</button>
       <button class="tog" id="replayTog" aria-pressed="true" title="Slow-motion replays of crashes, flips and big moments"><i></i>REPLAYS</button>
     </div>
@@ -1454,7 +1455,7 @@ const FX = (() => {
     dust(p, n, day) { for (let k = 0; k < n; k++) emit(solid, p.x + rnd(3), p.y - .2, p.z + rnd(3), rnd(6), 1 + Math.random()*2.5, rnd(6), 1 + Math.random()*.8, day ? col.setRGB(.72, .66, .55) : col.setRGB(.42, .45, .52), -.6, 2.4); },
     confetti(p, dir, n) { const pal = ["#ff2f45","#ffd23f","#3fd8ff","#38e383","#b65cff","#ffffff","#f47600"];
       for (let k = 0; k < n; k++) emit(solid, p.x, p.y, p.z, rnd(6) + dir.x*(6 + Math.random()*8), 9 + Math.random()*10, rnd(6) + dir.z*(6 + Math.random()*8), 3 + Math.random()*2.5, col.set(pal[k % pal.length]), 3, 1.6); },
-    firework(x, z, y0 = 2) { rockets.push({ x, y: y0, z, vy: 34 + Math.random()*10, fuse: .9 + Math.random()*.6, t: 0, hue: Math.random() }); },
+    firework(x, z, y0 = 2) { SND.pop(_sndV.set(x, y0 + 40, z)); rockets.push({ x, y: y0, z, vy: 34 + Math.random()*10, fuse: .9 + Math.random()*.6, t: 0, hue: Math.random() }); },
     smoke(p) { for (let k = 0; k < 2; k++) emit(solid, p.x + rnd(1.2), p.y - .1, p.z + rnd(1.2), rnd(1.5), .8 + Math.random()*1.2, rnd(1.5), 1.6 + Math.random()*1.2, col.setRGB(.8, .8, .82), -.5, 1.4); },
     update(dt) {
       for (let i = rockets.length - 1; i >= 0; i--) { const r = rockets[i]; r.t += dt; r.y += r.vy*dt; r.vy -= 9.81*dt;
@@ -2190,7 +2191,7 @@ function animateCreatures(dt, t) {
     if (a.neck) a.neck.rotation.z = Math.sin(t*.4 + a.ph)*.08 - (moving ? 0 : .12); // grazing: neck dips when standing
     if (a.roars) { // the T-rex roars when the leader goes past
       if (a.roarT > 0) a.roarT -= dt;
-      if (Math.abs(leadX - a.x) < 45 && a.roarT <= 0) { a.roarT = 4; if (!race.said.dino) { race.said.dino = 1; C.dino(); } }
+      if (Math.abs(leadX - a.x) < 45 && a.roarT <= 0) { a.roarT = 4; SND.roar(a.root.position); if (!race.said.dino) { race.said.dino = 1; C.dino(); } }
       const open = a.roarT > 2.2 ? Math.min(1, (4 - a.roarT)*2) : a.roarT > 0 ? Math.max(0, (a.roarT - 1.4)) : 0;
       a.jaw.rotation.z = -.65*open; a.head.rotation.z = .25*open; }
   }
@@ -2200,7 +2201,7 @@ function chomp(A) { const t = performance.now() - (A.chompT || -1e9); if (t < 22
 const _jaw = new THREE.Vector3();
 function eat(c, bb) { // a T-rex grabs the car in its jaws, shakes it, and throws it away
   const A = bb.beast; if (!A || c.eaten || c.status !== "race" || (race.eatN || 0) >= 3) return false; race.eatN = (race.eatN || 0) + 1;
-  c.eaten = { A, t: 0 }; A.chompT = performance.now();
+  c.eaten = { A, t: 0 }; A.chompT = performance.now(); SND.roar(c.body.position);
   event("EATEN", `${c.d.code} is eaten by a T-rex`, "#4f8a3a", c); C.eaten(c);
   out(c, "EATEN", true); setFrozen(c.body, true); c.body.collisionResponse = false;
   incident("obst", c, `EATEN · ${c.d.code}`, 3); shake = Math.min(1.4, shake + .9); return true;
@@ -2258,7 +2259,7 @@ function buildHerd() {
       update(t) {
         if (i === 0) { const dt = Math.max(0, t - H.lastT); H.lastT = t;
           const r = cars.filter(c => c.status === "race"), minS = r.length ? Math.min(...r.map(c => c.s || 0)) : track.length;
-          if (!H.on && t > 2.5 && race.phase === "race") { H.on = true; H.s = Math.max(0, minS - 35); event("STAMPEDE", "A herd of dinosaurs is chasing the field", "#4f8a3a"); C.stampede(); }
+          if (!H.on && t > 2.5 && race.phase === "race") { H.on = true; SND.roar(null); H.s = Math.max(0, minS - 35); event("STAMPEDE", "A herd of dinosaurs is chasing the field", "#4f8a3a"); C.stampede(); }
           if (H.on) { // it runs down the last car still racing: always a bit faster than its prey, and steers towards it
             const prey = r.find(c => (c.s || 0) === minS);
             if (prey) { const gap = minS - H.s; H.v = Math.max(0, Math.min(48, gap > 0 ? prey.spd + 3.5 + gap*.5 : prey.spd*.9)); H.z += (Math.max(-5, Math.min(5, prey.body.position.z)) - H.z)*Math.min(1, dt*2); }
@@ -2687,7 +2688,7 @@ function postStep(h) {
     if (track.trap && c.lastX < track.trap.x && b.position.x >= track.trap.x) track.trap.hit(c, sp);
     c.lastX = b.position.x;
     if (c.touch && c.wc < 2 && sp > 5 && Math.random() < .5) { b.quaternion.vmult(upLocal, tmpUp); FX.sparks({ x: b.position.x - tmpUp.x*.4, y: b.position.y - tmpUp.y*.4, z: b.position.z - tmpUp.z*.4 }, v, 2); }
-    if (!air && c.airCur > .45) { FX.dust(b.position, Math.min(40, Math.round(c.airCur*22)), opts.tod === "day"); if (c === focusCar()) shake = Math.min(1.2, shake + c.airCur*.35); }
+    if (!air && c.airCur > .45) { SND.thud(c.airCur, b.position); FX.dust(b.position, Math.min(40, Math.round(c.airCur*22)), opts.tod === "day"); if (c === focusCar()) shake = Math.min(1.2, shake + c.airCur*.35); }
     if (air) c.airCur += h; else if (c.airCur > 0) {
       if (c.airCur > c.airMax) c.airMax = c.airCur;
       if (c.airCur > 1.4 && c.status === "race") { event("AIR", `${c.d.code} flies for ${c.airCur.toFixed(1)} s`, "#b65cff", c); C.air(c, c.airCur); if (c.airCur > 2.6) incident("air", c, `BIG AIR · ${c.d.code}`, 0); }
@@ -2697,7 +2698,7 @@ function postStep(h) {
       c.status = "fin"; c.finT = t - (b.position.x - track.finX)/Math.max(1, v.x);
       const first = cars.filter(o => o.status === "fin").length === 1;
       event(first ? "WIN" : "LINE", first ? `${c.d.code} wins the drop` : `${c.d.code} crosses the line`, first ? "#ffffff" : "#38e383", c);
-      if (first) { showBanner(`${c.d.code} WINS`, `${c.d.name} · ${c.finT.toFixed(3)} s`); celebrate(); race.winner = c;
+      SND.cheer(); if (first) { showBanner(`${c.d.code} WINS`, `${c.d.name} · ${c.finT.toFixed(3)} s`); celebrate(); race.winner = c;
         race.closeAt = race.simT + 15; race.finishFrom = race.simT - 4.2; race.finishAt = race.simT + 1.3; }
       const nf = cars.filter(o => o.status === "fin").length;
       if (nf === 2) C.win(race.winner, c);
@@ -2736,7 +2737,7 @@ function onCollide(car, e) {
   const iv = Math.abs(e.contact.getImpactVelocityAlongNormal());
   if (car.status === "race" && iv > (race.maxHit ? race.maxHit.v : 6)) race.maxHit = { v: iv, c: car };
   const other = e.body, now = race.simT;
-  if (iv > 3) { const k = e.contact, p = k.bi.position.vadd(k.ri); FX.sparks(p, car.body.velocity, Math.min(40, Math.round(iv*3)));
+  if (iv > 3) { const k = e.contact, p = k.bi.position.vadd(k.ri); SND.crash(iv, p); FX.sparks(p, car.body.velocity, Math.min(40, Math.round(iv*3)));
     if (car === focusCar()) shake = Math.min(1.2, shake + iv*.04); }
   if (other.prop) {
     const k = other.kind; if (k === "wreck" || k === "windmill" || k === "tyre" || k === "trex" || k === "herd") FX.sparks(car.body.position, car.body.velocity, 26);
@@ -2772,10 +2773,10 @@ function startRace() {
   let i = 0;
   const tick = () => {
     if (!race || race.phase !== "lights") return;
-    if (i < 5) { bulbs[i].querySelectorAll(".bulb").forEach(b => b.classList.add("on")); i++; setGantry(i); setTimeout(tick, i < 5 ? 900 : 700 + Math.random()*1300); }
+    if (i < 5) { bulbs[i].querySelectorAll(".bulb").forEach(b => b.classList.add("on")); i++; SND.beep(false); setGantry(i); setTimeout(tick, i < 5 ? 900 : 700 + Math.random()*1300); }
     else { bulbs.forEach(p => p.querySelectorAll(".bulb").forEach(b => b.classList.remove("on"))); setGantry(0);
       setTimeout(() => { L.hidden = true; }, 500);
-      race.phase = "race"; race.goAt = race.simT; releaseCars(); setFlag("LIGHTS OUT", "go"); event("GO", "Lights out. 22 cars, no engines", "#38e383"); C.go();
+      race.phase = "race"; race.goAt = race.simT; releaseCars(); setFlag("LIGHTS OUT", "go"); SND.beep(true); event("GO", "Lights out. 22 cars, no engines", "#38e383"); C.go();
       $("#startBtn").textContent = "RACING"; }
   };
   setTimeout(tick, 600);
@@ -3060,7 +3061,7 @@ function frame(now) {
   else if (race && race.phase !== "grid" && race.phase !== "lights") simulate(dt*(opts.slow ? .3 : 1)*opts.speed); // SPEED fast-forwards the race; replays keep their own pace
   else if (race) simulate(dt);
   const tNow = now/1000, fdt = dt*(opts.slow && race && race.phase !== "grid" ? .3 : 1)*(race && race.phase === "race" && !RP.active ? opts.speed : 1);
-  FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position);
+  FX.update(fdt); updateParty(fdt); RAIN.update(fdt, camera.position); SND.update(fdt);
   if ((opts.rain || WEATHER.wet) && race && !RP.active) for (const c of cars) if (c.status === "race" && c.spd > 9 && c.wc > 0 && Math.random() < .55) FX.spray(c.mesh.position, c.body.velocity); if (animAirships) animAirships(tNow); animateCreatures(fdt, tNow); animateCrowd(tNow);
   if (race) {
     if (WATCH) watchFrame(dt); else if (RP.active) replayFrame(dt); else { syncVisuals(); updateCamera(dt); }
@@ -3149,6 +3150,37 @@ function watchHud() {
 function watchStep(d) { const ord = WATCH.order || DRIVERS.map(x => x.code); let i = ord.indexOf(WATCH.code); i = (i + d + ord.length) % ord.length; WATCH.code = ord[i];
   try { history.replaceState(null, "", "#watch=" + WATCH.code); } catch (e) {} watchHud(); }
 
+/* ---------- v2.0 SOUND: every effect is generated in the browser (no audio files) ---------- */
+const SND = { on: (() => { try { return localStorage.getItem("f1bezerk.sound") !== "off"; } catch (e) { return true; } })(), ctx: null };
+SND.init = () => { if (SND.ctx || !SND.on) { if (SND.ctx && SND.ctx.state === "suspended") SND.ctx.resume().catch(() => {}); return; }
+  const AC = window.AudioContext || window.webkitAudioContext; if (!AC) return;
+  try { const a = SND.ctx = new AC(), out = SND.out = a.createGain(); out.gain.value = .55; out.connect(a.destination);
+    const n = a.sampleRate*2, buf = a.createBuffer(1, n, a.sampleRate), d = buf.getChannelData(0); let b = 0; for (let i = 0; i < n; i++) { b = .97*b + .03*(Math.random()*2 - 1); d[i] = b*3 + (Math.random()*2 - 1)*.15; } SND.noise = buf;
+    const loop = (freq, q, type = "bandpass") => { const s = a.createBufferSource(); s.buffer = buf; s.loop = true; const f = a.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q; const g = a.createGain(); g.gain.value = 0; s.connect(f); f.connect(g); g.connect(out); s.start(); return { f, g }; };
+    SND.wind = loop(500, .7); SND.rain = loop(2600, .4, "highpass"); SND.crowd = loop(900, .9);
+  } catch (e) { SND.ctx = null; } };
+SND.dist = p => { if (!p) return 1; const d = camera.position.distanceTo(p); return Math.max(0, 1 - d/260); };
+SND.burst = (vol, freq, dur, q = 1, type = "lowpass") => { const a = SND.ctx; if (!a || !SND.on || vol <= .01) return; const s = a.createBufferSource(); s.buffer = SND.noise; const f = a.createBiquadFilter(); f.type = type; f.frequency.value = freq; f.Q.value = q;
+  const g = a.createGain(), t = a.currentTime; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.001, t + dur); s.connect(f); f.connect(g); g.connect(SND.out); s.start(t, Math.random()*1.5); s.stop(t + dur + .05); };
+SND.tone = (vol, f0, f1, dur, type = "sine") => { const a = SND.ctx; if (!a || !SND.on || vol <= .01) return; const o = a.createOscillator(), g = a.createGain(), t = a.currentTime; o.type = type; o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + dur);
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .015); g.gain.exponentialRampToValueAtTime(.0001, t + dur); o.connect(g); g.connect(SND.out); o.start(t); o.stop(t + dur + .05); };
+SND.crash = (iv, p) => { const v = Math.min(1, iv/18)*SND.dist(p), now = performance.now(); if (v < .03 || (now - (SND.lastC || 0) < 70 && v < .6)) return; SND.lastC = now; /* a big pile-up shouldn't turn into noise */ SND.burst(v*.9, 1200 + iv*60, .35 + v*.4, .8); SND.tone(v*.7, 110, 38, .45); if (iv > 8) SND.burst(v*.35, 4200, .25, 2, "bandpass"); };
+SND.thud = (air, p) => { const v = Math.min(1, air/2.5)*SND.dist(p); SND.tone(v*.6, 90, 35, .3); SND.burst(v*.4, 700, .25); if (air > 1) SND.screech(v*.5); };
+SND.screech = v => { const a = SND.ctx; if (!a || !SND.on || v < .03) return; const o = a.createOscillator(), lf = a.createOscillator(), lg = a.createGain(), f = a.createBiquadFilter(), g = a.createGain(), t = a.currentTime;
+  o.type = "sawtooth"; o.frequency.value = 820 + Math.random()*200; lf.frequency.value = 23; lg.gain.value = 60; lf.connect(lg); lg.connect(o.frequency); f.type = "bandpass"; f.frequency.value = 1500; f.Q.value = 3;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v*.35, t + .04); g.gain.exponentialRampToValueAtTime(.0001, t + .55); o.connect(f); f.connect(g); g.connect(SND.out); o.start(t); lf.start(t); o.stop(t + .6); lf.stop(t + .6); };
+SND.roar = p => { const v = Math.max(.35, SND.dist(p)); SND.tone(v*.8, 120, 55, 1.6, "sawtooth"); SND.tone(v*.5, 180, 70, 1.4, "square"); SND.burst(v*.5, 500, 1.5, 2, "bandpass"); };
+SND.beep = hi => SND.tone(.35, hi ? 1320 : 880, hi ? 1320 : 880, hi ? .5 : .18, "square");
+SND.pop = (p) => { const v = Math.max(.15, SND.dist(p)*1.5); setTimeout(() => { SND.burst(v*.6, 2500, .5, .7); SND.tone(v*.3, 200, 60, .4); }, 900 + Math.random()*400); };
+SND.cheer = () => { if (!SND.crowd) return; const g = SND.crowd.g.gain, t = SND.ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(.55, t + .4); g.linearRampToValueAtTime(.12, t + 4); };
+SND.update = dt => { const a = SND.ctx; if (!a) return; const t = a.currentTime, on = SND.on && !(typeof WATCH !== "undefined" && WATCH === null && false);
+  const fc = race && cars.length ? focusCar() : null, sp = fc && race.phase !== "grid" ? Math.min(1, (fc.spd || 0)/55) : 0, slow = RP.active ? .35 : 1;
+  SND.wind.g.gain.setTargetAtTime(on ? sp*sp*.5*slow : 0, t, .25); SND.wind.f.frequency.setTargetAtTime(300 + sp*1400, t, .3);
+  SND.rain.g.gain.setTargetAtTime(on && (opts.rain || WEATHER.wet) ? .16 : 0, t, .5);
+  const fd = track && track.finX ? Math.max(0, 1 - camera.position.distanceTo(_sndV.set(track.finX - 40, 4, -40))/220) : 0;
+  if (SND.crowd.g.gain.value < .15) SND.crowd.g.gain.setTargetAtTime(on ? fd*.12 : 0, t, .8); };
+const _sndV = new THREE.Vector3();
+
 /* ---------- controls ---------- */
 function rebuild() { buildWorld(); }
 document.querySelectorAll("[data-cam]").forEach(b => b.addEventListener("click", () => setCam(b.dataset.cam)));
@@ -3167,6 +3199,9 @@ $("#revTog").addEventListener("click", () => { opts.reverse = !opts.reverse; $("
 $("#chaosTog").addEventListener("click", () => { opts.chaos = !opts.chaos; $("#chaosTog").setAttribute("aria-pressed", String(opts.chaos)); rebuild(); });
 function toggleComm() { opts.comm = !opts.comm; $("#commTog").setAttribute("aria-pressed", String(opts.comm)); if (!opts.comm) commStop(); else say("pri", "Commentary back on. Did we miss anything?", 2); }
 $("#commTog").addEventListener("click", toggleComm);
+function toggleSound() { SND.on = !SND.on; $("#sndTog").setAttribute("aria-pressed", String(SND.on)); try { localStorage.setItem("f1bezerk.sound", SND.on ? "on" : "off"); } catch (e) {} if (SND.on) SND.init(); }
+$("#sndTog").addEventListener("click", toggleSound); $("#sndTog").setAttribute("aria-pressed", String(SND.on));
+addEventListener("pointerdown", () => SND.init(), { passive: true }); addEventListener("keydown", () => SND.init());
 document.querySelectorAll(".tab").forEach(t => t.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.setAttribute("aria-selected", String(x === t)));
   $("#pnOrder").hidden = t.dataset.tab !== "order"; $("#pnBets").hidden = t.dataset.tab !== "bets"; $("#pnSeason").hidden = t.dataset.tab !== "season"; $("#pnRecords").hidden = t.dataset.tab !== "records";
@@ -3287,6 +3322,7 @@ addEventListener("keydown", e => {
   else if (e.key === "d" || e.key === "D") setTimeOfDay(opts.tod === "day" ? "night" : "day");
   else if (e.key === "x" || e.key === "X") $("#chaosTog").click();
   else if (e.key === "c" || e.key === "C") toggleComm();
+  else if (e.key === "u" || e.key === "U") toggleSound();
   else if (e.key === "f" || e.key === "F") toggleFs();
   else if (e.key === "p" || e.key === "P") toggleReplays();
   else if (e.key === "v" || e.key === "V") $("#revTog").click();
