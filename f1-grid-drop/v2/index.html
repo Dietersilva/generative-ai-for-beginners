@@ -267,6 +267,7 @@ body.watch .stage .hud:not(.wh):not(.banner){display:none!important}
 .bs-drv i{align-self:stretch;background:var(--tc)} .bs-drv b{font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .bs-drv span{font-family:var(--f-display);font-weight:800;font-size:19px;letter-spacing:.04em} .bs-drv small{font-family:var(--f-mono);font-size:10px;color:#ffd23f}
 .bs-drv.on{border-color:var(--tc);background:color-mix(in srgb,var(--tc) 22%,var(--panel-2))} .bs-drv:disabled{opacity:.55;cursor:default}
+[hidden]{display:none!important} /* keeps hidden panels hidden even where a class sets display (e.g. .bt) */
 .bt{min-height:100%;box-sizing:border-box;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px 32px;max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
 .bt-hd{display:flex;align-items:center;gap:10px}
 .bt-body{display:flex;flex-direction:column;gap:10px}
@@ -2209,7 +2210,7 @@ function animateCreatures(dt, t) {
 }
 
 function chomp(A) { const t = performance.now() - (A.chompT || -1e9); if (t < 2200) { A.jaw.rotation.z = -.15 - .5*Math.abs(Math.sin(t*.012)); A.head.rotation.z = .25 + .15*Math.sin(t*.02); } }
-const _jaw = new THREE.Vector3();
+const _jaw = new THREE.Vector3(), _jawQ = new THREE.Quaternion(), _jawR = new THREE.Quaternion(), _jawE = new THREE.Euler();
 function eat(c, bb) { // a T-rex grabs the car in its jaws, shakes it, and throws it away
   const A = bb.beast; if (!A || c.eaten || c.status !== "race" || (race.eatN || 0) >= 3) return false; race.eatN = (race.eatN || 0) + 1;
   c.eaten = { A, t: 0 }; A.chompT = performance.now(); SND.roar(c.body.position);
@@ -2219,7 +2220,10 @@ function eat(c, bb) { // a T-rex grabs the car in its jaws, shakes it, and throw
 }
 function stepEaten(c, h) { // while held: the car hangs from the T-rex's jaws
   const E = c.eaten, b = c.body; E.t += h;
-  E.A.jaw.getWorldPosition(_jaw); b.position.set(_jaw.x + .6, _jaw.y - .3, _jaw.z); b.quaternion.setFromEuler(Math.sin(E.t*16)*.55, E.t*1.5, 1.1 + Math.sin(E.t*11)*.3);
+  /* the car is held crosswise in the middle of the mouth, in the jaw's own frame, so it follows the head wherever the T-rex is facing */
+  const jw = E.A.jaw; jw.updateWorldMatrix(true, false); jw.localToWorld(_jaw.set(1.05, .3, 0)); b.position.set(_jaw.x, _jaw.y, _jaw.z);
+  jw.getWorldQuaternion(_jawQ); _jawR.setFromEuler(_jawE.set(Math.sin(E.t*16)*.22, Math.PI/2 + Math.sin(E.t*9)*.18, Math.sin(E.t*11)*.2)); _jawQ.multiply(_jawR);
+  b.quaternion.set(_jawQ.x, _jawQ.y, _jawQ.z, _jawQ.w);
   if (E.t > 1.9) { E.done = true; setFrozen(b, false); b.collisionResponse = true; const sd = b.position.z >= 0 ? 1 : -1;
     b.velocity.set(8, 11, sd*15); b.angularVelocity.set(5, 3, 7); if (chance(.7)) say("pri", pick("spit", ["And it spits it out! Formula 1 cars must taste terrible.", "Thrown away like a chew toy!"]), 2); }
 }
@@ -3003,9 +3007,13 @@ function camTarget() {
 }
 function snapCamera() { camTarget(); camPos.copy(wantPos); camLook.copy(wantLook); applyCam(); }
 const shakeV = new THREE.Vector3();
+function keepAboveGround(v, clear = 2.5) { /* never let a camera sink under the road deck or the hillside (that view is just black) */
+  if (!track) return; const ter = terrainH(v.x, v.z) + 1.5; let floor = ter;
+  if (v.x > -3 && v.x < track.endX + 2) { const w = 1 - sstep(W/2 + 1.5, W/2 + 7.5, Math.abs(v.z)); floor = Math.max(ter, ter + (surfaceY(v.x) + clear - ter)*w); }
+  if (v.y < floor) v.y = floor; }
 function applyCam() { camera.position.copy(camPos);
   if (shake > .01 && opts.cam !== "side" && opts.cam !== "drone" && opts.cam !== "giant" && !reduceMotion) { shakeV.set(Math.random() - .5, Math.random() - .5, Math.random() - .5).multiplyScalar(shake*.9); camera.position.add(shakeV); }
-  camera.lookAt(camLook);
+  keepAboveGround(camera.position); camera.lookAt(camLook);
   sun.target.position.copy(camLook); sun.position.copy(camLook).add(new THREE.Vector3(-60, 110, 50)); sun.target.updateMatrixWorld(); }
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 function updateCamera(dt) {
@@ -3171,7 +3179,7 @@ function watchReplay(dt) { // slow-motion replay on the phone, from the race scr
     props.forEach((q, i) => { const k = i*7, A = pa.c, C = pb.c, y = M(A[k + 1], C[k + 1])/100; q.m.position.set(M(A[k], C[k])/100, y, M(A[k + 2], C[k + 2])/100);
       _wqa.set(A[k + 3], A[k + 4], A[k + 5], A[k + 6]).normalize(); _wqb.set(C[k + 3], C[k + 4], C[k + 5], C[k + 6]).normalize(); q.m.quaternion.slerpQuaternions(_wqa, _wqb, g); if (q.setOn) q.setOn(y > -100, 20); if (q.after) q.after(); }); }
   const P = (R.car || cars[0]).mesh.position; _wv.copy(P); let wide = /eaten|stampede|t-rex|snatch|wrecking|windmill/i.test(R.head) ? 2 : 1.4; /* big creatures need room */ if (R.car2) { _wv.add(R.car2.mesh.position).multiplyScalar(.5); wide = Math.max(wide, Math.min(3, (P.distanceTo(R.car2.mesh.position) + 6)/10)); }
-  R.ang += dt*.3; camera.position.set(_wv.x + Math.cos(R.ang)*12*wide, _wv.y + 5*wide, _wv.z + Math.sin(R.ang)*12*wide); camera.up.set(0, 1, 0); camera.lookAt(_wv);
+  R.ang += dt*.3; camera.position.set(_wv.x + Math.cos(R.ang)*12*wide, _wv.y + 5*wide, _wv.z + Math.sin(R.ang)*12*wide); keepAboveGround(camera.position); camera.up.set(0, 1, 0); camera.lookAt(_wv);
   if (camera.fov !== 55) { camera.fov = 55; camera.updateProjectionMatrix(); }
   $("#whState").textContent = "⟲ REPLAY · " + (R.head || "").toUpperCase(); return true;
 }
