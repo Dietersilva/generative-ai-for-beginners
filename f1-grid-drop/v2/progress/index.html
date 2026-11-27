@@ -60,7 +60,7 @@ footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padd
 
 <div class="wrap">
   <header class="hero">
-    <div class="flag"><span class="chk" aria-hidden="true"></span><span class="tag">BUILD LOG · 18 NOV 2026</span></div>
+    <div class="flag"><span class="chk" aria-hidden="true"></span><span class="tag">BUILD LOG · 26 NOV 2026</span></div>
     <h1>F1 Bezerk <em>v2.0</em> progress</h1>
     <p class="lede">Everything we have changed since v1.0, round by round, with screenshots from my test runs. v1.0 stays locked as a backup; all new work goes into v2.0.</p>
     <div class="links">
@@ -163,14 +163,34 @@ footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padd
         </div>
       </article>
 
-      <article class="lap now">
-        <div class="lap-h"><span class="tag">v2.0 · round 6 · now</span><h3>Championship, phones see everything, lighter</h3></div>
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 6</span><h3>Championship, phones see everything, lighter</h3></div>
         <ul>
           <li>🏆 5-race championship: random setup each race, F1 points, standings after every race and a champion's ceremony with fireworks.</li>
           <li>Phones now also see the obstacles and creatures: wrecking ball, windmill, balls, pins, the stampede herd and the pterodactyl.</li>
           <li>About 3.6× fewer triangles per frame, with nothing visible removed.</li>
           <li>The downloaded copy works when opened from disk (simpler scenery), and the phone betting slip explains itself instead of waiting forever.</li>
         </ul>
+      </article>
+
+      <article class="lap">
+        <div class="lap-h"><span class="tag">v2.0 · round 7</span><h3>TV director, replays, sound and liveries</h3></div>
+        <ul>
+          <li>Replays now start about 2 seconds before the moment, slow right down at the impact, frame both cars in a collision and show a headline such as "Bottas is eaten by a T-rex".</li>
+          <li>🎬 DIRECTOR camera that cuts like TV: wide shot on the grid, a side shot over each drop, onboard with the attacker in an overtake, slow motion at the finish.</li>
+          <li>Phones in the cockpit view now play the same replay in slow motion, then return to the live race.</li>
+          <li>Sound made in the browser: wind, crashes, landings, crowd, roars, rain and start beeps. Team liveries, tyre lettering, live gaps and lower-third TV graphics.</li>
+        </ul>
+      </article>
+
+      <article class="lap now">
+        <div class="lap-h"><span class="tag">v2.0 · round 8 · now</span><h3>Fixes: T-rex mouth, cameras under the track</h3></div>
+        <ul>
+          <li>A car caught by a T-rex is now held crosswise in the middle of its mouth and follows the head. Before, it hung beside the jaw.</li>
+          <li>Cameras can no longer sink under the road deck or the hillside, which showed only black. It covers every camera, the replay camera and the phone replay camera.</li>
+          <li>A downloaded copy served from a local web server no longer shows the phone betting slip on top of the race.</li>
+        </ul>
+        <p style="margin:10px 0 0;font-size:13px;opacity:.75">No screenshots for this round yet. Tested in a desktop browser; the phone replay camera and the kicker jump were not re-checked.</p>
       </article>
 
     </div>
@@ -187,7 +207,8 @@ footer{color:var(--muted);font-size:12.5px;border-top:1px solid var(--line);padd
     <div class="next">
       <div><b>True photoreal</b><span>Needs Unreal Engine and a gaming PC; the browser version can keep improving but won't look like a photo.</span></div>
       <div><b>Better cars</b><span>No free scanned F1-style car exists; more hand modelling or a generated model (would use your Higgsfield credits).</span></div>
-      <div><b>Replays on phones</b><span>Phones show the live race but not the slow-motion replays yet.</span></div>
+      <div><b>Check by ear and on a phone</b><span>The sound has never been tuned by ear, and the phone replay camera (moved back after it started inside the T-rex's mouth) hasn't been re-tested.</span></div>
+      <div><b>Tyre lettering</b><span>Only readable up close; it could be bigger, or shown only in onboard shots.</span></div>
     </div>
   </section>
 

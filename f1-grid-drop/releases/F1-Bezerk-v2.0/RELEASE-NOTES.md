@@ -1,6 +1,6 @@
 # F1 Bezerk v2.0
 
-The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separately in `releases/F1-Bezerk-v1.0/`.
+The realism upgrade of F1 Bezerk, as of 26 November 2026 (round 8). v1.0 is locked separately in `releases/F1-Bezerk-v1.0/`.
 
 ## What's in this folder
 
@@ -18,7 +18,7 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **Progress page:** https://claude.ai/artifact/NoagHvUYA67fxdHe5G9syZ
 - **v1.0 live page (locked):** https://claude.ai/artifact/T78SFRzPEEh7yYV2BaSAXJ
 - **Source in git:** `f1-grid-drop/v2/` on branch `claude/youthful-cerf-49o4ha`.
-- **SHA-256 of `index.html`:** `d03f5f4a090046cf7db364649a9c310a3e299af9fa2694d87f5cada96f600aed`
+- **SHA-256 of `index.html`:** `969b43edd24a20bac7578aad34efac8b24f44dc1ad7a7ac9b1aa50fc3442b71e`
 - **Libraries,** loaded from jsDelivr with pinned versions: three.js 0.160.0 (plus its add-ons) and cannon-es 0.20.0.
 
 ## What v2.0 adds over v1.0
@@ -40,6 +40,9 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **Speed:** faster fast-forward (60 physics steps a second at 2× and above), plus a real-speed readout.
 - **Championship:** a 5-race championship with F1 points and a champion's ceremony.
 - **Lighter rendering:** about 3.6× fewer triangles per frame than round 5.
+- **TV director and replays (round 7):** a 🎬 DIRECTOR camera that cuts like TV, replays that start before the moment and slow down at impact, and the same replays on phones.
+- **Sound and liveries (round 7):** wind, crash, crowd and roar sounds made in the browser, plus team liveries and live gaps.
+- **Fixes (round 8):** a car caught by a T-rex is held in its mouth, cameras can't sink under the track, and the phone betting slip no longer shows over the race on a local server.
 
 ## How to run it
 
@@ -47,6 +50,7 @@ The realism upgrade of F1 Bezerk, as of 18 November 2026. v1.0 is locked separat
 - **From this folder:** opening `index.html` straight from your computer may not load the textures, because browsers block pages opened from disk from loading other files. Use a small local web server instead, then open http://localhost:8000.
   - On a Mac or Linux, run this inside the folder: `python3 -m http.server`
   - On Windows, install Python first and run the same command.
+- **Garbled text:** if words show as `â€¦`, the local server isn't sending UTF-8. Python's plain `http.server` doesn't. Use a server that adds `charset=utf-8`, or the live page.
 - **Offline fallback:** opened straight from disk, or without the `assets/` folder, the game runs with the simpler v1.0-style scenery.
 - **Shared features:** phone betting, cheering and the phone driver view only work on the live claude.ai page.
 

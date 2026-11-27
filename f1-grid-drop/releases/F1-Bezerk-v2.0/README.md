@@ -17,6 +17,16 @@
 - **Safe fallback:** if the textures don't load, the v1.0 look stays.
 - **Size:** the textures are about 1.8 MB in `assets/`.
 
+## v2.0 round 8 (fixes)
+
+1. **Cars in the T-rex's mouth:** a car the T-rex grabs is now held crosswise in the middle of its mouth and follows the head, wherever the dinosaur is facing. Before, it was placed next to the jaw hinge with a fixed sideways offset, so on the road T-rex (which faces across the track) the car hung beside the head instead of in the mouth.
+2. **No more views from under the track:** a camera is never allowed lower than 2.5 m above the road deck while it is over the road, and never lower than 1.5 m above the hillside. Near the road's edge the limit eases from one to the other, so the camera doesn't jump. It applies to every camera, the replay camera and the phone replay camera. Before, some views sank under the deck and showed only black. The most likely cause is the replay orbit and the chase camera on the steep drops, where the road beside a car is far higher or lower than the car itself. I worked that out from the code and did not reproduce the black view first.
+3. **Local copies:** the phone betting slip no longer shows on top of the race when the page is served outside claude.ai (the page now carries its own `[hidden]` rule).
+
+Tested in a desktop browser on a local server, by forcing a T-rex catch and by pushing the camera far below the road. Not re-tested: a full race on the live page, the phone replay camera on a real phone, and the kicker jump (it isn't part of the road profile, so a camera could still dip under it).
+
+**Running it locally on Windows:** the page has no character-set tag of its own, and Python's plain `http.server` doesn't send one, so text can look garbled (for example `Connectingâ€¦`). Serve it with a UTF-8 header, or publish it to claude.ai, which adds the tag.
+
 ## v2.0 round 7
 
 1. **Replays match the action:**
